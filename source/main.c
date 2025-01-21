@@ -175,48 +175,50 @@ int main(int argc, char** argv) {
             }
         }
 
-        // set position and bounce on the walls
-        pos.y += vel_y;
-        pos.x += vel_x;
-        if (pos.x + pos.w > SCREEN_W) {
-            pos.x = SCREEN_W - pos.w;
-            vel_x = -rand_range(1, 5);
-            col = rand_range(0, 4);
-            snd = rand_range(0, 3);
-            if (sound[snd])
-                Mix_PlayChannel(-1, sound[snd], 0);
-        }
-        if (pos.x < 0) {
-            pos.x = 0;
-            vel_x = rand_range(1, 5);
-            col = rand_range(0, 4);
-            snd = rand_range(0, 3);
-            if (sound[snd])
-                Mix_PlayChannel(-1, sound[snd], 0);
-        }
-        if (pos.y + pos.h > SCREEN_H) {
-            pos.y = SCREEN_H - pos.h;
-            vel_y = -rand_range(1, 5);
-            col = rand_range(0, 4);
-            snd = rand_range(0, 3);
-            if (sound[snd])
-                Mix_PlayChannel(-1, sound[snd], 0);
-        }
-        if (pos.y < 0) {
-            pos.y = 0;
-            vel_y = rand_range(1, 5);
-            col = rand_range(0, 4);
-            snd = rand_range(0, 3);
-            if (sound[snd])
-                Mix_PlayChannel(-1, sound[snd], 0);
-        }
-
         if (!trail) {
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0xFF);
             SDL_RenderClear(renderer);
         }
 
-        // put logos on screen
+        if (demo_enabled) {
+            // Animation and movement logic
+            pos.y += vel_y;
+            pos.x += vel_x;
+            if (pos.x + pos.w > SCREEN_W) {
+                pos.x = SCREEN_W - pos.w;
+                vel_x = -rand_range(1, 5);
+                col = rand_range(0, 4);
+                snd = rand_range(0, 3);
+                if (sound[snd])
+                    Mix_PlayChannel(-1, sound[snd], 0);
+            }
+            if (pos.x < 0) {
+                pos.x = 0;
+                vel_x = rand_range(1, 5);
+                col = rand_range(0, 4);
+                snd = rand_range(0, 3);
+                if (sound[snd])
+                    Mix_PlayChannel(-1, sound[snd], 0);
+            }
+            if (pos.y + pos.h > SCREEN_H) {
+                pos.y = SCREEN_H - pos.h;
+                vel_y = -rand_range(1, 5);
+                col = rand_range(0, 4);
+                snd = rand_range(0, 3);
+                if (sound[snd])
+                    Mix_PlayChannel(-1, sound[snd], 0);
+            }
+            if (pos.y < 0) {
+                pos.y = 0;
+                vel_y = rand_range(1, 5);
+                col = rand_range(0, 4);
+                snd = rand_range(0, 3);
+                if (sound[snd])
+                    Mix_PlayChannel(-1, sound[snd], 0);
+            }
+        }
+
+        // Always render the static elements
         if (sdllogo_tex)
             SDL_RenderCopy(renderer, sdllogo_tex, NULL, &sdl_pos);
         if (switchlogo_tex) {
@@ -224,7 +226,6 @@ int main(int argc, char** argv) {
             SDL_RenderCopy(renderer, switchlogo_tex, NULL, &pos);
         }
         
-        // put text on screen
         if (helloworld_tex)
             SDL_RenderCopy(renderer, helloworld_tex, NULL, &helloworld_rect);
 
