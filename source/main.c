@@ -68,6 +68,7 @@ int main(int argc, char** argv) {
     romfsInit();
     chdir("romfs:/");
 
+    int demo_enabled = 0;
     int exit_requested = 0;
     int trail = 0;
     int wait = 25;
@@ -157,7 +158,7 @@ int main(int argc, char** argv) {
             if (event.type == SDL_QUIT)
                 exit_requested = 1;
 
-            // use joystick
+            // main event queue handler - use Switch controller inputs
             if (event.type == SDL_JOYBUTTONDOWN) {
                 if (event.jbutton.button == JOY_UP)
                     if (wait > 0)
