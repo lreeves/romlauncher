@@ -219,21 +219,19 @@ int main(int argc, char** argv) {
                 if (sound[snd])
                     Mix_PlayChannel(-1, sound[snd], 0);
             }
-        }
 
-        // Always render the static elements
-        if (sdllogo_tex)
-            SDL_RenderCopy(renderer, sdllogo_tex, NULL, &sdl_pos);
-        if (switchlogo_tex) {
-            SDL_SetTextureColorMod(switchlogo_tex, colors[col].r, colors[col].g, colors[col].b);
-            SDL_RenderCopy(renderer, switchlogo_tex, NULL, &pos);
+            if (sdllogo_tex)
+                SDL_RenderCopy(renderer, sdllogo_tex, NULL, &sdl_pos);
+            if (switchlogo_tex) {
+                SDL_SetTextureColorMod(switchlogo_tex, colors[col].r, colors[col].g, colors[col].b);
+                SDL_RenderCopy(renderer, switchlogo_tex, NULL, &pos);
+            }
+
+            if (helloworld_tex)
+                SDL_RenderCopy(renderer, helloworld_tex, NULL, &helloworld_rect);
         }
-        
-        if (helloworld_tex)
-            SDL_RenderCopy(renderer, helloworld_tex, NULL, &helloworld_rect);
 
         SDL_RenderPresent(renderer);
-
         SDL_Delay(wait);
     }
 
