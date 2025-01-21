@@ -172,6 +172,9 @@ int main(int argc, char** argv) {
 
                 if (event.jbutton.button == JOY_B)
                     trail =! trail;
+
+                if (event.jbutton.button == JOY_MINUS)
+                    demo_enabled =! demo_enabled;
             }
         }
 
