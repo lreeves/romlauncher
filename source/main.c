@@ -109,6 +109,7 @@ int rand_range(int min, int max){
 int main(int argc, char** argv) {
 
     log_message("Starting romlauncher");
+    log_message("Second message");
 
     romfsInit();
     chdir("romfs:/");
