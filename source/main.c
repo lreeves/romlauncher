@@ -22,15 +22,6 @@
 #include <time.h>
 #include <unistd.h>
 #include <stdio.h>
-
-void log_message(const char* message) {
-    FILE* log_file = fopen("/retrolauncher.log", "a");
-    if (log_file != NULL) {
-        fprintf(log_file, "%s\n", message);
-        fclose(log_file);
-    }
-}
-
 #include <SDL.h>
 #include <SDL_mixer.h>
 #include <SDL_image.h>
@@ -51,6 +42,14 @@ void log_message(const char* message) {
 
 #define SCREEN_W 1280
 #define SCREEN_H 720
+
+void log_message(const char* message) {
+    FILE* log_file = fopen("/retrolauncher.log", "a");
+    if (log_file != NULL) {
+        fprintf(log_file, "%s\n", message);
+        fclose(log_file);
+    }
+}
 
 SDL_Texture * render_text(SDL_Renderer *renderer, const char* text, TTF_Font *font, SDL_Color color, SDL_Rect *rect) 
 {
@@ -73,6 +72,8 @@ int rand_range(int min, int max){
 
 
 int main(int argc, char** argv) {
+
+    log_message("Starting romlauncher");
 
     romfsInit();
     chdir("romfs:/");
