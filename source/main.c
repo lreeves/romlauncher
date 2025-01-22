@@ -46,8 +46,10 @@
 #define SCREEN_H 720
 
 const char* rom_directory = "/roms";
+FILE* log_file = NULL;
 
 void log_message(const char* message) {
+    if (log_file == NULL) return;
     FILE* log_file = fopen("/retrolauncher.log", "a");
     if (log_file != NULL) {
         time_t now;
@@ -107,6 +109,10 @@ int rand_range(int min, int max){
 
 
 int main(int argc, char** argv) {
+    log_file = fopen("/retrolauncher.log", "a");
+    if (log_file == NULL) {
+        return 1;
+    }
 
     log_message("Starting romlauncher");
     log_message("Second message");
@@ -319,5 +325,9 @@ int main(int argc, char** argv) {
     Mix_Quit();
     SDL_Quit();
     romfsExit();
+    
+    if (log_file) {
+        fclose(log_file);
+    }
     return 0;
 }
