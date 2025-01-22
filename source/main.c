@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <dirent.h>
+#include <sys/stat.h>
 #include <SDL.h>
 #include <SDL_mixer.h>
 #include <SDL_image.h>
@@ -193,7 +194,20 @@ int main(int argc, char** argv) {
     sound[2] = Mix_LoadWAV("data/pop3.wav");
     sound[3] = Mix_LoadWAV("data/pop4.wav");
 
+    log_message("About to list files");
+    
+    // Check if directory exists
+    DIR *check = opendir(rom_directory);
+    if (check == NULL) {
+        log_message("ROM directory does not exist, creating it");
+        mkdir(rom_directory, 0777);
+    } else {
+        closedir(check);
+        log_message("ROM directory exists");
+    }
+    
     list_files(rom_directory);
+    log_message("Finished listing files");
 
     while (!exit_requested
         && appletMainLoop()
