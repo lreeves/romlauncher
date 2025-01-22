@@ -250,9 +250,6 @@ int main(int argc, char** argv) {
     SDL_Rect helloworld_rect = { 0, SCREEN_H - 36, 0, 0 };
     helloworld_tex = render_text(renderer, "Hello, world!", font, colors[1], &helloworld_rect);
 
-    // no need to keep the font loaded
-    TTF_CloseFont(font);
-
     SDL_InitSubSystem(SDL_INIT_AUDIO);
     Mix_AllocateChannels(5);
     Mix_OpenAudio(48000, AUDIO_S16, 2, 4096);
