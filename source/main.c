@@ -188,8 +188,8 @@ int main(int argc, char** argv) {
     sound[1] = Mix_LoadWAV("data/pop2.wav");
     sound[2] = Mix_LoadWAV("data/pop3.wav");
     sound[3] = Mix_LoadWAV("data/pop4.wav");
-    if (music)
-        // Mix_PlayMusic(music, -1);
+
+    list_files(rom_directory);
 
     while (!exit_requested
         && appletMainLoop()
