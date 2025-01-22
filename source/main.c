@@ -21,6 +21,15 @@
 
 #include <time.h>
 #include <unistd.h>
+#include <stdio.h>
+
+void log_message(const char* message) {
+    FILE* log_file = fopen("/retrolauncher.log", "a");
+    if (log_file != NULL) {
+        fprintf(log_file, "%s\n", message);
+        fclose(log_file);
+    }
+}
 
 #include <SDL.h>
 #include <SDL_mixer.h>
@@ -173,8 +182,10 @@ int main(int argc, char** argv) {
                 if (event.jbutton.button == JOY_B)
                     trail =! trail;
 
-                if (event.jbutton.button == JOY_MINUS)
+                if (event.jbutton.button == JOY_MINUS) {
                     demo_enabled =! demo_enabled;
+                    log_message(demo_enabled ? "Demo started" : "Demo stopped");
+                }
             }
         }
 
