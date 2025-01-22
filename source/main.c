@@ -45,7 +45,7 @@
 #define SCREEN_W 1280
 #define SCREEN_H 720
 
-const char* rom_directory = "/roms";
+const char* rom_directory = "sdmc:/roms";
 FILE* log_file = NULL;
 
 void log_message(const char* message) {
@@ -200,17 +200,6 @@ int main(int argc, char** argv) {
     sound[3] = Mix_LoadWAV("data/pop4.wav");
 
     log_message("About to list files");
-    
-    // Check if directory exists
-    DIR *check = opendir(rom_directory);
-    if (check == NULL) {
-        log_message("ROM directory does not exist, creating it");
-        mkdir(rom_directory, 0777);
-    } else {
-        closedir(check);
-        log_message("ROM directory exists");
-    }
-    
     list_files(rom_directory);
     log_message("Finished listing files");
 
