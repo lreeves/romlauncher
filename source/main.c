@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <string.h>
 #include <SDL.h>
 #include <SDL_mixer.h>
 #include <SDL_image.h>
@@ -74,12 +75,23 @@ SDL_Texture * render_text(SDL_Renderer *renderer, const char* text, TTF_Font *fo
     return texture;
 }
 
+#define MAX_ENTRIES 256
+#define MAX_PATH_LEN 512
+
+static int compare_strings(const void* a, const void* b) {
+    return strcmp(*(const char**)a, *(const char**)b);
+}
+
 void list_files(const char* path) {
     log_message("Starting to list files");
 
     DIR *dir;
     struct dirent *entry;
-    char log_buf[512];
+    char log_buf[MAX_PATH_LEN];
+    char *dirs[MAX_ENTRIES] = {0};
+    char *files[MAX_ENTRIES] = {0};
+    int dir_count = 0;
+    int file_count = 0;
 
     dir = opendir(path);
     if (dir == NULL) {
@@ -91,10 +103,46 @@ void list_files(const char* path) {
     snprintf(log_buf, sizeof(log_buf), "Listing contents of: %s", path);
     log_message(log_buf);
 
+    // First pass: collect directories and files
     while ((entry = readdir(dir)) != NULL) {
-        if (strlen(entry->d_name) + 3 < sizeof(log_buf)) {  // +3 for "  " prefix and null terminator
-            snprintf(log_buf, sizeof(log_buf), "  %s", entry->d_name);
+        if (dir_count >= MAX_ENTRIES || file_count >= MAX_ENTRIES) {
+            log_message("Maximum number of entries reached");
+            break;
+        }
+
+        // Skip . and ..
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+            continue;
+        }
+
+        char *name = strdup(entry->d_name);
+        if (name == NULL) continue;
+
+        if (entry->d_type == DT_DIR) {
+            dirs[dir_count++] = name;
+        } else {
+            files[file_count++] = name;
+        }
+    }
+
+    // Sort both arrays
+    if (dir_count > 0) {
+        qsort(dirs, dir_count, sizeof(char*), compare_strings);
+        log_message("Directories:");
+        for (int i = 0; i < dir_count; i++) {
+            snprintf(log_buf, sizeof(log_buf), "  [DIR] %s", dirs[i]);
             log_message(log_buf);
+            free(dirs[i]);
+        }
+    }
+
+    if (file_count > 0) {
+        qsort(files, file_count, sizeof(char*), compare_strings);
+        log_message("Files:");
+        for (int i = 0; i < file_count; i++) {
+            snprintf(log_buf, sizeof(log_buf), "  %s", files[i]);
+            log_message(log_buf);
+            free(files[i]);
         }
     }
 
