@@ -74,6 +74,8 @@ SDL_Texture * render_text(SDL_Renderer *renderer, const char* text, TTF_Font *fo
 }
 
 void list_files(const char* path) {
+    log_message("Starting to list files");
+
     DIR *dir;
     struct dirent *entry;
     char log_buf[512];
