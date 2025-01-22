@@ -50,15 +50,13 @@ FILE* log_file = NULL;
 
 void log_message(const char* message) {
     if (log_file == NULL) return;
-    FILE* log_file = fopen("/retrolauncher.log", "a");
-    if (log_file != NULL) {
-        time_t now;
-        time(&now);
-        char* timestamp = ctime(&now);
-        timestamp[24] = '\0'; // Remove newline that ctime adds
-        fprintf(log_file, "[%s] %s\n", timestamp, message);
-        fclose(log_file);
-    }
+    
+    time_t now;
+    time(&now);
+    char* timestamp = ctime(&now);
+    timestamp[24] = '\0'; // Remove newline that ctime adds
+    fprintf(log_file, "[%s] %s\n", timestamp, message);
+    fflush(log_file);
 }
 
 SDL_Texture * render_text(SDL_Renderer *renderer, const char* text, TTF_Font *font, SDL_Color color, SDL_Rect *rect) 
