@@ -287,8 +287,14 @@ int main(int argc, char** argv) {
 
     log_message("About to list files");
     DirContent* content = list_files(rom_directory, renderer, font, colors);
-    if (content) {
-        log_message("Finished listing files");
+    if (content == NULL) {
+        log_message("list_files returned NULL");
+    } else {
+        log_message("Got valid content");
+        char debug_buf[256];
+        snprintf(debug_buf, sizeof(debug_buf), "Found %d directories and %d files", 
+                content->dir_count, content->file_count);
+        log_message(debug_buf);
 /*
         // Free the allocated memory
         for (int i = 0; i < content->dir_count; i++) {
