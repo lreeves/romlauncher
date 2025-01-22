@@ -78,39 +78,58 @@ SDL_Texture * render_text(SDL_Renderer *renderer, const char* text, TTF_Font *fo
 #define MAX_ENTRIES 256
 #define MAX_PATH_LEN 512
 
+typedef struct {
+    char **dirs;
+    char **files;
+    int dir_count;
+    int file_count;
+} DirContent;
+
 static int compare_strings(const void* a, const void* b) {
     return strcmp(*(const char**)a, *(const char**)b);
 }
 
-void list_files(const char* path) {
+DirContent* list_files(const char* path) {
     log_message("Starting to list files");
 
     DIR *dir;
     struct dirent *entry;
     char log_buf[MAX_PATH_LEN];
-    char *dirs[MAX_ENTRIES] = {0};
-    char *files[MAX_ENTRIES] = {0};
-    int dir_count = 0;
-    int file_count = 0;
+    
+    DirContent* content = malloc(sizeof(DirContent));
+    if (!content) return NULL;
+    
+    content->dirs = calloc(MAX_ENTRIES, sizeof(char*));
+    content->files = calloc(MAX_ENTRIES, sizeof(char*));
+    if (!content->dirs || !content->files) {
+        free(content->dirs);
+        free(content->files);
+        free(content);
+        return NULL;
+    }
+    
+    content->dir_count = 0;
+    content->file_count = 0;
 
     dir = opendir(path);
     if (dir == NULL) {
         snprintf(log_buf, sizeof(log_buf), "Failed to open directory: %s", path);
         log_message(log_buf);
-        return;
+        free(content->dirs);
+        free(content->files);
+        free(content);
+        return NULL;
     }
 
     snprintf(log_buf, sizeof(log_buf), "Listing contents of: %s", path);
     log_message(log_buf);
 
-    // First pass: collect directories and files
     while ((entry = readdir(dir)) != NULL) {
-        if (dir_count >= MAX_ENTRIES || file_count >= MAX_ENTRIES) {
+        if (content->dir_count >= MAX_ENTRIES || content->file_count >= MAX_ENTRIES) {
             log_message("Maximum number of entries reached");
             break;
         }
 
-        // Skip . and ..
         if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
             continue;
         }
@@ -119,34 +138,32 @@ void list_files(const char* path) {
         if (name == NULL) continue;
 
         if (entry->d_type == DT_DIR) {
-            dirs[dir_count++] = name;
+            content->dirs[content->dir_count++] = name;
         } else {
-            files[file_count++] = name;
+            content->files[content->file_count++] = name;
         }
     }
 
-    // Sort both arrays
-    if (dir_count > 0) {
-        qsort(dirs, dir_count, sizeof(char*), compare_strings);
+    if (content->dir_count > 0) {
+        qsort(content->dirs, content->dir_count, sizeof(char*), compare_strings);
         log_message("Directories:");
-        for (int i = 0; i < dir_count; i++) {
-            snprintf(log_buf, sizeof(log_buf), "  [DIR] %s", dirs[i]);
+        for (int i = 0; i < content->dir_count; i++) {
+            snprintf(log_buf, sizeof(log_buf), "  [DIR] %s", content->dirs[i]);
             log_message(log_buf);
-            free(dirs[i]);
         }
     }
 
-    if (file_count > 0) {
-        qsort(files, file_count, sizeof(char*), compare_strings);
+    if (content->file_count > 0) {
+        qsort(content->files, content->file_count, sizeof(char*), compare_strings);
         log_message("Files:");
-        for (int i = 0; i < file_count; i++) {
-            snprintf(log_buf, sizeof(log_buf), "  %s", files[i]);
+        for (int i = 0; i < content->file_count; i++) {
+            snprintf(log_buf, sizeof(log_buf), "  %s", content->files[i]);
             log_message(log_buf);
-            free(files[i]);
         }
     }
 
     closedir(dir);
+    return content;
 }
 
 int rand_range(int min, int max){
@@ -248,8 +265,21 @@ int main(int argc, char** argv) {
     sound[3] = Mix_LoadWAV("data/pop4.wav");
 
     log_message("About to list files");
-    list_files(rom_directory);
-    log_message("Finished listing files");
+    DirContent* content = list_files(rom_directory);
+    if (content) {
+        log_message("Finished listing files");
+        
+        // Free the allocated memory
+        for (int i = 0; i < content->dir_count; i++) {
+            free(content->dirs[i]);
+        }
+        for (int i = 0; i < content->file_count; i++) {
+            free(content->files[i]);
+        }
+        free(content->dirs);
+        free(content->files);
+        free(content);
+    }
 
     while (!exit_requested
         && appletMainLoop()
