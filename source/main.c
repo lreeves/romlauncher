@@ -46,7 +46,11 @@
 void log_message(const char* message) {
     FILE* log_file = fopen("/retrolauncher.log", "a");
     if (log_file != NULL) {
-        fprintf(log_file, "%s\n", message);
+        time_t now;
+        time(&now);
+        char* timestamp = ctime(&now);
+        timestamp[24] = '\0'; // Remove newline that ctime adds
+        fprintf(log_file, "[%s] %s\n", timestamp, message);
         fclose(log_file);
     }
 }
