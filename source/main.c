@@ -43,6 +43,8 @@
 #define SCREEN_W 1280
 #define SCREEN_H 720
 
+const char* rom_directory = "/roms";
+
 void log_message(const char* message) {
     FILE* log_file = fopen("/retrolauncher.log", "a");
     if (log_file != NULL) {
