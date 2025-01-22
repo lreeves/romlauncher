@@ -289,7 +289,7 @@ int main(int argc, char** argv) {
     DirContent* content = list_files(rom_directory, renderer, font, colors);
     if (content) {
         log_message("Finished listing files");
-        
+/*
         // Free the allocated memory
         for (int i = 0; i < content->dir_count; i++) {
             free(content->dirs[i]);
@@ -309,7 +309,7 @@ int main(int argc, char** argv) {
         free(content->file_textures);
         free(content->dir_rects);
         free(content->file_rects);
-        free(content);
+        free(content);*/
     }
 
     while (!exit_requested
@@ -337,6 +337,20 @@ int main(int argc, char** argv) {
                 if (event.jbutton.button == JOY_MINUS) {
                     demo_enabled =! demo_enabled;
                     log_message(demo_enabled ? "Demo started" : "Demo stopped");
+                }
+            }
+        }
+
+        // Render directory and file listings
+        if (content) {
+            for (int i = 0; i < content->dir_count; i++) {
+                if (content->dir_textures[i]) {
+                    SDL_RenderCopy(renderer, content->dir_textures[i], NULL, &content->dir_rects[i]);
+                }
+            }
+            for (int i = 0; i < content->file_count; i++) {
+                if (content->file_textures[i]) {
+                    SDL_RenderCopy(renderer, content->file_textures[i], NULL, &content->file_rects[i]);
                 }
             }
         }
@@ -392,20 +406,6 @@ int main(int argc, char** argv) {
 
             if (helloworld_tex)
                 SDL_RenderCopy(renderer, helloworld_tex, NULL, &helloworld_rect);
-                
-            // Render directory and file listings
-            if (content) {
-                for (int i = 0; i < content->dir_count; i++) {
-                    if (content->dir_textures[i]) {
-                        SDL_RenderCopy(renderer, content->dir_textures[i], NULL, &content->dir_rects[i]);
-                    }
-                }
-                for (int i = 0; i < content->file_count; i++) {
-                    if (content->file_textures[i]) {
-                        SDL_RenderCopy(renderer, content->file_textures[i], NULL, &content->file_rects[i]);
-                    }
-                }
-            }
         }
 
         SDL_RenderPresent(renderer);
