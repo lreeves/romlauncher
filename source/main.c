@@ -354,20 +354,6 @@ int main(int argc, char** argv) {
 
         // Render directory and file listings
         if (content) {
-            static int logged = 0;
-            if (!logged) {
-                log_message("Attempting to render directory and file listings");
-                char debug_buf[256];
-                for (int i = 0; i < content->dir_count; i++) {
-                    if (content->dir_textures[i]) {
-                        snprintf(debug_buf, sizeof(debug_buf), "Directory texture %d is ready at position %d,%d", 
-                                i, content->dir_rects[i].x, content->dir_rects[i].y);
-                        log_message(debug_buf);
-                    }
-                }
-                logged = 1;
-            }
-            
             for (int i = 0; i < content->dir_count; i++) {
                 if (content->dir_textures[i]) {
                     SDL_RenderCopy(renderer, content->dir_textures[i], NULL, &content->dir_rects[i]);
