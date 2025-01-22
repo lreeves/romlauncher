@@ -22,6 +22,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <dirent.h>
 #include <SDL.h>
 #include <SDL_mixer.h>
 #include <SDL_image.h>
@@ -70,6 +71,29 @@ SDL_Texture * render_text(SDL_Renderer *renderer, const char* text, TTF_Font *fo
     SDL_FreeSurface(surface);
 
     return texture;
+}
+
+void list_files(const char* path) {
+    DIR *dir;
+    struct dirent *entry;
+    char log_buf[256];
+
+    dir = opendir(path);
+    if (dir == NULL) {
+        snprintf(log_buf, sizeof(log_buf), "Failed to open directory: %s", path);
+        log_message(log_buf);
+        return;
+    }
+
+    snprintf(log_buf, sizeof(log_buf), "Listing contents of: %s", path);
+    log_message(log_buf);
+
+    while ((entry = readdir(dir)) != NULL) {
+        snprintf(log_buf, sizeof(log_buf), "  %s", entry->d_name);
+        log_message(log_buf);
+    }
+
+    closedir(dir);
 }
 
 int rand_range(int min, int max){
