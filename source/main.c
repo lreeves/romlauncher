@@ -76,7 +76,7 @@ SDL_Texture * render_text(SDL_Renderer *renderer, const char* text, TTF_Font *fo
 void list_files(const char* path) {
     DIR *dir;
     struct dirent *entry;
-    char log_buf[256];
+    char log_buf[512];
 
     dir = opendir(path);
     if (dir == NULL) {
@@ -89,8 +89,10 @@ void list_files(const char* path) {
     log_message(log_buf);
 
     while ((entry = readdir(dir)) != NULL) {
-        snprintf(log_buf, sizeof(log_buf), "  %s", entry->d_name);
-        log_message(log_buf);
+        if (strlen(entry->d_name) + 3 < sizeof(log_buf)) {  // +3 for "  " prefix and null terminator
+            snprintf(log_buf, sizeof(log_buf), "  %s", entry->d_name);
+            log_message(log_buf);
+        }
     }
 
     closedir(dir);
