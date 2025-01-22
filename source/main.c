@@ -83,6 +83,10 @@ typedef struct {
     char **files;
     int dir_count;
     int file_count;
+    SDL_Texture **dir_textures;
+    SDL_Texture **file_textures;
+    SDL_Rect *dir_rects;
+    SDL_Rect *file_rects;
 } DirContent;
 
 static int compare_strings(const void* a, const void* b) {
@@ -101,9 +105,19 @@ DirContent* list_files(const char* path) {
     
     content->dirs = calloc(MAX_ENTRIES, sizeof(char*));
     content->files = calloc(MAX_ENTRIES, sizeof(char*));
-    if (!content->dirs || !content->files) {
+    content->dir_textures = calloc(MAX_ENTRIES, sizeof(SDL_Texture*));
+    content->file_textures = calloc(MAX_ENTRIES, sizeof(SDL_Texture*));
+    content->dir_rects = calloc(MAX_ENTRIES, sizeof(SDL_Rect));
+    content->file_rects = calloc(MAX_ENTRIES, sizeof(SDL_Rect));
+    
+    if (!content->dirs || !content->files || !content->dir_textures || 
+        !content->file_textures || !content->dir_rects || !content->file_rects) {
         free(content->dirs);
         free(content->files);
+        free(content->dir_textures);
+        free(content->file_textures);
+        free(content->dir_rects);
+        free(content->file_rects);
         free(content);
         return NULL;
     }
@@ -148,8 +162,13 @@ DirContent* list_files(const char* path) {
         qsort(content->dirs, content->dir_count, sizeof(char*), compare_strings);
         log_message("Directories:");
         for (int i = 0; i < content->dir_count; i++) {
-            snprintf(log_buf, sizeof(log_buf), "  [DIR] %s", content->dirs[i]);
+            snprintf(log_buf, sizeof(log_buf), "[DIR] %s", content->dirs[i]);
             log_message(log_buf);
+            
+            // Render directory entry
+            content->dir_rects[i].x = 50;
+            content->dir_rects[i].y = 50 + (i * 40);  // 40 pixels spacing between entries
+            content->dir_textures[i] = render_text(renderer, log_buf, font, colors[1], &content->dir_rects[i]);
         }
     }
 
@@ -157,8 +176,13 @@ DirContent* list_files(const char* path) {
         qsort(content->files, content->file_count, sizeof(char*), compare_strings);
         log_message("Files:");
         for (int i = 0; i < content->file_count; i++) {
-            snprintf(log_buf, sizeof(log_buf), "  %s", content->files[i]);
+            snprintf(log_buf, sizeof(log_buf), "%s", content->files[i]);
             log_message(log_buf);
+            
+            // Render file entry
+            content->file_rects[i].x = 50;
+            content->file_rects[i].y = 50 + ((content->dir_count + i + 1) * 40);  // Continue after directories
+            content->file_textures[i] = render_text(renderer, log_buf, font, colors[0], &content->file_rects[i]);
         }
     }
 
@@ -269,12 +293,22 @@ int main(int argc, char** argv) {
         // Free the allocated memory
         for (int i = 0; i < content->dir_count; i++) {
             free(content->dirs[i]);
+            if (content->dir_textures[i]) {
+                SDL_DestroyTexture(content->dir_textures[i]);
+            }
         }
         for (int i = 0; i < content->file_count; i++) {
             free(content->files[i]);
+            if (content->file_textures[i]) {
+                SDL_DestroyTexture(content->file_textures[i]);
+            }
         }
         free(content->dirs);
         free(content->files);
+        free(content->dir_textures);
+        free(content->file_textures);
+        free(content->dir_rects);
+        free(content->file_rects);
         free(content);
     }
 
@@ -358,6 +392,20 @@ int main(int argc, char** argv) {
 
             if (helloworld_tex)
                 SDL_RenderCopy(renderer, helloworld_tex, NULL, &helloworld_rect);
+                
+            // Render directory and file listings
+            if (content) {
+                for (int i = 0; i < content->dir_count; i++) {
+                    if (content->dir_textures[i]) {
+                        SDL_RenderCopy(renderer, content->dir_textures[i], NULL, &content->dir_rects[i]);
+                    }
+                }
+                for (int i = 0; i < content->file_count; i++) {
+                    if (content->file_textures[i]) {
+                        SDL_RenderCopy(renderer, content->file_textures[i], NULL, &content->file_rects[i]);
+                    }
+                }
+            }
         }
 
         SDL_RenderPresent(renderer);
