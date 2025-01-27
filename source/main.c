@@ -196,7 +196,7 @@ int rand_range(int min, int max){
 
 
 int main(int argc, char** argv) {
-    log_file = fopen("/retrolauncher.log", "a");
+    log_file = fopen("/retrolauncher.log", "w");
     if (log_file == NULL) {
         return 1;
     }
