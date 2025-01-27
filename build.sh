@@ -33,7 +33,7 @@ fi
 
 echo "Launching Ryujinx"
 
-DOTNET_ROOT=/home/codedemo/Tools/dotnet-sdk-8.0.405 /home/codedemo/Source/ryujinx/build/Ryujinx /home/codedemo/Source/romlauncher/project.nro >/home/codedemo/ryujinx.log
+DOTNET_ROOT=/home/codedemo/Tools/dotnet-sdk-8.0.405 /home/codedemo/Source/ryujinx/build/Ryujinx /home/codedemo/Source/romlauncher/project.nro &>/home/codedemo/ryujinx.log
 
 cat /home/codedemo/.config/Ryujinx/sdcard/retrolauncher.log
 
