@@ -4,4 +4,6 @@ WORKDIR /usr/src/project
 
 COPY . /usr/src/project
 
+RUN apt update && apt install -y clang-tools-16
+
 CMD ["make"]
