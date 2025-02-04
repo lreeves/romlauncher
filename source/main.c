@@ -249,18 +249,12 @@ int main(int argc, char** argv) {
     // load logos from file
     SDL_Surface *sdllogo = IMG_Load("data/sdl.png");
     if (sdllogo) {
-        sdl_pos.w = sdllogo->w;
-        sdl_pos.h = sdllogo->h;
         sdllogo_tex = SDL_CreateTextureFromSurface(renderer, sdllogo);
         SDL_FreeSurface(sdllogo);
     }
 
     SDL_Surface *switchlogo = IMG_Load("data/switch.png");
     if (switchlogo) {
-        pos.x = SCREEN_W / 2 - switchlogo->w / 2;
-        pos.y = SCREEN_H / 2 - switchlogo->h / 2;
-        pos.w = switchlogo->w;
-        pos.h = switchlogo->h;
         switchlogo_tex = SDL_CreateTextureFromSurface(renderer, switchlogo);
         SDL_FreeSurface(switchlogo);
     }
