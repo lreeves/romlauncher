@@ -221,7 +221,7 @@ void change_directory(DirContent* content, int selected_index) {
     }
     
     // Get new directory content
-    DirContent* new_content = list_files(new_path);
+    DirContent* new_content = list_files(current_path);
     if (new_content) {
         content->dirs = new_content->dirs;
         content->files = new_content->files;
