@@ -147,7 +147,7 @@ DirContent* list_files(const char* path, SDL_Renderer *renderer, TTF_Font *font,
             // Render directory entry
             content->dir_rects[i].x = 50;
             content->dir_rects[i].y = 50 + (i * 40);  // 40 pixels spacing between entries
-            content->dir_textures[i] = render_text(renderer, log_buf, font, colors[1], &content->dir_rects[i]);
+            content->dir_textures[i] = render_text(renderer, log_buf, font, colors[i == selected_index ? 8 : 1], &content->dir_rects[i]);
         }
     }
 
@@ -161,7 +161,8 @@ DirContent* list_files(const char* path, SDL_Renderer *renderer, TTF_Font *font,
             // Render file entry
             content->file_rects[i].x = 50;
             content->file_rects[i].y = 50 + ((content->dir_count + i + 1) * 40);  // Continue after directories
-            content->file_textures[i] = render_text(renderer, log_buf, font, colors[0], &content->file_rects[i]);
+            int entry_index = content->dir_count + i;
+            content->file_textures[i] = render_text(renderer, log_buf, font, colors[entry_index == selected_index ? 8 : 0], &content->file_rects[i]);
         }
     }
 
@@ -206,8 +207,11 @@ int main(int argc, char** argv) {
         { 255, 255, 0, 0 },   // brown
         { 0, 255, 255, 0 },   // cyan
         { 255, 0, 255, 0 },   // purple
+        { 0, 128, 255, 0 },   // bright blue
     };
     int col = 0, snd = 0;
+    int selected_index = 0;
+    int total_entries = 0;
 
     srand(time(NULL));
     int vel_x = rand_range(1, 5);
@@ -270,6 +274,7 @@ int main(int argc, char** argv) {
         log_message("list_files returned NULL");
     } else {
         log_message("Got valid content");
+        total_entries = content->dir_count + content->file_count;
         char debug_buf[256];
         snprintf(debug_buf, sizeof(debug_buf), "Found %d directories and %d files", 
                 content->dir_count, content->file_count);
@@ -306,12 +311,20 @@ int main(int argc, char** argv) {
 
             // main event queue handler - use Switch controller inputs
             if (event.type == SDL_JOYBUTTONDOWN) {
-                if (event.jbutton.button == JOY_UP)
-                    if (wait > 0)
-                        wait--;
-                if (event.jbutton.button == JOY_DOWN)
-                    if (wait < 100)
-                        wait++;
+                if (event.jbutton.button == JOY_UP) {
+                    if (demo_enabled) {
+                        if (wait > 0) wait--;
+                    } else {
+                        if (selected_index > 0) selected_index--;
+                    }
+                }
+                if (event.jbutton.button == JOY_DOWN) {
+                    if (demo_enabled) {
+                        if (wait < 100) wait++;
+                    } else {
+                        if (selected_index < total_entries - 1) selected_index++;
+                    }
+                }
 
                 if (event.jbutton.button == JOY_PLUS)
                     exit_requested = 1;
