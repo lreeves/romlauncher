@@ -18,9 +18,9 @@
 #define JOY_PLUS  10
 #define JOY_MINUS 11
 #define JOY_LEFT  12
-#define JOY_UP    13
 #define JOY_RIGHT 14
-#define JOY_DOWN  15
+#define DPAD_UP    13
+#define DPAD_DOWN  15
 
 #define SCREEN_W 1280
 #define SCREEN_H 720
@@ -292,16 +292,16 @@ int main(int argc, char** argv) {
                 char button_msg[64];
                 snprintf(button_msg, sizeof(button_msg), "Button pressed: %d", event.jbutton.button);
                 log_message(button_msg);
-                if (event.jbutton.button == JOY_UP) {
+                if (event.jbutton.button == DPAD_UP) {
                     if (selected_index > 0) selected_index--;
                 }
-                if (event.jbutton.button == JOY_DOWN) {
-                    log_message("JOY_DOWN");
+                if (event.jbutton.button == DPAD_DOWN) {
+                    log_message("DPAD_DOWN");
                     if (selected_index < total_entries - 1) selected_index++;
                 }
 
                 if (event.jbutton.button == JOY_PLUS) {
-                    log_message("JOY_UP");
+                    log_message("DPAD_UP");
                     exit_requested = 1;
                 }
 
