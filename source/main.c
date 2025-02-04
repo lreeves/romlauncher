@@ -289,6 +289,9 @@ int main(int argc, char** argv) {
 
             // main event queue handler - use Switch controller inputs
             if (event.type == SDL_JOYBUTTONDOWN) {
+                char button_msg[64];
+                snprintf(button_msg, sizeof(button_msg), "Button pressed: %d", event.jbutton.button);
+                log_message(button_msg);
                 if (event.jbutton.button == JOY_UP) {
                     if (selected_index > 0) selected_index--;
                 }
