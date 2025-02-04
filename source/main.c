@@ -293,10 +293,12 @@ int main(int argc, char** argv) {
                     if (selected_index > 0) selected_index--;
                 }
                 if (event.jbutton.button == JOY_DOWN) {
+                    log_message("JOY_DOWN");
                     if (selected_index < total_entries - 1) selected_index++;
                 }
 
                 if (event.jbutton.button == JOY_PLUS) {
+                    log_message("JOY_UP");
                     exit_requested = 1;
                 }
 
