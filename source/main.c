@@ -173,6 +173,37 @@ int rand_range(int min, int max){
    return min + rand() / (RAND_MAX / (max - min + 1) + 1);
 }
 
+void change_directory(DirContent* content, const char* base_path, int selected_index) {
+    if (!content || selected_index >= content->dir_count) return;
+    
+    char new_path[MAX_PATH_LEN];
+    snprintf(new_path, sizeof(new_path), "%s/%s", base_path, content->dirs[selected_index]);
+    
+    // Free existing content
+    for (int i = 0; i < content->dir_count; i++) {
+        free(content->dirs[i]);
+        if (content->dir_textures[i]) SDL_DestroyTexture(content->dir_textures[i]);
+    }
+    for (int i = 0; i < content->file_count; i++) {
+        free(content->files[i]);
+        if (content->file_textures[i]) SDL_DestroyTexture(content->file_textures[i]);
+    }
+    
+    // Get new directory content
+    DirContent* new_content = list_files(new_path);
+    if (new_content) {
+        content->dirs = new_content->dirs;
+        content->files = new_content->files;
+        content->dir_count = new_content->dir_count;
+        content->file_count = new_content->file_count;
+        content->dir_textures = new_content->dir_textures;
+        content->file_textures = new_content->file_textures;
+        content->dir_rects = new_content->dir_rects;
+        content->file_rects = new_content->file_rects;
+        free(new_content);
+    }
+}
+
 void set_selection(DirContent* content, SDL_Renderer *renderer, TTF_Font *font, SDL_Color *colors, int selected_index) {
     if (!content) return;
     
@@ -322,6 +353,15 @@ int main(int argc, char** argv) {
                     }
                 }
 
+                if (event.jbutton.button == JOY_A) {
+                    if (selected_index < content->dir_count) {
+                        change_directory(content, rom_directory, selected_index);
+                        selected_index = 0;
+                        total_entries = content->dir_count + content->file_count;
+                        set_selection(content, renderer, font, colors, selected_index);
+                    }
+                }
+                
                 if (event.jbutton.button == JOY_PLUS) {
                     exit_requested = 1;
                 }
