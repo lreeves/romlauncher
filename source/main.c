@@ -26,6 +26,7 @@
 #define SCREEN_H 720
 
 const char* rom_directory = "sdmc:/roms";
+char current_path[MAX_PATH_LEN];
 FILE* log_file = NULL;
 
 void log_message(const char* message) {
@@ -173,11 +174,41 @@ int rand_range(int min, int max){
    return min + rand() / (RAND_MAX / (max - min + 1) + 1);
 }
 
-void change_directory(DirContent* content, const char* base_path, int selected_index) {
+void go_up_directory(DirContent* content) {
+    char *last_slash = strrchr(current_path, '/');
+    if (last_slash && strcmp(current_path, rom_directory) != 0) {
+        *last_slash = '\0';  // Truncate at last slash to go up one level
+        
+        // Free existing content
+        for (int i = 0; i < content->dir_count; i++) {
+            free(content->dirs[i]);
+            if (content->dir_textures[i]) SDL_DestroyTexture(content->dir_textures[i]);
+        }
+        for (int i = 0; i < content->file_count; i++) {
+            free(content->files[i]);
+            if (content->file_textures[i]) SDL_DestroyTexture(content->file_textures[i]);
+        }
+        
+        // Get new directory content
+        DirContent* new_content = list_files(current_path);
+        if (new_content) {
+            content->dirs = new_content->dirs;
+            content->files = new_content->files;
+            content->dir_count = new_content->dir_count;
+            content->file_count = new_content->file_count;
+            content->dir_textures = new_content->dir_textures;
+            content->file_textures = new_content->file_textures;
+            content->dir_rects = new_content->dir_rects;
+            content->file_rects = new_content->file_rects;
+            free(new_content);
+        }
+    }
+}
+
+void change_directory(DirContent* content, int selected_index) {
     if (!content || selected_index >= content->dir_count) return;
     
-    char new_path[MAX_PATH_LEN];
-    snprintf(new_path, sizeof(new_path), "%s/%s", base_path, content->dirs[selected_index]);
+    snprintf(current_path, sizeof(current_path), "%s/%s", current_path, content->dirs[selected_index]);
     
     // Free existing content
     for (int i = 0; i < content->dir_count; i++) {
@@ -314,7 +345,8 @@ int main(int argc, char** argv) {
     sound[3] = Mix_LoadWAV("data/pop4.wav");
 
     log_message("About to list files");
-    DirContent* content = list_files(rom_directory);
+    strncpy(current_path, rom_directory, sizeof(current_path) - 1);
+    DirContent* content = list_files(current_path);
     if (content == NULL) {
         log_message("list_files returned NULL");
     } else {
@@ -355,11 +387,18 @@ int main(int argc, char** argv) {
 
                 if (event.jbutton.button == JOY_A) {
                     if (selected_index < content->dir_count) {
-                        change_directory(content, rom_directory, selected_index);
+                        change_directory(content, selected_index);
                         selected_index = 0;
                         total_entries = content->dir_count + content->file_count;
                         set_selection(content, renderer, font, colors, selected_index);
                     }
+                }
+                
+                if (event.jbutton.button == JOY_B) {
+                    go_up_directory(content);
+                    selected_index = 0;
+                    total_entries = content->dir_count + content->file_count;
+                    set_selection(content, renderer, font, colors, selected_index);
                 }
                 
                 if (event.jbutton.button == JOY_PLUS) {
