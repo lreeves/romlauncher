@@ -315,9 +315,10 @@ int main(int argc, char** argv) {
 
             // main event queue handler - use Switch controller inputs
             if (event.type == SDL_JOYBUTTONDOWN) {
-                char button_msg[64];
+                /* char button_msg[64];
                 snprintf(button_msg, sizeof(button_msg), "Button pressed: %d", event.jbutton.button);
-                log_message(button_msg);
+                log_message(button_msg); */
+
                 if (event.jbutton.button == DPAD_UP) {
                     if (selected_index > 0) {
                         selected_index--;
@@ -325,7 +326,6 @@ int main(int argc, char** argv) {
                     }
                 }
                 if (event.jbutton.button == DPAD_DOWN) {
-                    log_message("DPAD_DOWN");
                     if (selected_index < total_entries - 1) {
                         selected_index++;
                         set_selection(content, renderer, font, colors, selected_index);
@@ -333,7 +333,6 @@ int main(int argc, char** argv) {
                 }
 
                 if (event.jbutton.button == JOY_PLUS) {
-                    log_message("DPAD_UP");
                     exit_requested = 1;
                 }
             }
