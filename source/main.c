@@ -187,7 +187,6 @@ int main(int argc, char** argv) {
     romfsInit();
     chdir("romfs:/");
 
-    int demo_enabled = 0;
     int exit_requested = 0;
     int trail = 0;
     int wait = 25;
@@ -279,27 +278,6 @@ int main(int argc, char** argv) {
         snprintf(debug_buf, sizeof(debug_buf), "Found %d directories and %d files", 
                 content->dir_count, content->file_count);
         log_message(debug_buf);
-/*
-        // Free the allocated memory
-        for (int i = 0; i < content->dir_count; i++) {
-            free(content->dirs[i]);
-            if (content->dir_textures[i]) {
-                SDL_DestroyTexture(content->dir_textures[i]);
-            }
-        }
-        for (int i = 0; i < content->file_count; i++) {
-            free(content->files[i]);
-            if (content->file_textures[i]) {
-                SDL_DestroyTexture(content->file_textures[i]);
-            }
-        }
-        free(content->dirs);
-        free(content->files);
-        free(content->dir_textures);
-        free(content->file_textures);
-        free(content->dir_rects);
-        free(content->file_rects);
-        free(content);*/
     }
 
     while (!exit_requested
@@ -312,29 +290,18 @@ int main(int argc, char** argv) {
             // main event queue handler - use Switch controller inputs
             if (event.type == SDL_JOYBUTTONDOWN) {
                 if (event.jbutton.button == JOY_UP) {
-                    if (demo_enabled) {
-                        if (wait > 0) wait--;
-                    } else {
-                        if (selected_index > 0) selected_index--;
-                    }
+                    if (selected_index > 0) selected_index--;
                 }
                 if (event.jbutton.button == JOY_DOWN) {
-                    if (demo_enabled) {
-                        if (wait < 100) wait++;
-                    } else {
-                        if (selected_index < total_entries - 1) selected_index++;
-                    }
+                    if (selected_index < total_entries - 1) selected_index++;
                 }
 
-                if (event.jbutton.button == JOY_PLUS)
+                if (event.jbutton.button == JOY_PLUS) {
                     exit_requested = 1;
+                }
 
-                if (event.jbutton.button == JOY_B)
+                if (event.jbutton.button == JOY_B) {
                     trail =! trail;
-
-                if (event.jbutton.button == JOY_MINUS) {
-                    demo_enabled =! demo_enabled;
-                    log_message(demo_enabled ? "Demo started" : "Demo stopped");
                 }
             }
         }
@@ -356,54 +323,6 @@ int main(int argc, char** argv) {
                     SDL_RenderCopy(renderer, content->file_textures[i], NULL, &content->file_rects[i]);
                 }
             }
-        }
-
-        if (demo_enabled) {
-            // Animation and movement logic
-            pos.y += vel_y;
-            pos.x += vel_x;
-            if (pos.x + pos.w > SCREEN_W) {
-                pos.x = SCREEN_W - pos.w;
-                vel_x = -rand_range(1, 5);
-                col = rand_range(0, 4);
-                snd = rand_range(0, 3);
-                if (sound[snd])
-                    Mix_PlayChannel(-1, sound[snd], 0);
-            }
-            if (pos.x < 0) {
-                pos.x = 0;
-                vel_x = rand_range(1, 5);
-                col = rand_range(0, 4);
-                snd = rand_range(0, 3);
-                if (sound[snd])
-                    Mix_PlayChannel(-1, sound[snd], 0);
-            }
-            if (pos.y + pos.h > SCREEN_H) {
-                pos.y = SCREEN_H - pos.h;
-                vel_y = -rand_range(1, 5);
-                col = rand_range(0, 4);
-                snd = rand_range(0, 3);
-                if (sound[snd])
-                    Mix_PlayChannel(-1, sound[snd], 0);
-            }
-            if (pos.y < 0) {
-                pos.y = 0;
-                vel_y = rand_range(1, 5);
-                col = rand_range(0, 4);
-                snd = rand_range(0, 3);
-                if (sound[snd])
-                    Mix_PlayChannel(-1, sound[snd], 0);
-            }
-
-            if (sdllogo_tex)
-                SDL_RenderCopy(renderer, sdllogo_tex, NULL, &sdl_pos);
-            if (switchlogo_tex) {
-                SDL_SetTextureColorMod(switchlogo_tex, colors[col].r, colors[col].g, colors[col].b);
-                SDL_RenderCopy(renderer, switchlogo_tex, NULL, &pos);
-            }
-
-            if (helloworld_tex)
-                SDL_RenderCopy(renderer, helloworld_tex, NULL, &helloworld_rect);
         }
 
         SDL_RenderPresent(renderer);
