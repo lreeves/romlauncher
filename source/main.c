@@ -144,10 +144,10 @@ DirContent* list_files(const char* path, SDL_Renderer *renderer, TTF_Font *font,
             snprintf(log_buf, sizeof(log_buf), "[DIR] %s", content->dirs[i]);
             log_message(log_buf);
             
-            // Render directory entry
+            // Set directory entry position
             content->dir_rects[i].x = 50;
             content->dir_rects[i].y = 50 + (i * 40);  // 40 pixels spacing between entries
-            content->dir_textures[i] = render_text(renderer, log_buf, font, colors[i == selected_index ? 8 : 1], &content->dir_rects[i]);
+            content->dir_textures[i] = NULL;
         }
     }
 
@@ -158,11 +158,10 @@ DirContent* list_files(const char* path, SDL_Renderer *renderer, TTF_Font *font,
             snprintf(log_buf, sizeof(log_buf), "%s", content->files[i]);
             log_message(log_buf);
             
-            // Render file entry
+            // Set file entry position
             content->file_rects[i].x = 50;
             content->file_rects[i].y = 50 + ((content->dir_count + i + 1) * 40);  // Continue after directories
-            int entry_index = content->dir_count + i;
-            content->file_textures[i] = render_text(renderer, log_buf, font, colors[entry_index == selected_index ? 8 : 0], &content->file_rects[i]);
+            content->file_textures[i] = NULL;
         }
     }
 
@@ -172,6 +171,33 @@ DirContent* list_files(const char* path, SDL_Renderer *renderer, TTF_Font *font,
 
 int rand_range(int min, int max){
    return min + rand() / (RAND_MAX / (max - min + 1) + 1);
+}
+
+void set_selection(DirContent* content, SDL_Renderer *renderer, TTF_Font *font, SDL_Color *colors, int selected_index) {
+    if (!content) return;
+    
+    char log_buf[MAX_PATH_LEN];
+    
+    // Update directory entries
+    for (int i = 0; i < content->dir_count; i++) {
+        snprintf(log_buf, sizeof(log_buf), "[DIR] %s", content->dirs[i]);
+        if (content->dir_textures[i]) {
+            SDL_DestroyTexture(content->dir_textures[i]);
+        }
+        content->dir_textures[i] = render_text(renderer, log_buf, font, 
+            colors[i == selected_index ? 8 : 1], &content->dir_rects[i]);
+    }
+    
+    // Update file entries
+    for (int i = 0; i < content->file_count; i++) {
+        snprintf(log_buf, sizeof(log_buf), "%s", content->files[i]);
+        if (content->file_textures[i]) {
+            SDL_DestroyTexture(content->file_textures[i]);
+        }
+        int entry_index = content->dir_count + i;
+        content->file_textures[i] = render_text(renderer, log_buf, font,
+            colors[entry_index == selected_index ? 8 : 0], &content->file_rects[i]);
+    }
 }
 
 
@@ -277,6 +303,7 @@ int main(int argc, char** argv) {
         snprintf(debug_buf, sizeof(debug_buf), "Found %d directories and %d files", 
                 content->dir_count, content->file_count);
         log_message(debug_buf);
+        set_selection(content, renderer, font, colors, selected_index);
     }
 
     while (!exit_requested
@@ -292,11 +319,17 @@ int main(int argc, char** argv) {
                 snprintf(button_msg, sizeof(button_msg), "Button pressed: %d", event.jbutton.button);
                 log_message(button_msg);
                 if (event.jbutton.button == DPAD_UP) {
-                    if (selected_index > 0) selected_index--;
+                    if (selected_index > 0) {
+                        selected_index--;
+                        set_selection(content, renderer, font, colors, selected_index);
+                    }
                 }
                 if (event.jbutton.button == DPAD_DOWN) {
                     log_message("DPAD_DOWN");
-                    if (selected_index < total_entries - 1) selected_index++;
+                    if (selected_index < total_entries - 1) {
+                        selected_index++;
+                        set_selection(content, renderer, font, colors, selected_index);
+                    }
                 }
 
                 if (event.jbutton.button == JOY_PLUS) {
