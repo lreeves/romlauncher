@@ -72,7 +72,7 @@ static int compare_strings(const void* a, const void* b) {
     return strcmp(*(const char**)a, *(const char**)b);
 }
 
-DirContent* list_files(const char* path, SDL_Renderer *renderer, TTF_Font *font, SDL_Color *colors) {
+DirContent* list_files(const char* path, SDL_Renderer *renderer, TTF_Font *font, SDL_Color *colors, int selected_index) {
     log_message("Starting to list files");
 
     DIR *dir;
@@ -269,7 +269,7 @@ int main(int argc, char** argv) {
     sound[3] = Mix_LoadWAV("data/pop4.wav");
 
     log_message("About to list files");
-    DirContent* content = list_files(rom_directory, renderer, font, colors);
+    DirContent* content = list_files(rom_directory, renderer, font, colors, selected_index);
     if (content == NULL) {
         log_message("list_files returned NULL");
     } else {
