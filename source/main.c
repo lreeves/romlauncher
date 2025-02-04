@@ -217,7 +217,6 @@ int main(int argc, char** argv) {
     int wait = 25;
 
     SDL_Texture *switchlogo_tex = NULL, *sdllogo_tex = NULL, *helloworld_tex = NULL;
-    SDL_Rect pos = { 0, 0, 0, 0 }, sdl_pos = { 0, 0, 0, 0 };
     Mix_Music *music = NULL;
     Mix_Chunk *sound[4] = { NULL };
     SDL_Event event;
@@ -233,13 +232,11 @@ int main(int argc, char** argv) {
         { 255, 0, 255, 0 },   // purple
         { 0, 128, 255, 0 },   // bright blue
     };
-    int col = 0, snd = 0;
+    int snd = 0;
     int selected_index = 0;
     int total_entries = 0;
 
     srand(time(NULL));
-    int vel_x = rand_range(1, 5);
-    int vel_y = rand_range(1, 5);
 
     SDL_Init(SDL_INIT_VIDEO|SDL_INIT_TIMER);
     Mix_Init(MIX_INIT_OGG);
@@ -268,7 +265,6 @@ int main(int argc, char** argv) {
         SDL_FreeSurface(switchlogo);
     }
 
-    col = rand_range(0, 7);
 
     SDL_InitSubSystem(SDL_INIT_JOYSTICK);
     SDL_JoystickEventState(SDL_ENABLE);
