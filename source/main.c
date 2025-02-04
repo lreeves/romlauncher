@@ -188,7 +188,6 @@ int main(int argc, char** argv) {
     chdir("romfs:/");
 
     int exit_requested = 0;
-    int trail = 0;
     int wait = 25;
 
     SDL_Texture *switchlogo_tex = NULL, *sdllogo_tex = NULL, *helloworld_tex = NULL;
@@ -304,17 +303,11 @@ int main(int argc, char** argv) {
                     log_message("DPAD_UP");
                     exit_requested = 1;
                 }
-
-                if (event.jbutton.button == JOY_B) {
-                    trail =! trail;
-                }
             }
         }
 
-        if (!trail) {
-            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0xFF);
-            SDL_RenderClear(renderer);
-        }
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0xFF);
+        SDL_RenderClear(renderer);
 
         // Render directory and file listings
         if (content) {
