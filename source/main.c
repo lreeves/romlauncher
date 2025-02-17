@@ -12,6 +12,93 @@
 
 #include "uthash.h"
 
+// Config hash table structure
+typedef struct {
+    char key[256];           // key string
+    char value[512];         // value string
+    UT_hash_handle hh;       // makes this structure hashable
+} config_entry;
+
+static config_entry *config = NULL;
+
+// Function to add/update config entry
+void config_put(const char *key, const char *value) {
+    config_entry *entry;
+    HASH_FIND_STR(config, key, entry);
+    
+    if (entry == NULL) {
+        entry = malloc(sizeof(config_entry));
+        strncpy(entry->key, key, sizeof(entry->key)-1);
+        entry->key[sizeof(entry->key)-1] = '\0';
+        HASH_ADD_STR(config, key, entry);
+    }
+    
+    strncpy(entry->value, value, sizeof(entry->value)-1);
+    entry->value[sizeof(entry->value)-1] = '\0';
+}
+
+// Function to get config value
+const char* config_get(const char *key) {
+    config_entry *entry;
+    HASH_FIND_STR(config, key, entry);
+    return entry ? entry->value : NULL;
+}
+
+// Function to load config file
+void load_config() {
+    FILE *fp = fopen("sdmc:/romlauncher.ini", "r");
+    if (!fp) {
+        log_message(LOG_ERROR, "Could not open config file");
+        return;
+    }
+
+    char line[768];
+    while (fgets(line, sizeof(line), fp)) {
+        // Skip empty lines and comments
+        if (line[0] == '\n' || line[0] == '#' || line[0] == ';')
+            continue;
+            
+        // Remove newline
+        line[strcspn(line, "\n")] = 0;
+        
+        // Find equals sign
+        char *equals = strchr(line, '=');
+        if (!equals) continue;
+        
+        // Split into key/value
+        *equals = '\0';
+        char *key = line;
+        char *value = equals + 1;
+        
+        // Trim whitespace
+        while (*key && isspace(*key)) key++;
+        char *end = key + strlen(key) - 1;
+        while (end > key && isspace(*end)) *end-- = '\0';
+        
+        while (*value && isspace(*value)) value++;
+        end = value + strlen(value) - 1;
+        while (end > value && isspace(*end)) *end-- = '\0';
+        
+        if (*key && *value) {
+            config_put(key, value);
+            char log_buf[1024];
+            snprintf(log_buf, sizeof(log_buf), "Loaded config: %s = %s", key, value);
+            log_message(LOG_DEBUG, log_buf);
+        }
+    }
+    
+    fclose(fp);
+}
+
+// Function to free config hash table
+void free_config() {
+    config_entry *current, *tmp;
+    HASH_ITER(hh, config, current, tmp) {
+        HASH_DEL(config, current);
+        free(current);
+    }
+}
+
 // some switch buttons
 #define JOY_A     0
 #define JOY_B     1
@@ -283,7 +370,10 @@ int main(int argc, char** argv) {
     }
 
     log_message(LOG_INFO, "Starting romlauncher");
-    log_message(LOG_INFO, "Second message");
+    
+    // Load config file
+    load_config();
+    log_message(LOG_INFO, "Config loaded");
 
     romfsInit();
     chdir("romfs:/");
@@ -465,6 +555,9 @@ int main(int argc, char** argv) {
     SDL_Quit();
     romfsExit();
     
+    // Free config hash table
+    free_config();
+
     if (log_file) {
         fclose(log_file);
     }
