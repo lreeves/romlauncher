@@ -558,8 +558,15 @@ int main(int argc, char** argv) {
                                 log_message(LOG_INFO, launch_msg);
 
                                 // Launch RetroArch with the selected ROM
-                                envSetNextLoad(RETROARCH_PATH, full_arguments);
-                                exit_requested = 1;
+                                Result rc = envSetNextLoad(RETROARCH_PATH, full_arguments);
+                                if (R_SUCCEEDED(rc)) {
+                                    log_message(LOG_INFO, "Successfully set next load");
+                                    exit_requested = 1;
+                                } else {
+                                    char error_msg[MAX_PATH_LEN];
+                                    snprintf(error_msg, sizeof(error_msg), "Failed to set next load, error: %x", rc);
+                                    log_message(LOG_ERROR, error_msg);
+                                }
                             }
                         }
                     }
