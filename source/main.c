@@ -28,18 +28,29 @@
 #define MAX_ENTRIES 256
 #define MAX_PATH_LEN 512
 
+// Log levels
+#define LOG_DEBUG 0
+#define LOG_INFO  1
+#define LOG_ERROR 2
+
 const char* rom_directory = "sdmc:/roms";
 char current_path[MAX_PATH_LEN];
 FILE* log_file = NULL;
 
-void log_message(const char* message) {
+void log_message(int level, const char* message) {
     if (log_file == NULL) return;
     
     time_t now;
     time(&now);
     char* timestamp = ctime(&now);
     timestamp[24] = '\0'; // Remove newline that ctime adds
-    fprintf(log_file, "[%s] %s\n", timestamp, message);
+    const char* level_str = "";
+    switch(level) {
+        case LOG_DEBUG: level_str = "DEBUG"; break;
+        case LOG_INFO:  level_str = "INFO"; break;
+        case LOG_ERROR: level_str = "ERROR"; break;
+    }
+    fprintf(log_file, "[%s] [%s] %s\n", timestamp, level_str, message);
     fflush(log_file);
 }
 
@@ -74,7 +85,7 @@ static int compare_strings(const void* a, const void* b) {
 }
 
 DirContent* list_files(const char* path) {
-    log_message("Starting to list files");
+    log_message(LOG_INFO, "Starting to list files");
 
     DIR *dir;
     struct dirent *entry;
@@ -108,7 +119,7 @@ DirContent* list_files(const char* path) {
     dir = opendir(path);
     if (dir == NULL) {
         snprintf(log_buf, sizeof(log_buf), "Failed to open directory: %s", path);
-        log_message(log_buf);
+        log_message(LOG_INFO, log_buf);
         free(content->dirs);
         free(content->files);
         free(content);
@@ -120,7 +131,7 @@ DirContent* list_files(const char* path) {
 
     while ((entry = readdir(dir)) != NULL) {
         if (content->dir_count >= MAX_ENTRIES || content->file_count >= MAX_ENTRIES) {
-            log_message("Maximum number of entries reached");
+            log_message(LOG_INFO, "Maximum number of entries reached");
             break;
         }
 
@@ -140,10 +151,10 @@ DirContent* list_files(const char* path) {
 
     if (content->dir_count > 0) {
         qsort(content->dirs, content->dir_count, sizeof(char*), compare_strings);
-        log_message("Directories:");
+        log_message(LOG_INFO, "Directories:");
         for (int i = 0; i < content->dir_count; i++) {
             snprintf(log_buf, sizeof(log_buf), "[DIR] %s", content->dirs[i]);
-            log_message(log_buf);
+            log_message(LOG_INFO, log_buf);
             
             // Set directory entry position
             content->dir_rects[i].x = 50;
@@ -154,10 +165,10 @@ DirContent* list_files(const char* path) {
 
     if (content->file_count > 0) {
         qsort(content->files, content->file_count, sizeof(char*), compare_strings);
-        log_message("Files:");
+        log_message(LOG_INFO, "Files:");
         for (int i = 0; i < content->file_count; i++) {
             snprintf(log_buf, sizeof(log_buf), "%s", content->files[i]);
-            log_message(log_buf);
+            log_message(LOG_INFO, log_buf);
             
             // Set file entry position
             content->file_rects[i].x = 50;
@@ -269,8 +280,8 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    log_message("Starting romlauncher");
-    log_message("Second message");
+    log_message(LOG_INFO, "Starting romlauncher");
+    log_message(LOG_INFO, "Second message");
 
     romfsInit();
     chdir("romfs:/");
@@ -344,18 +355,18 @@ int main(int argc, char** argv) {
     sound[2] = Mix_LoadWAV("data/pop3.wav");
     sound[3] = Mix_LoadWAV("data/pop4.wav");
 
-    log_message("About to list files");
+    log_message(LOG_INFO, "About to list files");
     strncpy(current_path, rom_directory, sizeof(current_path) - 1);
     DirContent* content = list_files(current_path);
     if (content == NULL) {
-        log_message("list_files returned NULL");
+        log_message(LOG_INFO, "list_files returned NULL");
     } else {
-        log_message("Got valid content");
+        log_message(LOG_INFO, "Got valid content");
         total_entries = content->dir_count + content->file_count;
         char debug_buf[256];
         snprintf(debug_buf, sizeof(debug_buf), "Found %d directories and %d files", 
                 content->dir_count, content->file_count);
-        log_message(debug_buf);
+        log_message(LOG_INFO, debug_buf);
         set_selection(content, renderer, font, colors, selected_index);
     }
 
