@@ -125,7 +125,7 @@ void free_config() {
 #define MAX_ENTRIES 256
 #define ENTRIES_PER_PAGE 15  // How many entries fit on one page
 #define MAX_PATH_LEN 512
-#define RETROARCH_PATH "/switch/retroarch.nsp"
+#define RETROARCH_PATH "/switch/retroarch_switch.nro"
 
 const char* rom_directory = "sdmc:/roms";
 char current_path[MAX_PATH_LEN];
