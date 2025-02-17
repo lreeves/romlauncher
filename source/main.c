@@ -532,9 +532,9 @@ int main(int argc, char** argv) {
                         // Calculate which file was selected (accounting for directories)
                         int file_index = selected_index - content->dir_count;
                         if (file_index >= 0 && file_index < content->file_count) {
-                            // Construct full path for the selected file
+                            // Construct full arguments with core and ROM path
                             char full_arguments[MAX_PATH_LEN];
-                            snprintf(full_arguments, sizeof(full_arguments), "\"%s/%s\"", 
+                            snprintf(full_arguments, sizeof(full_arguments), "-L /retroarch/cores/snes9x_libretro_libnx.nro \"%s/%s\"", 
                                    current_path, // Keep the full path including sdmc:
                                    content->files[file_index]);
                             
