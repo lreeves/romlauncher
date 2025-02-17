@@ -31,6 +31,10 @@ if [ $? == 0 ]; then
 	sleep 3
 fi
 
+if [ "$1" == "--skip-emulator" ]; then
+  exit 0
+fi
+
 echo "Launching Ryujinx"
 
 DOTNET_ROOT=~/Tools/dotnet-90-200 /home/luke/Source/ryujinx/build/Ryujinx /home/luke/Source/romlauncher/project.nro &>/home/luke/ryujinx.log

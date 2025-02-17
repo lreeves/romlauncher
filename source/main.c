@@ -10,6 +10,8 @@
 #include <SDL_ttf.h>
 #include <switch.h>
 
+#include "uthash.h"
+
 // some switch buttons
 #define JOY_A     0
 #define JOY_B     1
