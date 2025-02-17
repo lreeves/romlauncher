@@ -126,6 +126,7 @@ void free_config() {
 #define ENTRIES_PER_PAGE 15  // How many entries fit on one page
 #define MAX_PATH_LEN 512
 #define RETROARCH_PATH "/switch/retroarch_switch.nro"
+#define SFC_CORE "sdmc:/retroarch/cores/snes9x_libretro_libnx.nro"
 
 const char* rom_directory = "sdmc:/roms";
 char current_path[MAX_PATH_LEN];
@@ -535,20 +536,31 @@ int main(int argc, char** argv) {
                             // Construct full arguments with ROM path first, then core path
                             char full_arguments[MAX_PATH_LEN];
                             
-                            // Construct arguments in RetroArch's expected format
-                            snprintf(full_arguments, sizeof(full_arguments), "%s/%s -L /retroarch/cores/snes9x_libretro_libnx.nro",
-                                   current_path + 5, // Skip "sdmc:" prefix
-                                   content->files[file_index]);
-                            
-                            // Log launch details
-                            char launch_msg[MAX_PATH_LEN * 2];
-                            snprintf(launch_msg, sizeof(launch_msg), "Launching RetroArch: %s with ROM: %s", 
-                                   RETROARCH_PATH, full_arguments);
-                            log_message(LOG_INFO, launch_msg);
+                            // Check if core exists
+                            FILE *core_file = fopen(SFC_CORE, "r");
+                            if (core_file == NULL) {
+                                char error_msg[MAX_PATH_LEN];
+                                snprintf(error_msg, sizeof(error_msg), "SNES core not found at: %s", SFC_CORE);
+                                log_message(LOG_ERROR, error_msg);
+                            } else {
+                                fclose(core_file);
+                                
+                                // Construct arguments in RetroArch's expected format
+                                snprintf(full_arguments, sizeof(full_arguments), "%s/%s -L %s",
+                                       current_path + 5, // Skip "sdmc:" prefix
+                                       content->files[file_index],
+                                       SFC_CORE + 5); // Skip "sdmc:" prefix from core path
+                                
+                                // Log launch details
+                                char launch_msg[MAX_PATH_LEN * 2];
+                                snprintf(launch_msg, sizeof(launch_msg), "Launching RetroArch: %s with ROM: %s", 
+                                       RETROARCH_PATH, full_arguments);
+                                log_message(LOG_INFO, launch_msg);
 
-                            // Launch RetroArch with the selected ROM
-                            envSetNextLoad(RETROARCH_PATH, full_arguments);
-                            exit_requested = 1;
+                                // Launch RetroArch with the selected ROM
+                                envSetNextLoad(RETROARCH_PATH, full_arguments);
+                                exit_requested = 1;
+                            }
                         }
                     }
                 }
