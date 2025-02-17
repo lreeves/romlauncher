@@ -533,19 +533,19 @@ int main(int argc, char** argv) {
                         int file_index = selected_index - content->dir_count;
                         if (file_index >= 0 && file_index < content->file_count) {
                             // Construct full path for the selected file
-                            char full_path[MAX_PATH_LEN];
-                            snprintf(full_path, sizeof(full_path), "\"%s/%s\"", 
+                            char full_arguments[MAX_PATH_LEN];
+                            snprintf(full_arguments, sizeof(full_arguments), "\"%s/%s\"", 
                                    current_path, // Keep the full path including sdmc:
                                    content->files[file_index]);
                             
                             // Log launch details
                             char launch_msg[MAX_PATH_LEN * 2];
                             snprintf(launch_msg, sizeof(launch_msg), "Launching RetroArch: %s with ROM: %s", 
-                                   RETROARCH_PATH, full_path);
+                                   RETROARCH_PATH, full_arguments);
                             log_message(LOG_INFO, launch_msg);
 
                             // Launch RetroArch with the selected ROM
-                            envSetNextLoad(RETROARCH_PATH, full_path);
+                            envSetNextLoad(RETROARCH_PATH, full_arguments);
                             exit_requested = 1;
                         }
                     }
