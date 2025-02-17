@@ -12,6 +12,14 @@
 
 #include "uthash.h"
 
+// Log levels
+#define LOG_DEBUG 0
+#define LOG_INFO  1
+#define LOG_ERROR 2
+
+// Function declarations
+void log_message(int level, const char* message);
+
 // Config hash table structure
 typedef struct {
     char key[256];           // key string
@@ -116,11 +124,6 @@ void free_config() {
 
 #define MAX_ENTRIES 256
 #define MAX_PATH_LEN 512
-
-// Log levels
-#define LOG_DEBUG 0
-#define LOG_INFO  1
-#define LOG_ERROR 2
 
 const char* rom_directory = "sdmc:/roms";
 char current_path[MAX_PATH_LEN];
