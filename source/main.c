@@ -534,7 +534,8 @@ int main(int argc, char** argv) {
                     go_up_directory(content);
                     selected_index = 0;
                     total_entries = content->dir_count + content->file_count;
-                    set_selection(content, renderer, font, colors, selected_index);
+                    current_page = 0;
+                    set_selection(content, renderer, font, colors, selected_index, current_page);
                 }
                 
                 if (event.jbutton.button == JOY_PLUS) {
