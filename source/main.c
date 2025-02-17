@@ -534,26 +534,11 @@ int main(int argc, char** argv) {
                         if (file_index >= 0 && file_index < content->file_count) {
                             // Construct full arguments with ROM path first, then core path
                             char full_arguments[MAX_PATH_LEN];
-                            char escaped_path[MAX_PATH_LEN];
                             
-                            // Escape any single quotes in the path with '\''
-                            const char *src = content->files[file_index];
-                            char *dst = escaped_path;
-                            while (*src) {
-                                if (*src == '\'') {
-                                    strcpy(dst, "'\\''");
-                                    dst += 4;
-                                } else {
-                                    *dst++ = *src;
-                                }
-                                src++;
-                            }
-                            *dst = '\0';
-                            
-                            // Use single quotes around the full path to handle spaces and special chars
-                            snprintf(full_arguments, sizeof(full_arguments), "'%s/%s' -L sdmc:/retroarch/cores/snes9x_libretro_libnx.nro",
-                                   current_path,
-                                   escaped_path);
+                            // Construct arguments in RetroArch's expected format
+                            snprintf(full_arguments, sizeof(full_arguments), "-L /retroarch/cores/snes9x_libretro_libnx.nro \"%s/%s\"",
+                                   current_path + 5, // Skip "sdmc:" prefix
+                                   content->files[file_index]);
                             
                             // Log launch details
                             char launch_msg[MAX_PATH_LEN * 2];
