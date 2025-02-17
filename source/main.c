@@ -127,7 +127,7 @@ DirContent* list_files(const char* path) {
     }
 
     snprintf(log_buf, sizeof(log_buf), "Listing contents of: %s", path);
-    log_message(log_buf);
+    log_message(LOG_INFO, log_buf);
 
     while ((entry = readdir(dir)) != NULL) {
         if (content->dir_count >= MAX_ENTRIES || content->file_count >= MAX_ENTRIES) {
