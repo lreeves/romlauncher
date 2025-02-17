@@ -536,7 +536,7 @@ int main(int argc, char** argv) {
                             char full_arguments[MAX_PATH_LEN];
                             
                             // Construct arguments in RetroArch's expected format
-                            snprintf(full_arguments, sizeof(full_arguments), "-L /retroarch/cores/snes9x_libretro_libnx.nro \"%s/%s\"",
+                            snprintf(full_arguments, sizeof(full_arguments), "%s/%s -L /retroarch/cores/snes9x_libretro_libnx.nro",
                                    current_path + 5, // Skip "sdmc:" prefix
                                    content->files[file_index]);
                             
