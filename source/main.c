@@ -538,6 +538,12 @@ int main(int argc, char** argv) {
                                    current_path + 5, // Skip the "sdmc:" prefix from current_path
                                    content->files[file_index]);
                             
+                            // Log launch details
+                            char launch_msg[MAX_PATH_LEN * 2];
+                            snprintf(launch_msg, sizeof(launch_msg), "Launching RetroArch: %s with ROM: %s", 
+                                   RETROARCH_PATH, full_path);
+                            log_message(LOG_INFO, launch_msg);
+
                             // Launch RetroArch with the selected ROM
                             envSetNextLoad(RETROARCH_PATH, full_path);
                             exit_requested = 1;
