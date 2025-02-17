@@ -528,6 +528,20 @@ int main(int argc, char** argv) {
                         total_entries = content->dir_count + content->file_count;
                         current_page = 0;
                         set_selection(content, renderer, font, colors, selected_index, current_page);
+                    } else {
+                        // Calculate which file was selected (accounting for directories)
+                        int file_index = selected_index - content->dir_count;
+                        if (file_index >= 0 && file_index < content->file_count) {
+                            // Construct full path for the selected file
+                            char full_path[MAX_PATH_LEN];
+                            snprintf(full_path, sizeof(full_path), "sdmc:%s/%s", 
+                                   current_path + 5, // Skip the "sdmc:" prefix from current_path
+                                   content->files[file_index]);
+                            
+                            // Launch RetroArch with the selected ROM
+                            envSetNextLoad(RETROARCH_PATH, full_path);
+                            exit_requested = 1;
+                        }
                     }
                 }
                 
