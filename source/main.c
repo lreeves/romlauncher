@@ -534,8 +534,8 @@ int main(int argc, char** argv) {
                         if (file_index >= 0 && file_index < content->file_count) {
                             // Construct full path for the selected file
                             char full_path[MAX_PATH_LEN];
-                            snprintf(full_path, sizeof(full_path), "sdmc:%s/%s", 
-                                   current_path + 5, // Skip the "sdmc:" prefix from current_path
+                            snprintf(full_path, sizeof(full_path), "\"%s/%s\"", 
+                                   current_path, // Keep the full path including sdmc:
                                    content->files[file_index]);
                             
                             // Log launch details
