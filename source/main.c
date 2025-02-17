@@ -25,6 +25,9 @@
 #define SCREEN_W 1280
 #define SCREEN_H 720
 
+#define MAX_ENTRIES 256
+#define MAX_PATH_LEN 512
+
 const char* rom_directory = "sdmc:/roms";
 char current_path[MAX_PATH_LEN];
 FILE* log_file = NULL;
@@ -54,9 +57,6 @@ SDL_Texture * render_text(SDL_Renderer *renderer, const char* text, TTF_Font *fo
 
     return texture;
 }
-
-#define MAX_ENTRIES 256
-#define MAX_PATH_LEN 512
 
 typedef struct {
     char **dirs;

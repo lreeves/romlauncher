@@ -1,3 +1,3 @@
 #!/bin/bash
 
-DOTNET_ROOT=/home/codedemo/Tools/dotnet-sdk-8.0.405 /home/codedemo/Source/ryujinx/build/Ryujinx $@
+DOTNET_ROOT=/home/luke/Tools/dotnet-90-200 /home/luke/Source/ryujinx/build/Ryujinx $@

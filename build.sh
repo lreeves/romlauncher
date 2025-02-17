@@ -21,7 +21,7 @@ if [ $? != 0 ]; then
 	exit $?
 fi
 
-LINE=`ps aux | grep "Ryujinx /home/codedemo/Source/romlauncher/project.nro" | grep -v grep`
+LINE=`ps aux | grep "Ryujinx /home/luke/Source/romlauncher/project.nro" | grep -v grep`
 
 if [ $? == 0 ]; then
 	PROCESS_ID=`echo $LINE | cut -d ' ' -f 2`
@@ -33,7 +33,7 @@ fi
 
 echo "Launching Ryujinx"
 
-DOTNET_ROOT=/home/codedemo/Tools/dotnet-sdk-8.0.405 /home/codedemo/Source/ryujinx/build/Ryujinx /home/codedemo/Source/romlauncher/project.nro &>/home/codedemo/ryujinx.log
+DOTNET_ROOT=~/Tools/dotnet-90-200 /home/luke/Source/ryujinx/build/Ryujinx /home/luke/Source/romlauncher/project.nro &>/home/luke/ryujinx.log
 
-cat /home/codedemo/.config/Ryujinx/sdcard/retrolauncher.log
+cat /home/luke/.config/Ryujinx/sdcard/retrolauncher.log
 
