@@ -154,7 +154,7 @@ DirContent* list_files(const char* path) {
         log_message(LOG_INFO, "Directories:");
         for (int i = 0; i < content->dir_count; i++) {
             snprintf(log_buf, sizeof(log_buf), "[DIR] %s", content->dirs[i]);
-            log_message(LOG_INFO, log_buf);
+            log_message(LOG_DEBUG, log_buf);
             
             // Set directory entry position
             content->dir_rects[i].x = 50;
@@ -168,7 +168,7 @@ DirContent* list_files(const char* path) {
         log_message(LOG_INFO, "Files:");
         for (int i = 0; i < content->file_count; i++) {
             snprintf(log_buf, sizeof(log_buf), "%s", content->files[i]);
-            log_message(LOG_INFO, log_buf);
+            log_message(LOG_DEBUG, log_buf);
             
             // Set file entry position
             content->file_rects[i].x = 50;

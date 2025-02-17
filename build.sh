@@ -35,5 +35,5 @@ echo "Launching Ryujinx"
 
 DOTNET_ROOT=~/Tools/dotnet-90-200 /home/luke/Source/ryujinx/build/Ryujinx /home/luke/Source/romlauncher/project.nro &>/home/luke/ryujinx.log
 
-cat /home/luke/.config/Ryujinx/sdcard/retrolauncher.log
+cat /home/luke/.config/Ryujinx/sdcard/retrolauncher.log | grep -v DEBUG
 
