@@ -123,6 +123,7 @@ void free_config() {
 #define SCREEN_H 720
 
 #define MAX_ENTRIES 256
+#define ENTRIES_PER_PAGE 15  // How many entries fit on one page
 #define MAX_PATH_LEN 512
 
 const char* rom_directory = "sdmc:/roms";
@@ -250,7 +251,7 @@ DirContent* list_files(const char* path) {
             
             // Set directory entry position
             content->dir_rects[i].x = 50;
-            content->dir_rects[i].y = 50 + (i * 40);  // 40 pixels spacing between entries
+            content->dir_rects[i].y = 50 + ((i % ENTRIES_PER_PAGE) * 40);  // 40 pixels spacing between entries
             content->dir_textures[i] = NULL;
         }
     }
@@ -264,7 +265,8 @@ DirContent* list_files(const char* path) {
             
             // Set file entry position
             content->file_rects[i].x = 50;
-            content->file_rects[i].y = 50 + ((content->dir_count + i + 1) * 40);  // Continue after directories
+            int virtual_index = content->dir_count + i;
+            content->file_rects[i].y = 50 + ((virtual_index % ENTRIES_PER_PAGE) * 40);
             content->file_textures[i] = NULL;
         }
     }
@@ -338,13 +340,23 @@ void change_directory(DirContent* content, int selected_index) {
     }
 }
 
-void set_selection(DirContent* content, SDL_Renderer *renderer, TTF_Font *font, SDL_Color *colors, int selected_index) {
+void set_selection(DirContent* content, SDL_Renderer *renderer, TTF_Font *font, SDL_Color *colors, int selected_index, int current_page) {
     if (!content) return;
     
     char log_buf[MAX_PATH_LEN];
     
+    int start_index = current_page * ENTRIES_PER_PAGE;
+    int end_index = start_index + ENTRIES_PER_PAGE;
+    
     // Update directory entries
     for (int i = 0; i < content->dir_count; i++) {
+        if (i < start_index || i >= end_index) {
+            if (content->dir_textures[i]) {
+                SDL_DestroyTexture(content->dir_textures[i]);
+                content->dir_textures[i] = NULL;
+            }
+            continue;
+        }
         snprintf(log_buf, sizeof(log_buf), "[DIR] %s", content->dirs[i]);
         if (content->dir_textures[i]) {
             SDL_DestroyTexture(content->dir_textures[i]);
@@ -355,6 +367,14 @@ void set_selection(DirContent* content, SDL_Renderer *renderer, TTF_Font *font, 
     
     // Update file entries
     for (int i = 0; i < content->file_count; i++) {
+        int virtual_index = content->dir_count + i;
+        if (virtual_index < start_index || virtual_index >= end_index) {
+            if (content->file_textures[i]) {
+                SDL_DestroyTexture(content->file_textures[i]);
+                content->file_textures[i] = NULL;
+            }
+            continue;
+        }
         snprintf(log_buf, sizeof(log_buf), "%s", content->files[i]);
         if (content->file_textures[i]) {
             SDL_DestroyTexture(content->file_textures[i]);
@@ -403,6 +423,8 @@ int main(int argc, char** argv) {
     int snd = 0;
     int selected_index = 0;
     int total_entries = 0;
+    int current_page = 0;
+    int total_pages = 0;
 
     srand(time(NULL));
 
@@ -462,7 +484,8 @@ int main(int argc, char** argv) {
         snprintf(debug_buf, sizeof(debug_buf), "Found %d directories and %d files", 
                 content->dir_count, content->file_count);
         log_message(LOG_INFO, debug_buf);
-        set_selection(content, renderer, font, colors, selected_index);
+        total_pages = (total_entries + ENTRIES_PER_PAGE - 1) / ENTRIES_PER_PAGE;
+        set_selection(content, renderer, font, colors, selected_index, current_page);
     }
 
     while (!exit_requested
@@ -481,13 +504,19 @@ int main(int argc, char** argv) {
                 if (event.jbutton.button == DPAD_UP) {
                     if (selected_index > 0) {
                         selected_index--;
-                        set_selection(content, renderer, font, colors, selected_index);
+                        if (selected_index < (current_page * ENTRIES_PER_PAGE)) {
+                            current_page--;
+                        }
+                        set_selection(content, renderer, font, colors, selected_index, current_page);
                     }
                 }
                 if (event.jbutton.button == DPAD_DOWN) {
                     if (selected_index < total_entries - 1) {
                         selected_index++;
-                        set_selection(content, renderer, font, colors, selected_index);
+                        if (selected_index >= ((current_page + 1) * ENTRIES_PER_PAGE)) {
+                            current_page++;
+                        }
+                        set_selection(content, renderer, font, colors, selected_index, current_page);
                     }
                 }
 
@@ -496,7 +525,8 @@ int main(int argc, char** argv) {
                         change_directory(content, selected_index);
                         selected_index = 0;
                         total_entries = content->dir_count + content->file_count;
-                        set_selection(content, renderer, font, colors, selected_index);
+                        current_page = 0;
+                        set_selection(content, renderer, font, colors, selected_index, current_page);
                     }
                 }
                 
