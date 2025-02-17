@@ -535,7 +535,7 @@ int main(int argc, char** argv) {
                             // Construct full arguments with core and ROM path
                             char full_arguments[MAX_PATH_LEN];
                             snprintf(full_arguments, sizeof(full_arguments), "-L /retroarch/cores/snes9x_libretro_libnx.nro \"%s/%s\"", 
-                                   current_path, // Keep the full path including sdmc:
+                                   current_path + 5, // Skip the "sdmc:" prefix
                                    content->files[file_index]);
                             
                             // Log launch details
