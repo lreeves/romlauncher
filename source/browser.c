@@ -144,7 +144,10 @@ void go_up_directory(DirContent* content, char* current_path, const char* rom_di
 void change_directory(DirContent* content, int selected_index, char* current_path) {
     if (!content || selected_index >= content->dir_count) return;
 
-    snprintf(current_path, MAX_PATH_LEN, "%s/%s", current_path, content->dirs[selected_index]);
+    char new_path[MAX_PATH_LEN];
+    snprintf(new_path, MAX_PATH_LEN, "%s/%s", current_path, content->dirs[selected_index]);
+    strncpy(current_path, new_path, MAX_PATH_LEN - 1);
+    current_path[MAX_PATH_LEN - 1] = '\0';
 
     for (int i = 0; i < content->dir_count; i++) {
         free(content->dirs[i]);
