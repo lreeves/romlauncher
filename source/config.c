@@ -161,23 +161,22 @@ void free_favorites(void) {
 }
 
 void init_default_core_mappings(void) {
-    config_entry *entry;
+    static const struct {
+        const char *key;
+        const char *value;
+    } default_cores[] = {
+        {"sfc", "snes9x"},
+        {"genesis", "genesis_plus_gx"}
+    };
 
-    // SNES
-    entry = malloc(sizeof(config_entry));
-    strncpy(entry->key, "sfc", sizeof(entry->key)-1);
-    entry->key[sizeof(entry->key)-1] = '\0';
-    strncpy(entry->value, "snes9x", sizeof(entry->value)-1);
-    entry->value[sizeof(entry->value)-1] = '\0';
-    HASH_ADD_STR(default_core_mappings, key, entry);
-
-    // Genesis
-    entry = malloc(sizeof(config_entry));
-    strncpy(entry->key, "genesis", sizeof(entry->key)-1);
-    entry->key[sizeof(entry->key)-1] = '\0';
-    strncpy(entry->value, "genesis_plus_gx", sizeof(entry->value)-1);
-    entry->value[sizeof(entry->value)-1] = '\0';
-    HASH_ADD_STR(default_core_mappings, key, entry);
+    for (size_t i = 0; i < sizeof(default_cores) / sizeof(default_cores[0]); i++) {
+        config_entry *entry = malloc(sizeof(config_entry));
+        strncpy(entry->key, default_cores[i].key, sizeof(entry->key)-1);
+        entry->key[sizeof(entry->key)-1] = '\0';
+        strncpy(entry->value, default_cores[i].value, sizeof(entry->value)-1);
+        entry->value[sizeof(entry->value)-1] = '\0';
+        HASH_ADD_STR(default_core_mappings, key, entry);
+    }
 }
 
 void free_default_core_mappings(void) {
