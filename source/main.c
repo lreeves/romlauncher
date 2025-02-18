@@ -178,17 +178,58 @@ int main(int argc, char** argv) {
                 }
 
                 if (event.jbutton.button == JOY_A) {
-                    if (selected_index < content->dir_count) {
-                        change_directory(content, selected_index, current_path);
-                        selected_index = 0;
-                        total_entries = content->dir_count + content->file_count;
-                        current_page = 0;
-                        total_pages = (total_entries + ENTRIES_PER_PAGE - 1) / ENTRIES_PER_PAGE;
-                        set_selection(content, renderer, font, colors, selected_index, current_page);
-                    } else {
-                        // Calculate which file was selected (accounting for directories)
-                        int file_index = selected_index - content->dir_count;
-                        if (file_index >= 0 && file_index < content->file_count) {
+                    if (current_mode == MODE_BROWSER) {
+                        if (selected_index < content->dir_count) {
+                            change_directory(content, selected_index, current_path);
+                            selected_index = 0;
+                            total_entries = content->dir_count + content->file_count;
+                            current_page = 0;
+                            total_pages = (total_entries + ENTRIES_PER_PAGE - 1) / ENTRIES_PER_PAGE;
+                            set_selection(content, renderer, font, colors, selected_index, current_page);
+                        } else {
+                            // Calculate which file was selected (accounting for directories)
+                            int file_index = selected_index - content->dir_count;
+                            if (file_index >= 0 && file_index < content->file_count) {
+                                // Check if core exists
+                                FILE *core_file = fopen(SFC_CORE, "r");
+                                if (core_file == NULL) {
+                                    log_message(LOG_ERROR, "SNES core not found at: %s", SFC_CORE);
+                                } else {
+                                    fclose(core_file);
+
+                                    // First, construct the full ROM/core path safely
+                                    char rom_path[MAX_PATH_LEN];
+                                    int written = snprintf(rom_path, sizeof(rom_path), "%s/%s", current_path + 5, content->files[file_index]);
+                                    if (written < 0 || (size_t)written >= sizeof(rom_path)) {
+                                        log_message(LOG_ERROR, "ROM path construction failed (truncation or error)");
+                                        exit(1);
+                                    }
+
+                                    // Now, construct the full arguments string safely using the constructed path twice
+                                    char full_arguments[MAX_PATH_LEN];
+                                    written = snprintf(full_arguments, sizeof(full_arguments), "\"%s\" \"%s\"", rom_path, rom_path);
+                                    if (written < 0 || (size_t)written >= sizeof(full_arguments)) {
+                                        log_message(LOG_ERROR, "Arguments string construction failed (truncation or error)");
+                                        exit(1);
+                                    }
+
+                                    // Log launch details
+                                    log_message(LOG_INFO, "Launching RetroArch: %s with args: %s", RETROARCH_PATH, full_arguments);
+
+                                    // Launch RetroArch with the selected ROM
+                                    Result rc = envSetNextLoad("/retroarch/cores/snes9x_libretro_libnx.nro", full_arguments);
+                                    if (R_SUCCEEDED(rc)) {
+                                        log_message(LOG_INFO, "Successfully set next load");
+                                        exit_requested = 1;
+                                    } else {
+                                        log_message(LOG_ERROR, "Failed to set next load, error: %x", rc);
+                                    }
+                                }
+                            }
+                        }
+                    } else if (current_mode == MODE_FAVORITES) {
+                        // In favorites mode, directly launch the selected ROM
+                        if (selected_index >= 0 && selected_index < favorites_content->file_count) {
                             // Check if core exists
                             FILE *core_file = fopen(SFC_CORE, "r");
                             if (core_file == NULL) {
@@ -196,32 +237,30 @@ int main(int argc, char** argv) {
                             } else {
                                 fclose(core_file);
 
-                                // First, construct the full ROM/core path safely
-                                char rom_path[MAX_PATH_LEN];
-                                int written = snprintf(rom_path, sizeof(rom_path), "%s/%s", current_path + 5, content->files[file_index]);
-                                if (written < 0 || (size_t)written >= sizeof(rom_path)) {
-                                    log_message(LOG_ERROR, "ROM path construction failed (truncation or error)");
-                                    exit(1);
-                                }
+                                // The favorites list stores full paths, so we can use them directly
+                                const char* full_path = favorites_content->files[selected_index];
+                                
+                                // Skip the "sdmc:" prefix if present
+                                const char* rom_path = strncmp(full_path, "sdmc:", 5) == 0 ? full_path + 5 : full_path;
 
-                                // Now, construct the full arguments string safely using the constructed path twice
+                                // Construct the arguments string
                                 char full_arguments[MAX_PATH_LEN];
-                                written = snprintf(full_arguments, sizeof(full_arguments), "\"%s\" \"%s\"", rom_path, rom_path);
+                                int written = snprintf(full_arguments, sizeof(full_arguments), "\"%s\" \"%s\"", rom_path, rom_path);
                                 if (written < 0 || (size_t)written >= sizeof(full_arguments)) {
                                     log_message(LOG_ERROR, "Arguments string construction failed (truncation or error)");
                                     exit(1);
                                 }
 
                                 // Log launch details
-                                log_message(LOG_INFO, "Launching RetroArch: %s with args: %s", RETROARCH_PATH, full_arguments);
+                                log_message(LOG_INFO, "Launching RetroArch from favorites: %s with args: %s", RETROARCH_PATH, full_arguments);
 
                                 // Launch RetroArch with the selected ROM
                                 Result rc = envSetNextLoad("/retroarch/cores/snes9x_libretro_libnx.nro", full_arguments);
                                 if (R_SUCCEEDED(rc)) {
-                                    log_message(LOG_INFO, "Successfully set next load");
+                                    log_message(LOG_INFO, "Successfully set next load from favorites");
                                     exit_requested = 1;
                                 } else {
-                                    log_message(LOG_ERROR, "Failed to set next load, error: %x", rc);
+                                    log_message(LOG_ERROR, "Failed to set next load from favorites, error: %x", rc);
                                 }
                             }
                         }
