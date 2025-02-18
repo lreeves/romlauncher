@@ -209,7 +209,11 @@ int main(int argc, char** argv) {
                                 
                                 // Construct core path
                                 char core_path[MAX_PATH_LEN];
-                                snprintf(core_path, sizeof(core_path), "/retroarch/cores/%s_libretro_libnx.nro", core_entry->value);
+                                int written = snprintf(core_path, sizeof(core_path), "/retroarch/cores/%s_libretro_libnx.nro", core_entry->value);
+                                if (written < 0 || (size_t)written >= sizeof(core_path)) {
+                                    log_message(LOG_ERROR, "Core path construction failed (truncation or error)");
+                                    continue;
+                                }
                                 
                                 // Check if core exists
                                 FILE *core_file = fopen(core_path, "r");
@@ -263,7 +267,11 @@ int main(int argc, char** argv) {
                             
                             // Construct core path
                             char core_path[MAX_PATH_LEN];
-                            snprintf(core_path, sizeof(core_path), "/retroarch/cores/%s_libretro_libnx.nro", core_entry->value);
+                            int written = snprintf(core_path, sizeof(core_path), "/retroarch/cores/%s_libretro_libnx.nro", core_entry->value);
+                            if (written < 0 || (size_t)written >= sizeof(core_path)) {
+                                log_message(LOG_ERROR, "Core path construction failed (truncation or error)");
+                                continue;
+                            }
                             
                             // Check if core exists
                             FILE *core_file = fopen(core_path, "r");
