@@ -4,6 +4,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <string.h>
+#include <stdarg.h>
 #include <SDL.h>
 #include <SDL_mixer.h>
 #include <SDL_image.h>
@@ -132,20 +133,32 @@ const char* rom_directory = "sdmc:/roms";
 char current_path[MAX_PATH_LEN];
 FILE* log_file = NULL;
 
-void log_message(int level, const char* message) {
+void log_message(int level, const char* format, ...) {
     if (log_file == NULL) return;
 
     time_t now;
     time(&now);
     char* timestamp = ctime(&now);
     timestamp[24] = '\0'; // Remove newline that ctime adds
+    
     const char* level_str = "";
     switch(level) {
         case LOG_DEBUG: level_str = "DEBUG"; break;
         case LOG_INFO:  level_str = "INFO"; break;
         case LOG_ERROR: level_str = "ERROR"; break;
     }
-    fprintf(log_file, "[%s] [%s] %s\n", timestamp, level_str, message);
+
+    // Print the timestamp and level
+    fprintf(log_file, "[%s] [%s] ", timestamp, level_str);
+
+    // Handle the variable arguments
+    va_list args;
+    va_start(args, format);
+    vfprintf(log_file, format, args);
+    va_end(args);
+
+    // Add newline and flush
+    fprintf(log_file, "\n");
     fflush(log_file);
 }
 
@@ -213,16 +226,14 @@ DirContent* list_files(const char* path) {
 
     dir = opendir(path);
     if (dir == NULL) {
-        snprintf(log_buf, sizeof(log_buf), "Failed to open directory: %s", path);
-        log_message(LOG_INFO, log_buf);
+        log_message(LOG_INFO, "Failed to open directory: %s", path);
         free(content->dirs);
         free(content->files);
         free(content);
         return NULL;
     }
 
-    snprintf(log_buf, sizeof(log_buf), "Listing contents of: %s", path);
-    log_message(LOG_INFO, log_buf);
+    log_message(LOG_INFO, "Listing contents of: %s", path);
 
     while ((entry = readdir(dir)) != NULL) {
         if (content->dir_count >= MAX_ENTRIES || content->file_count >= MAX_ENTRIES) {
@@ -248,8 +259,7 @@ DirContent* list_files(const char* path) {
         qsort(content->dirs, content->dir_count, sizeof(char*), compare_strings);
         log_message(LOG_INFO, "Directories:");
         for (int i = 0; i < content->dir_count; i++) {
-            snprintf(log_buf, sizeof(log_buf), "[DIR] %s", content->dirs[i]);
-            log_message(LOG_DEBUG, log_buf);
+            log_message(LOG_DEBUG, "[DIR] %s", content->dirs[i]);
 
             // Set directory entry position
             content->dir_rects[i].x = 50;
@@ -262,8 +272,7 @@ DirContent* list_files(const char* path) {
         qsort(content->files, content->file_count, sizeof(char*), compare_strings);
         log_message(LOG_INFO, "Files:");
         for (int i = 0; i < content->file_count; i++) {
-            snprintf(log_buf, sizeof(log_buf), "%s", content->files[i]);
-            log_message(LOG_DEBUG, log_buf);
+            log_message(LOG_DEBUG, "%s", content->files[i]);
 
             // Set file entry position
             content->file_rects[i].x = 50;
@@ -482,10 +491,8 @@ int main(int argc, char** argv) {
     } else {
         log_message(LOG_INFO, "Got valid content");
         total_entries = content->dir_count + content->file_count;
-        char debug_buf[256];
-        snprintf(debug_buf, sizeof(debug_buf), "Found %d directories and %d files",
-                content->dir_count, content->file_count);
-        log_message(LOG_INFO, debug_buf);
+        log_message(LOG_INFO, "Found %d directories and %d files",
+                   content->dir_count, content->file_count);
         total_pages = (total_entries + ENTRIES_PER_PAGE - 1) / ENTRIES_PER_PAGE;
         set_selection(content, renderer, font, colors, selected_index, current_page);
     }
@@ -499,9 +506,7 @@ int main(int argc, char** argv) {
 
             // main event queue handler - use Switch controller inputs
             if (event.type == SDL_JOYBUTTONDOWN) {
-                char button_msg[64];
-                snprintf(button_msg, sizeof(button_msg), "Button pressed: %d", event.jbutton.button);
-                log_message(LOG_DEBUG, button_msg);
+                log_message(LOG_DEBUG, "Button pressed: %d", event.jbutton.button);
 
                 if (event.jbutton.button == DPAD_UP) {
                     if (selected_index > 0) {
@@ -539,9 +544,7 @@ int main(int argc, char** argv) {
                             // Check if core exists
                             FILE *core_file = fopen(SFC_CORE, "r");
                             if (core_file == NULL) {
-                                char error_msg[MAX_PATH_LEN];
-                                snprintf(error_msg, sizeof(error_msg), "SNES core not found at: %s", SFC_CORE);
-                                log_message(LOG_ERROR, error_msg);
+                                log_message(LOG_ERROR, "SNES core not found at: %s", SFC_CORE);
                             } else {
                                 fclose(core_file);
 
@@ -555,10 +558,8 @@ int main(int argc, char** argv) {
                                        );
 
                                 // Log launch details
-                                char launch_msg[MAX_PATH_LEN * 2];
-                                snprintf(launch_msg, sizeof(launch_msg), "Launching RetroArch: %s with args: %s",
-                                       RETROARCH_PATH, full_arguments);
-                                log_message(LOG_INFO, launch_msg);
+                                log_message(LOG_INFO, "Launching RetroArch: %s with args: %s",
+                                          RETROARCH_PATH, full_arguments);
 
                                 // Launch RetroArch with the selected ROM
                                 Result rc = envSetNextLoad("/retroarch/cores/snes9x_libretro_libnx.nro", full_arguments);
@@ -566,9 +567,7 @@ int main(int argc, char** argv) {
                                     log_message(LOG_INFO, "Successfully set next load");
                                     exit_requested = 1;
                                 } else {
-                                    char error_msg[MAX_PATH_LEN];
-                                    snprintf(error_msg, sizeof(error_msg), "Failed to set next load, error: %x", rc);
-                                    log_message(LOG_ERROR, error_msg);
+                                    log_message(LOG_ERROR, "Failed to set next load, error: %x", rc);
                                 }
                             }
                         }
