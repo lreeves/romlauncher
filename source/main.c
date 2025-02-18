@@ -28,8 +28,6 @@
 #define SCREEN_W 1280
 #define SCREEN_H 720
 
-#define MAX_ENTRIES 256
-#define ENTRIES_PER_PAGE 15  // How many entries fit on one page
 #define MAX_PATH_LEN 512
 #define RETROARCH_PATH "/switch/retroarch_switch.nro"
 #define SFC_CORE "sdmc:/retroarch/cores/snes9x_libretro_libnx.nro"
@@ -232,26 +230,21 @@ int main(int argc, char** argv) {
                 }
 
                 if (event.jbutton.button == 6) {
-                    log_message(LOG_INFO, "Left shoulder");
                     if (current_page > 0) {
                         current_page--;
                     } else {
                         current_page = total_pages - 1;
                     }
-                    log_message(LOG_INFO, "Left shoulder - moving to page %d", current_page);
                     selected_index = current_page * ENTRIES_PER_PAGE;
                     set_selection(content, renderer, font, colors, selected_index, current_page);
                 }
 
                 if (event.jbutton.button == 7) {
-                    log_message(LOG_INFO, "Right shoulder");
-                    log_message(LOG_INFO, "Current page: %d, Total pages: %d", current_page, total_pages);
                     if (current_page < total_pages - 1) {
                         current_page++;
                     } else {
                         current_page = 0;
                     }
-                    log_message(LOG_INFO, "Right shoulder - moving to page %d", current_page);
                     selected_index = current_page * ENTRIES_PER_PAGE;
                     set_selection(content, renderer, font, colors, selected_index, current_page);
                 }
