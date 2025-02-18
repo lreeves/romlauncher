@@ -33,14 +33,14 @@ static config_entry *config = NULL;
 void config_put(const char *key, const char *value) {
     config_entry *entry;
     HASH_FIND_STR(config, key, entry);
-    
+
     if (entry == NULL) {
         entry = malloc(sizeof(config_entry));
         strncpy(entry->key, key, sizeof(entry->key)-1);
         entry->key[sizeof(entry->key)-1] = '\0';
         HASH_ADD_STR(config, key, entry);
     }
-    
+
     strncpy(entry->value, value, sizeof(entry->value)-1);
     entry->value[sizeof(entry->value)-1] = '\0';
 }
@@ -65,28 +65,28 @@ void load_config() {
         // Skip empty lines and comments
         if (line[0] == '\n' || line[0] == '#' || line[0] == ';')
             continue;
-            
+
         // Remove newline
         line[strcspn(line, "\n")] = 0;
-        
+
         // Find equals sign
         char *equals = strchr(line, '=');
         if (!equals) continue;
-        
+
         // Split into key/value
         *equals = '\0';
         char *key = line;
         char *value = equals + 1;
-        
+
         // Trim whitespace
         while (*key && isspace(*key)) key++;
         char *end = key + strlen(key) - 1;
         while (end > key && isspace(*end)) *end-- = '\0';
-        
+
         while (*value && isspace(*value)) value++;
         end = value + strlen(value) - 1;
         while (end > value && isspace(*end)) *end-- = '\0';
-        
+
         if (*key && *value) {
             config_put(key, value);
             char log_buf[1024];
@@ -94,7 +94,7 @@ void load_config() {
             log_message(LOG_DEBUG, log_buf);
         }
     }
-    
+
     fclose(fp);
 }
 
@@ -134,7 +134,7 @@ FILE* log_file = NULL;
 
 void log_message(int level, const char* message) {
     if (log_file == NULL) return;
-    
+
     time_t now;
     time(&now);
     char* timestamp = ctime(&now);
@@ -149,7 +149,7 @@ void log_message(int level, const char* message) {
     fflush(log_file);
 }
 
-SDL_Texture * render_text(SDL_Renderer *renderer, const char* text, TTF_Font *font, SDL_Color color, SDL_Rect *rect) 
+SDL_Texture * render_text(SDL_Renderer *renderer, const char* text, TTF_Font *font, SDL_Color color, SDL_Rect *rect)
 {
     SDL_Surface *surface;
     SDL_Texture *texture;
@@ -185,18 +185,18 @@ DirContent* list_files(const char* path) {
     DIR *dir;
     struct dirent *entry;
     char log_buf[MAX_PATH_LEN];
-    
+
     DirContent* content = malloc(sizeof(DirContent));
     if (!content) return NULL;
-    
+
     content->dirs = calloc(MAX_ENTRIES, sizeof(char*));
     content->files = calloc(MAX_ENTRIES, sizeof(char*));
     content->dir_textures = calloc(MAX_ENTRIES, sizeof(SDL_Texture*));
     content->file_textures = calloc(MAX_ENTRIES, sizeof(SDL_Texture*));
     content->dir_rects = calloc(MAX_ENTRIES, sizeof(SDL_Rect));
     content->file_rects = calloc(MAX_ENTRIES, sizeof(SDL_Rect));
-    
-    if (!content->dirs || !content->files || !content->dir_textures || 
+
+    if (!content->dirs || !content->files || !content->dir_textures ||
         !content->file_textures || !content->dir_rects || !content->file_rects) {
         free(content->dirs);
         free(content->files);
@@ -207,7 +207,7 @@ DirContent* list_files(const char* path) {
         free(content);
         return NULL;
     }
-    
+
     content->dir_count = 0;
     content->file_count = 0;
 
@@ -250,7 +250,7 @@ DirContent* list_files(const char* path) {
         for (int i = 0; i < content->dir_count; i++) {
             snprintf(log_buf, sizeof(log_buf), "[DIR] %s", content->dirs[i]);
             log_message(LOG_DEBUG, log_buf);
-            
+
             // Set directory entry position
             content->dir_rects[i].x = 50;
             content->dir_rects[i].y = 50 + ((i % ENTRIES_PER_PAGE) * 40);  // 40 pixels spacing between entries
@@ -264,7 +264,7 @@ DirContent* list_files(const char* path) {
         for (int i = 0; i < content->file_count; i++) {
             snprintf(log_buf, sizeof(log_buf), "%s", content->files[i]);
             log_message(LOG_DEBUG, log_buf);
-            
+
             // Set file entry position
             content->file_rects[i].x = 50;
             int virtual_index = content->dir_count + i;
@@ -285,7 +285,7 @@ void go_up_directory(DirContent* content) {
     char *last_slash = strrchr(current_path, '/');
     if (last_slash && strcmp(current_path, rom_directory) != 0) {
         *last_slash = '\0';  // Truncate at last slash to go up one level
-        
+
         // Free existing content
         for (int i = 0; i < content->dir_count; i++) {
             free(content->dirs[i]);
@@ -295,7 +295,7 @@ void go_up_directory(DirContent* content) {
             free(content->files[i]);
             if (content->file_textures[i]) SDL_DestroyTexture(content->file_textures[i]);
         }
-        
+
         // Get new directory content
         DirContent* new_content = list_files(current_path);
         if (new_content) {
@@ -314,9 +314,9 @@ void go_up_directory(DirContent* content) {
 
 void change_directory(DirContent* content, int selected_index) {
     if (!content || selected_index >= content->dir_count) return;
-    
+
     snprintf(current_path, sizeof(current_path), "%s/%s", current_path, content->dirs[selected_index]);
-    
+
     // Free existing content
     for (int i = 0; i < content->dir_count; i++) {
         free(content->dirs[i]);
@@ -326,7 +326,7 @@ void change_directory(DirContent* content, int selected_index) {
         free(content->files[i]);
         if (content->file_textures[i]) SDL_DestroyTexture(content->file_textures[i]);
     }
-    
+
     // Get new directory content
     DirContent* new_content = list_files(current_path);
     if (new_content) {
@@ -344,12 +344,12 @@ void change_directory(DirContent* content, int selected_index) {
 
 void set_selection(DirContent* content, SDL_Renderer *renderer, TTF_Font *font, SDL_Color *colors, int selected_index, int current_page) {
     if (!content) return;
-    
+
     char log_buf[MAX_PATH_LEN];
-    
+
     int start_index = current_page * ENTRIES_PER_PAGE;
     int end_index = start_index + ENTRIES_PER_PAGE;
-    
+
     // Update directory entries
     for (int i = 0; i < content->dir_count; i++) {
         if (i < start_index || i >= end_index) {
@@ -363,10 +363,10 @@ void set_selection(DirContent* content, SDL_Renderer *renderer, TTF_Font *font, 
         if (content->dir_textures[i]) {
             SDL_DestroyTexture(content->dir_textures[i]);
         }
-        content->dir_textures[i] = render_text(renderer, log_buf, font, 
+        content->dir_textures[i] = render_text(renderer, log_buf, font,
             colors[i == selected_index ? 8 : 1], &content->dir_rects[i]);
     }
-    
+
     // Update file entries
     for (int i = 0; i < content->file_count; i++) {
         int virtual_index = content->dir_count + i;
@@ -395,7 +395,7 @@ int main(int argc, char** argv) {
     }
 
     log_message(LOG_INFO, "Starting romlauncher");
-    
+
     // Load config file
     load_config();
     log_message(LOG_INFO, "Config loaded");
@@ -455,7 +455,7 @@ int main(int argc, char** argv) {
     SDL_InitSubSystem(SDL_INIT_JOYSTICK);
     SDL_JoystickEventState(SDL_ENABLE);
     SDL_JoystickOpen(0);
-    
+
     // load font from romfs
     TTF_Font* font = TTF_OpenFont("data/LeroyLetteringLightBeta01.ttf", 36);
 
@@ -483,7 +483,7 @@ int main(int argc, char** argv) {
         log_message(LOG_INFO, "Got valid content");
         total_entries = content->dir_count + content->file_count;
         char debug_buf[256];
-        snprintf(debug_buf, sizeof(debug_buf), "Found %d directories and %d files", 
+        snprintf(debug_buf, sizeof(debug_buf), "Found %d directories and %d files",
                 content->dir_count, content->file_count);
         log_message(LOG_INFO, debug_buf);
         total_pages = (total_entries + ENTRIES_PER_PAGE - 1) / ENTRIES_PER_PAGE;
@@ -535,7 +535,7 @@ int main(int argc, char** argv) {
                         if (file_index >= 0 && file_index < content->file_count) {
                             // Construct full arguments with ROM path first, then core path
                             char full_arguments[MAX_PATH_LEN];
-                            
+
                             // Check if core exists
                             FILE *core_file = fopen(SFC_CORE, "r");
                             if (core_file == NULL) {
@@ -544,21 +544,24 @@ int main(int argc, char** argv) {
                                 log_message(LOG_ERROR, error_msg);
                             } else {
                                 fclose(core_file);
-                                
+
                                 // Construct arguments in RetroArch's expected format
-                                snprintf(full_arguments, sizeof(full_arguments), "%s/%s -L %s",
-                                       current_path + 5, // Skip "sdmc:" prefix
+                                // The two full paths work around a potential bug in HBLoader
+                                snprintf(full_arguments, sizeof(full_arguments), "\"%s/%s\" \"%s/%s\"",
+                                       current_path + 5,
                                        content->files[file_index],
-                                       SFC_CORE + 5); // Skip "sdmc:" prefix from core path
-                                
+                                       current_path + 5,
+                                       content->files[file_index]
+                                       );
+
                                 // Log launch details
                                 char launch_msg[MAX_PATH_LEN * 2];
-                                snprintf(launch_msg, sizeof(launch_msg), "Launching RetroArch: %s with ROM: %s", 
+                                snprintf(launch_msg, sizeof(launch_msg), "Launching RetroArch: %s with args: %s",
                                        RETROARCH_PATH, full_arguments);
                                 log_message(LOG_INFO, launch_msg);
 
                                 // Launch RetroArch with the selected ROM
-                                Result rc = envSetNextLoad(RETROARCH_PATH, full_arguments);
+                                Result rc = envSetNextLoad("/retroarch/cores/snes9x_libretro_libnx.nro", full_arguments);
                                 if (R_SUCCEEDED(rc)) {
                                     log_message(LOG_INFO, "Successfully set next load");
                                     exit_requested = 1;
@@ -571,7 +574,7 @@ int main(int argc, char** argv) {
                         }
                     }
                 }
-                
+
                 if (event.jbutton.button == JOY_B) {
                     go_up_directory(content);
                     selected_index = 0;
@@ -579,7 +582,7 @@ int main(int argc, char** argv) {
                     current_page = 0;
                     set_selection(content, renderer, font, colors, selected_index, current_page);
                 }
-                
+
                 if (event.jbutton.button == JOY_PLUS) {
                     exit_requested = 1;
                 }
@@ -630,7 +633,7 @@ int main(int argc, char** argv) {
     Mix_Quit();
     SDL_Quit();
     romfsExit();
-    
+
     // Free config hash table
     free_config();
 
