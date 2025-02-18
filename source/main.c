@@ -1,10 +1,9 @@
-#include <time.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <dirent.h>
 #include <sys/stat.h>
 #include <string.h>
-#include <stdarg.h>
+#include "logging.h"
 #include <SDL.h>
 #include <SDL_mixer.h>
 #include <SDL_image.h>
@@ -13,13 +12,6 @@
 
 #include "uthash.h"
 
-// Log levels
-#define LOG_DEBUG 0
-#define LOG_INFO  1
-#define LOG_ERROR 2
-
-// Function declarations
-void log_message(int level, const char* format, ...);
 
 // Config hash table structure
 typedef struct {
@@ -131,36 +123,6 @@ void free_config() {
 
 const char* rom_directory = "sdmc:/roms";
 char current_path[MAX_PATH_LEN];
-FILE* log_file = NULL;
-
-void log_message(int level, const char* format, ...) {
-    if (log_file == NULL) return;
-
-    time_t now;
-    time(&now);
-    char* timestamp = ctime(&now);
-    timestamp[24] = '\0'; // Remove newline that ctime adds
-    
-    const char* level_str = "";
-    switch(level) {
-        case LOG_DEBUG: level_str = "DEBUG"; break;
-        case LOG_INFO:  level_str = "INFO"; break;
-        case LOG_ERROR: level_str = "ERROR"; break;
-    }
-
-    // Print the timestamp and level
-    fprintf(log_file, "[%s] [%s] ", timestamp, level_str);
-
-    // Handle the variable arguments
-    va_list args;
-    va_start(args, format);
-    vfprintf(log_file, format, args);
-    va_end(args);
-
-    // Add newline and flush
-    fprintf(log_file, "\n");
-    fflush(log_file);
-}
 
 SDL_Texture * render_text(SDL_Renderer *renderer, const char* text, TTF_Font *font, SDL_Color color, SDL_Rect *rect)
 {
@@ -398,10 +360,7 @@ void set_selection(DirContent* content, SDL_Renderer *renderer, TTF_Font *font, 
 
 
 int main(int argc, char** argv) {
-    log_file = fopen("/retrolauncher.log", "w");
-    if (log_file == NULL) {
-        return 1;
-    }
+    log_init("/retrolauncher.log");
 
     log_message(LOG_INFO, "Starting romlauncher");
 
@@ -656,8 +615,6 @@ int main(int argc, char** argv) {
     // Free config hash table
     free_config();
 
-    if (log_file) {
-        fclose(log_file);
-    }
+    log_close();
     return 0;
 }
