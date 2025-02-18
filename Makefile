@@ -43,6 +43,7 @@ SOURCES		:=	source
 DATA		:=	data
 INCLUDES	:=	include
 ROMFS		:=	romfs
+ICON	:= logo.jpg
 
 APP_TITLE   := romlauncher
 APP_AUTHOR  := luke
