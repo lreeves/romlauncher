@@ -19,7 +19,7 @@
 #define LOG_ERROR 2
 
 // Function declarations
-void log_message(int level, const char* message);
+void log_message(int level, const char* format, ...);
 
 // Config hash table structure
 typedef struct {
