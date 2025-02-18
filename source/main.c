@@ -229,7 +229,7 @@ int main(int argc, char** argv) {
                                     snprintf(msg, sizeof(msg), "No core mapping found for .%s files", ext);
                                     notification.texture = render_text(renderer, msg, font, colors[2], &notification.rect);
                                     notification.rect.x = (SCREEN_W - notification.rect.w) / 2;
-                                    notification.rect.y = (SCREEN_H - notification.rect.h) / 2;
+                                    notification.rect.y = SCREEN_H - notification.rect.h - 20; // 20px padding from bottom
                                     notification.active = 1;
                                     continue;
                                 }
