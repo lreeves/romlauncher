@@ -28,7 +28,6 @@ DirContent* list_files(const char* path) {
 
     DIR *dir;
     struct dirent *entry;
-    char log_buf[MAX_PATH_LEN];
 
     DirContent* content = malloc(sizeof(DirContent));
     if (!content) return NULL;
