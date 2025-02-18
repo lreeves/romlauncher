@@ -180,9 +180,6 @@ int main(int argc, char** argv) {
                         // Calculate which file was selected (accounting for directories)
                         int file_index = selected_index - content->dir_count;
                         if (file_index >= 0 && file_index < content->file_count) {
-                            // Construct full arguments with ROM path first, then core path
-                            char full_arguments[MAX_PATH_LEN];
-
                             // Check if core exists
                             FILE *core_file = fopen(SFC_CORE, "r");
                             if (core_file == NULL) {
@@ -190,18 +187,24 @@ int main(int argc, char** argv) {
                             } else {
                                 fclose(core_file);
 
-                                // Construct arguments in RetroArch's expected format
-                                // The two full paths work around a potential bug in HBLoader
-                                snprintf(full_arguments, sizeof(full_arguments), "\"%s/%s\" \"%s/%s\"",
-                                       current_path + 5,
-                                       content->files[file_index],
-                                       current_path + 5,
-                                       content->files[file_index]
-                                       );
+                                // First, construct the full ROM/core path safely
+                                char rom_path[MAX_PATH_LEN];
+                                int written = snprintf(rom_path, sizeof(rom_path), "%s/%s", current_path + 5, content->files[file_index]);
+                                if (written < 0 || (size_t)written >= sizeof(rom_path)) {
+                                    log_message(LOG_ERROR, "ROM path construction failed (truncation or error)");
+                                    exit(1);
+                                }
+
+                                // Now, construct the full arguments string safely using the constructed path twice
+                                char full_arguments[MAX_PATH_LEN];
+                                written = snprintf(full_arguments, sizeof(full_arguments), "\"%s\" \"%s\"", rom_path, rom_path);
+                                if (written < 0 || (size_t)written >= sizeof(full_arguments)) {
+                                    log_message(LOG_ERROR, "Arguments string construction failed (truncation or error)");
+                                    exit(1);
+                                }
 
                                 // Log launch details
-                                log_message(LOG_INFO, "Launching RetroArch: %s with args: %s",
-                                          RETROARCH_PATH, full_arguments);
+                                log_message(LOG_INFO, "Launching RetroArch: %s with args: %s", RETROARCH_PATH, full_arguments);
 
                                 // Launch RetroArch with the selected ROM
                                 Result rc = envSetNextLoad("/retroarch/cores/snes9x_libretro_libnx.nro", full_arguments);
