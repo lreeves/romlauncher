@@ -118,8 +118,6 @@ void free_config() {
 #define JOY_RIGHT 14
 #define DPAD_UP    13
 #define DPAD_DOWN  15
-#define JOY_L      6  // Left shoulder
-#define JOY_R      7  // Right shoulder
 
 #define SCREEN_W 1280
 #define SCREEN_H 720
@@ -501,9 +499,9 @@ int main(int argc, char** argv) {
 
             // main event queue handler - use Switch controller inputs
             if (event.type == SDL_JOYBUTTONDOWN) {
-                /* char button_msg[64];
+                char button_msg[64];
                 snprintf(button_msg, sizeof(button_msg), "Button pressed: %d", event.jbutton.button);
-                log_message(button_msg); */
+                log_message(LOG_DEBUG, button_msg);
 
                 if (event.jbutton.button == DPAD_UP) {
                     if (selected_index > 0) {
@@ -585,16 +583,20 @@ int main(int argc, char** argv) {
                     set_selection(content, renderer, font, colors, selected_index, current_page);
                 }
 
-                if (event.jbutton.button == JOY_L) {
+                if (event.jbutton.button == 6) {
+                    log_message(LOG_INFO, "Left shoulder");
                     if (current_page > 0) {
+                        log_message(LOG_INFO, "Left shoulder VALID");
                         current_page--;
                         selected_index = current_page * ENTRIES_PER_PAGE;
                         set_selection(content, renderer, font, colors, selected_index, current_page);
                     }
                 }
 
-                if (event.jbutton.button == JOY_R) {
+                if (event.jbutton.button == 7) {
+                    log_message(LOG_INFO, "Right shoulder");
                     if (current_page < total_pages - 1) {
+                        log_message(LOG_INFO, "Right shoulder VALID");
                         current_page++;
                         selected_index = current_page * ENTRIES_PER_PAGE;
                         set_selection(content, renderer, font, colors, selected_index, current_page);
