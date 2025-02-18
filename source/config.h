@@ -11,8 +11,11 @@ typedef struct {
 } config_entry;
 
 extern config_entry *favorites;  // Global favorites hash table
+extern config_entry *default_core_mappings;  // Global default core mappings
 
 // Function declarations
+void init_default_core_mappings(void);
+void free_default_core_mappings(void);
 void config_put(const char *key, const char *value);
 const char* config_get(const char *key);
 void load_config(void);

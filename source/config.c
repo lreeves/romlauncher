@@ -8,6 +8,7 @@
 #include "logging.h"
 
 static config_entry *config = NULL;
+config_entry *default_core_mappings = NULL;
 
 void config_put(const char *key, const char *value) {
     config_entry *entry;
@@ -155,6 +156,34 @@ void free_favorites(void) {
     config_entry *current, *tmp;
     HASH_ITER(hh, favorites, current, tmp) {
         HASH_DEL(favorites, current);
+        free(current);
+    }
+}
+
+void init_default_core_mappings(void) {
+    config_entry *entry;
+
+    // SNES
+    entry = malloc(sizeof(config_entry));
+    strncpy(entry->key, "sfc", sizeof(entry->key)-1);
+    entry->key[sizeof(entry->key)-1] = '\0';
+    strncpy(entry->value, "snes9x", sizeof(entry->value)-1);
+    entry->value[sizeof(entry->value)-1] = '\0';
+    HASH_ADD_STR(default_core_mappings, key, entry);
+
+    // Genesis
+    entry = malloc(sizeof(config_entry));
+    strncpy(entry->key, "genesis", sizeof(entry->key)-1);
+    entry->key[sizeof(entry->key)-1] = '\0';
+    strncpy(entry->value, "genesis_plus_gx", sizeof(entry->value)-1);
+    entry->value[sizeof(entry->value)-1] = '\0';
+    HASH_ADD_STR(default_core_mappings, key, entry);
+}
+
+void free_default_core_mappings(void) {
+    config_entry *current, *tmp;
+    HASH_ITER(hh, default_core_mappings, current, tmp) {
+        HASH_DEL(default_core_mappings, current);
         free(current);
     }
 }
