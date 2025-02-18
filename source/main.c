@@ -31,7 +31,6 @@
 #define SCREEN_H 720
 
 #define MAX_PATH_LEN 512
-#define RETROARCH_PATH "/switch/retroarch_switch.nro"
 
 // Helper function to get file extension
 const char* get_file_extension(const char* filename) {
@@ -170,7 +169,7 @@ int main(int argc, char** argv) {
                         selected_index = total_entries - 1;
                     }
                     current_page = selected_index / ENTRIES_PER_PAGE;
-                    set_selection(current_mode == MODE_FAVORITES ? favorites_content : content, 
+                    set_selection(current_mode == MODE_FAVORITES ? favorites_content : content,
                                 renderer, font, colors, selected_index, current_page);
                 }
                 if (event.jbutton.button == DPAD_DOWN) {
@@ -180,7 +179,7 @@ int main(int argc, char** argv) {
                         selected_index = 0;
                     }
                     current_page = selected_index / ENTRIES_PER_PAGE;
-                    set_selection(current_mode == MODE_FAVORITES ? favorites_content : content, 
+                    set_selection(current_mode == MODE_FAVORITES ? favorites_content : content,
                                 renderer, font, colors, selected_index, current_page);
                 }
 
@@ -201,12 +200,12 @@ int main(int argc, char** argv) {
                                 const char* ext = get_file_extension(content->files[file_index]);
                                 config_entry *core_entry;
                                 HASH_FIND_STR(default_core_mappings, ext, core_entry);
-                                
+
                                 if (!core_entry) {
                                     log_message(LOG_ERROR, "No core mapping found for extension: %s", ext);
                                     continue;
                                 }
-                                
+
                                 // Construct core path
                                 char core_path[MAX_PATH_LEN];
                                 int written = snprintf(core_path, sizeof(core_path), "sdmc:/retroarch/cores/%s_libretro_libnx.nro", core_entry->value);
@@ -214,7 +213,7 @@ int main(int argc, char** argv) {
                                     log_message(LOG_ERROR, "Core path construction failed (truncation or error)");
                                     continue;
                                 }
-                                
+
                                 // Check if core exists
                                 FILE *core_file = fopen(core_path, "r");
                                 if (core_file == NULL) {
@@ -239,7 +238,7 @@ int main(int argc, char** argv) {
                                     }
 
                                     // Log launch details
-                                    log_message(LOG_INFO, "Launching RetroArch: %s with args: %s", RETROARCH_PATH, full_arguments);
+                                    log_message(LOG_INFO, "Launching RetroArch: %s with args: %s", core_path, full_arguments);
 
                                     // Launch RetroArch with the selected ROM
                                     Result rc = envSetNextLoad(core_path, full_arguments);
@@ -259,12 +258,12 @@ int main(int argc, char** argv) {
                             const char* ext = get_file_extension(favorites_content->files[selected_index]);
                             config_entry *core_entry;
                             HASH_FIND_STR(default_core_mappings, ext, core_entry);
-                            
+
                             if (!core_entry) {
                                 log_message(LOG_ERROR, "No core mapping found for extension: %s", ext);
                                 continue;
                             }
-                            
+
                             // Construct core path
                             char core_path[MAX_PATH_LEN];
                             int written = snprintf(core_path, sizeof(core_path), "sdmc:/retroarch/cores/%s_libretro_libnx.nro", core_entry->value);
@@ -272,7 +271,7 @@ int main(int argc, char** argv) {
                                 log_message(LOG_ERROR, "Core path construction failed (truncation or error)");
                                 continue;
                             }
-                            
+
                             // Check if core exists
                             FILE *core_file = fopen(core_path, "r");
                             if (core_file == NULL) {
@@ -282,7 +281,7 @@ int main(int argc, char** argv) {
 
                                 // The favorites list stores full paths, so we can use them directly
                                 const char* full_path = favorites_content->files[selected_index];
-                                
+
                                 // Skip the "sdmc:" prefix if present
                                 const char* rom_path = strncmp(full_path, "sdmc:", 5) == 0 ? full_path + 5 : full_path;
 
@@ -295,7 +294,7 @@ int main(int argc, char** argv) {
                                 }
 
                                 // Log launch details
-                                log_message(LOG_INFO, "Launching RetroArch from favorites: %s with args: %s", RETROARCH_PATH, full_arguments);
+                                log_message(LOG_INFO, "Launching RetroArch from favorites: %s with args: %s", core_path, full_arguments);
 
                                 // Launch RetroArch with the selected ROM
                                 Result rc = envSetNextLoad(core_path, full_arguments);
@@ -313,7 +312,7 @@ int main(int argc, char** argv) {
                 if (event.jbutton.button == JOY_X) {
                     toggle_current_favorite(content, selected_index, current_path);
                     set_selection(content, renderer, font, colors, selected_index, current_page);
-                    
+
                     // If we're in favorites mode, refresh the list
                     if (current_mode == MODE_FAVORITES) {
                         if (favorites_content) free_dir_content(favorites_content);
@@ -354,7 +353,7 @@ int main(int argc, char** argv) {
                         set_selection(content, renderer, font, colors, selected_index, current_page);
                     }
                 }
-                
+
                 if (event.jbutton.button == JOY_B) {
                     go_up_directory(content, current_path, rom_directory);
                     selected_index = 0;
@@ -371,7 +370,7 @@ int main(int argc, char** argv) {
                         current_page = total_pages - 1;
                     }
                     selected_index = current_page * ENTRIES_PER_PAGE;
-                    set_selection(current_mode == MODE_FAVORITES ? favorites_content : content, 
+                    set_selection(current_mode == MODE_FAVORITES ? favorites_content : content,
                                 renderer, font, colors, selected_index, current_page);
                 }
 
@@ -382,7 +381,7 @@ int main(int argc, char** argv) {
                         current_page = 0;
                     }
                     selected_index = current_page * ENTRIES_PER_PAGE;
-                    set_selection(current_mode == MODE_FAVORITES ? favorites_content : content, 
+                    set_selection(current_mode == MODE_FAVORITES ? favorites_content : content,
                                 renderer, font, colors, selected_index, current_page);
                 }
 
