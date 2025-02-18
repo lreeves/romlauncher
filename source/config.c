@@ -61,13 +61,13 @@ void load_config(void) {
         char *value = equals + 1;
 
         // Trim whitespace
-        while (*key && isspace(*key)) key++;
+        while (*key && isspace((unsigned char)*key)) key++;
         char *end = key + strlen(key) - 1;
-        while (end > key && isspace(*end)) *end-- = '\0';
+        while (end > key && isspace((unsigned char)*end)) *end-- = '\0';
 
-        while (*value && isspace(*value)) value++;
+        while (*value && isspace((unsigned char)*value)) value++;
         end = value + strlen(value) - 1;
-        while (end > value && isspace(*end)) *end-- = '\0';
+        while (end > value && isspace((unsigned char)*end)) *end-- = '\0';
 
         if (*key && *value) {
             config_put(key, value);
