@@ -135,6 +135,8 @@ int main(int argc, char** argv) {
         total_entries = content->dir_count + content->file_count;
         log_message(LOG_INFO, "Found %d directories and %d files",
                    content->dir_count, content->file_count);
+        log_message(LOG_INFO, "Calculating pages: total_entries=%d, ENTRIES_PER_PAGE=%d",
+                   total_entries, ENTRIES_PER_PAGE);
         total_pages = (total_entries + ENTRIES_PER_PAGE - 1) / ENTRIES_PER_PAGE;
         set_selection(content, renderer, font, colors, selected_index, current_page);
     }
@@ -175,6 +177,7 @@ int main(int argc, char** argv) {
                         selected_index = 0;
                         total_entries = content->dir_count + content->file_count;
                         current_page = 0;
+                        total_pages = (total_entries + ENTRIES_PER_PAGE - 1) / ENTRIES_PER_PAGE;
                         set_selection(content, renderer, font, colors, selected_index, current_page);
                     } else {
                         // Calculate which file was selected (accounting for directories)
@@ -224,6 +227,7 @@ int main(int argc, char** argv) {
                     selected_index = 0;
                     total_entries = content->dir_count + content->file_count;
                     current_page = 0;
+                    total_pages = (total_entries + ENTRIES_PER_PAGE - 1) / ENTRIES_PER_PAGE;
                     set_selection(content, renderer, font, colors, selected_index, current_page);
                 }
 
@@ -239,11 +243,14 @@ int main(int argc, char** argv) {
 
                 if (event.jbutton.button == 7) {
                     log_message(LOG_INFO, "Right shoulder");
+                    log_message(LOG_INFO, "Current page: %d, Total pages: %d", current_page, total_pages);
                     if (current_page < total_pages - 1) {
                         log_message(LOG_INFO, "Right shoulder VALID");
                         current_page++;
                         selected_index = current_page * ENTRIES_PER_PAGE;
                         set_selection(content, renderer, font, colors, selected_index, current_page);
+                    } else {
+                        log_message(LOG_INFO, "Right shoulder INVALID - at last page");
                     }
                 }
 
