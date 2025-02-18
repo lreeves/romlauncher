@@ -155,20 +155,20 @@ int main(int argc, char** argv) {
                 if (event.jbutton.button == DPAD_UP) {
                     if (selected_index > 0) {
                         selected_index--;
-                        if (selected_index < (current_page * ENTRIES_PER_PAGE)) {
-                            current_page--;
-                        }
-                        set_selection(content, renderer, font, colors, selected_index, current_page);
+                    } else {
+                        selected_index = total_entries - 1;
                     }
+                    current_page = selected_index / ENTRIES_PER_PAGE;
+                    set_selection(content, renderer, font, colors, selected_index, current_page);
                 }
                 if (event.jbutton.button == DPAD_DOWN) {
                     if (selected_index < total_entries - 1) {
                         selected_index++;
-                        if (selected_index >= ((current_page + 1) * ENTRIES_PER_PAGE)) {
-                            current_page++;
-                        }
-                        set_selection(content, renderer, font, colors, selected_index, current_page);
+                    } else {
+                        selected_index = 0;
                     }
+                    current_page = selected_index / ENTRIES_PER_PAGE;
+                    set_selection(content, renderer, font, colors, selected_index, current_page);
                 }
 
                 if (event.jbutton.button == JOY_A) {
@@ -234,24 +234,26 @@ int main(int argc, char** argv) {
                 if (event.jbutton.button == 6) {
                     log_message(LOG_INFO, "Left shoulder");
                     if (current_page > 0) {
-                        log_message(LOG_INFO, "Left shoulder VALID");
                         current_page--;
-                        selected_index = current_page * ENTRIES_PER_PAGE;
-                        set_selection(content, renderer, font, colors, selected_index, current_page);
+                    } else {
+                        current_page = total_pages - 1;
                     }
+                    log_message(LOG_INFO, "Left shoulder - moving to page %d", current_page);
+                    selected_index = current_page * ENTRIES_PER_PAGE;
+                    set_selection(content, renderer, font, colors, selected_index, current_page);
                 }
 
                 if (event.jbutton.button == 7) {
                     log_message(LOG_INFO, "Right shoulder");
                     log_message(LOG_INFO, "Current page: %d, Total pages: %d", current_page, total_pages);
                     if (current_page < total_pages - 1) {
-                        log_message(LOG_INFO, "Right shoulder VALID");
                         current_page++;
-                        selected_index = current_page * ENTRIES_PER_PAGE;
-                        set_selection(content, renderer, font, colors, selected_index, current_page);
                     } else {
-                        log_message(LOG_INFO, "Right shoulder INVALID - at last page");
+                        current_page = 0;
                     }
+                    log_message(LOG_INFO, "Right shoulder - moving to page %d", current_page);
+                    selected_index = current_page * ENTRIES_PER_PAGE;
+                    set_selection(content, renderer, font, colors, selected_index, current_page);
                 }
 
                 if (event.jbutton.button == JOY_PLUS) {
