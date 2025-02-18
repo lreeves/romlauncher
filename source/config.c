@@ -112,7 +112,7 @@ void load_favorites(void) {
 void save_favorites(void) {
     // Create directory if it doesn't exist
     mkdir("sdmc:/romlauncher", 0755);
-    
+
     FILE *fp = fopen("sdmc:/romlauncher/favorites.ini", "w");
     if (!fp) {
         log_message(LOG_ERROR, "Could not open favorites file for writing");
@@ -165,8 +165,14 @@ void init_default_core_mappings(void) {
         const char *key;
         const char *value;
     } default_cores[] = {
+        {"gb", "gambatte"},
+        {"gbc", "gambatte"},
+        {"gba", "mgba"},
+        {"md", "genesis_plus_gx"},
+        {"nes", "fceumm"},
+        {"pce", "mednafen_pce"},
         {"sfc", "snes9x"},
-        {"genesis", "genesis_plus_gx"}
+        {"sms", "genesis_plus_gx"}
     };
 
     for (size_t i = 0; i < sizeof(default_cores) / sizeof(default_cores[0]); i++) {
