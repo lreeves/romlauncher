@@ -1,3 +1,5 @@
-project.*
+romlauncher.nacp
+romlauncher.nro
+romlauncher.elf
 build/
 .aider*

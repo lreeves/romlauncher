@@ -6,7 +6,7 @@ CONTAINER_NAME="switch-build-container"
 SOURCE_DIR=$(pwd)
 OUTPUT_DIR="${SOURCE_DIR}/output"
 
-rm project.*
+rm romlauncher.nro romlauncher.nacp romlauncher.elf
 
 if [ -d "build" ]; then
 	rm -Rf build
