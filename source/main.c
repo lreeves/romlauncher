@@ -163,7 +163,8 @@ int main(int argc, char** argv) {
                         selected_index = total_entries - 1;
                     }
                     current_page = selected_index / ENTRIES_PER_PAGE;
-                    set_selection(content, renderer, font, colors, selected_index, current_page);
+                    set_selection(current_mode == MODE_FAVORITES ? favorites_content : content, 
+                                renderer, font, colors, selected_index, current_page);
                 }
                 if (event.jbutton.button == DPAD_DOWN) {
                     if (selected_index < total_entries - 1) {
@@ -172,7 +173,8 @@ int main(int argc, char** argv) {
                         selected_index = 0;
                     }
                     current_page = selected_index / ENTRIES_PER_PAGE;
-                    set_selection(content, renderer, font, colors, selected_index, current_page);
+                    set_selection(current_mode == MODE_FAVORITES ? favorites_content : content, 
+                                renderer, font, colors, selected_index, current_page);
                 }
 
                 if (event.jbutton.button == JOY_A) {
@@ -287,7 +289,8 @@ int main(int argc, char** argv) {
                         current_page = total_pages - 1;
                     }
                     selected_index = current_page * ENTRIES_PER_PAGE;
-                    set_selection(content, renderer, font, colors, selected_index, current_page);
+                    set_selection(current_mode == MODE_FAVORITES ? favorites_content : content, 
+                                renderer, font, colors, selected_index, current_page);
                 }
 
                 if (event.jbutton.button == 7) {
@@ -297,7 +300,8 @@ int main(int argc, char** argv) {
                         current_page = 0;
                     }
                     selected_index = current_page * ENTRIES_PER_PAGE;
-                    set_selection(content, renderer, font, colors, selected_index, current_page);
+                    set_selection(current_mode == MODE_FAVORITES ? favorites_content : content, 
+                                renderer, font, colors, selected_index, current_page);
                 }
 
                 if (event.jbutton.button == JOY_PLUS) {
