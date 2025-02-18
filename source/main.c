@@ -24,6 +24,8 @@
 #define JOY_MINUS 11
 #define JOY_LEFT  12
 #define JOY_RIGHT 14
+#define JOY_LEFT_SHOULDER 6
+#define JOY_RIGHT_SHOULDER 7
 #define DPAD_UP    13
 #define DPAD_DOWN  15
 
@@ -363,7 +365,7 @@ int main(int argc, char** argv) {
                     set_selection(content, renderer, font, colors, selected_index, current_page);
                 }
 
-                if (event.jbutton.button == 6) {
+                if (event.jbutton.button == JOY_LEFT_SHOULDER) {
                     if (current_page > 0) {
                         current_page--;
                     } else {
@@ -374,7 +376,7 @@ int main(int argc, char** argv) {
                                 renderer, font, colors, selected_index, current_page);
                 }
 
-                if (event.jbutton.button == 7) {
+                if (event.jbutton.button == JOY_RIGHT_SHOULDER) {
                     if (current_page < total_pages - 1) {
                         current_page++;
                     } else {
