@@ -32,6 +32,13 @@
 #define SCREEN_W 1280
 #define SCREEN_H 720
 
+typedef struct {
+    char message[256];
+    SDL_Texture* texture;
+    SDL_Rect rect;
+    int active;
+} Notification;
+
 #define MAX_PATH_LEN 512
 
 // Helper function to get file extension
@@ -68,6 +75,8 @@ int main(int argc, char** argv) {
     int current_mode = MODE_BROWSER;
     DirContent* favorites_content = NULL;
     char saved_path[MAX_PATH_LEN];
+    
+    Notification notification = {0};
 
     SDL_Texture *switchlogo_tex = NULL, *sdllogo_tex = NULL, *helloworld_tex = NULL;
     Mix_Music *music = NULL;
@@ -163,6 +172,12 @@ int main(int argc, char** argv) {
             // main event queue handler - use Switch controller inputs
             if (event.type == SDL_JOYBUTTONDOWN) {
                 log_message(LOG_DEBUG, "Button pressed: %d", event.jbutton.button);
+                
+                // If notification is active, any button dismisses it
+                if (notification.active) {
+                    notification.active = 0;
+                    continue;
+                }
 
                 if (event.jbutton.button == DPAD_UP) {
                     if (selected_index > 0) {
@@ -205,6 +220,17 @@ int main(int argc, char** argv) {
 
                                 if (!core_entry) {
                                     log_message(LOG_ERROR, "No core mapping found for extension: %s", ext);
+                                    
+                                    // Show notification
+                                    if (notification.texture) {
+                                        SDL_DestroyTexture(notification.texture);
+                                    }
+                                    char msg[256];
+                                    snprintf(msg, sizeof(msg), "No core mapping found for .%s files", ext);
+                                    notification.texture = render_text(renderer, msg, font, colors[2], &notification.rect);
+                                    notification.rect.x = (SCREEN_W - notification.rect.w) / 2;
+                                    notification.rect.y = (SCREEN_H - notification.rect.h) / 2;
+                                    notification.active = 1;
                                     continue;
                                 }
 
@@ -396,6 +422,14 @@ int main(int argc, char** argv) {
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0xFF);
         SDL_RenderClear(renderer);
 
+        // Draw semi-transparent background if notification is active
+        if (notification.active) {
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 200);
+            SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+            SDL_RenderFillRect(renderer, NULL);
+            SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+        }
+
         // Render directory and file listings
         DirContent* current_content = (current_mode == MODE_FAVORITES) ? favorites_content : content;
         if (current_content) {
@@ -409,6 +443,11 @@ int main(int argc, char** argv) {
                     SDL_RenderCopy(renderer, current_content->file_textures[i], NULL, &current_content->file_rects[i]);
                 }
             }
+        }
+
+        // Render notification if active
+        if (notification.active && notification.texture) {
+            SDL_RenderCopy(renderer, notification.texture, NULL, &notification.rect);
         }
 
         SDL_RenderPresent(renderer);
@@ -429,6 +468,9 @@ int main(int argc, char** argv) {
 
     if (helloworld_tex)
         SDL_DestroyTexture(helloworld_tex);
+        
+    if (notification.texture)
+        SDL_DestroyTexture(notification.texture);
 
     // stop sounds and free loaded data
     Mix_HaltChannel(-1);
