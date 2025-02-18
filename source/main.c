@@ -32,7 +32,13 @@
 
 #define MAX_PATH_LEN 512
 #define RETROARCH_PATH "/switch/retroarch_switch.nro"
-#define SFC_CORE "sdmc:/retroarch/cores/snes9x_libretro_libnx.nro"
+
+// Helper function to get file extension
+const char* get_file_extension(const char* filename) {
+    const char* dot = strrchr(filename, '.');
+    if (!dot || dot == filename) return "";
+    return dot + 1;
+}
 
 const char* rom_directory = "sdmc:/roms";
 char current_path[MAX_PATH_LEN];
@@ -190,10 +196,24 @@ int main(int argc, char** argv) {
                             // Calculate which file was selected (accounting for directories)
                             int file_index = selected_index - content->dir_count;
                             if (file_index >= 0 && file_index < content->file_count) {
+                                // Get file extension and look up core
+                                const char* ext = get_file_extension(content->files[file_index]);
+                                config_entry *core_entry;
+                                HASH_FIND_STR(default_core_mappings, ext, core_entry);
+                                
+                                if (!core_entry) {
+                                    log_message(LOG_ERROR, "No core mapping found for extension: %s", ext);
+                                    continue;
+                                }
+                                
+                                // Construct core path
+                                char core_path[MAX_PATH_LEN];
+                                snprintf(core_path, sizeof(core_path), "/retroarch/cores/%s_libretro_libnx.nro", core_entry->value);
+                                
                                 // Check if core exists
-                                FILE *core_file = fopen(SFC_CORE, "r");
+                                FILE *core_file = fopen(core_path, "r");
                                 if (core_file == NULL) {
-                                    log_message(LOG_ERROR, "SNES core not found at: %s", SFC_CORE);
+                                    log_message(LOG_ERROR, "Core not found at: %s", core_path);
                                 } else {
                                     fclose(core_file);
 
@@ -217,7 +237,7 @@ int main(int argc, char** argv) {
                                     log_message(LOG_INFO, "Launching RetroArch: %s with args: %s", RETROARCH_PATH, full_arguments);
 
                                     // Launch RetroArch with the selected ROM
-                                    Result rc = envSetNextLoad("/retroarch/cores/snes9x_libretro_libnx.nro", full_arguments);
+                                    Result rc = envSetNextLoad(core_path, full_arguments);
                                     if (R_SUCCEEDED(rc)) {
                                         log_message(LOG_INFO, "Successfully set next load");
                                         exit_requested = 1;
@@ -230,10 +250,24 @@ int main(int argc, char** argv) {
                     } else if (current_mode == MODE_FAVORITES) {
                         // In favorites mode, directly launch the selected ROM
                         if (selected_index >= 0 && selected_index < favorites_content->file_count) {
+                            // Get file extension and look up core
+                            const char* ext = get_file_extension(favorites_content->files[selected_index]);
+                            config_entry *core_entry;
+                            HASH_FIND_STR(default_core_mappings, ext, core_entry);
+                            
+                            if (!core_entry) {
+                                log_message(LOG_ERROR, "No core mapping found for extension: %s", ext);
+                                continue;
+                            }
+                            
+                            // Construct core path
+                            char core_path[MAX_PATH_LEN];
+                            snprintf(core_path, sizeof(core_path), "/retroarch/cores/%s_libretro_libnx.nro", core_entry->value);
+                            
                             // Check if core exists
-                            FILE *core_file = fopen(SFC_CORE, "r");
+                            FILE *core_file = fopen(core_path, "r");
                             if (core_file == NULL) {
-                                log_message(LOG_ERROR, "SNES core not found at: %s", SFC_CORE);
+                                log_message(LOG_ERROR, "Core not found at: %s", core_path);
                             } else {
                                 fclose(core_file);
 
@@ -255,7 +289,7 @@ int main(int argc, char** argv) {
                                 log_message(LOG_INFO, "Launching RetroArch from favorites: %s with args: %s", RETROARCH_PATH, full_arguments);
 
                                 // Launch RetroArch with the selected ROM
-                                Result rc = envSetNextLoad("/retroarch/cores/snes9x_libretro_libnx.nro", full_arguments);
+                                Result rc = envSetNextLoad(core_path, full_arguments);
                                 if (R_SUCCEEDED(rc)) {
                                     log_message(LOG_INFO, "Successfully set next load from favorites");
                                     exit_requested = 1;
