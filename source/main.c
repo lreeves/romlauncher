@@ -118,6 +118,8 @@ void free_config() {
 #define JOY_RIGHT 14
 #define DPAD_UP    13
 #define DPAD_DOWN  15
+#define JOY_L      6  // Left shoulder
+#define JOY_R      7  // Right shoulder
 
 #define SCREEN_W 1280
 #define SCREEN_H 720
@@ -581,6 +583,22 @@ int main(int argc, char** argv) {
                     total_entries = content->dir_count + content->file_count;
                     current_page = 0;
                     set_selection(content, renderer, font, colors, selected_index, current_page);
+                }
+
+                if (event.jbutton.button == JOY_L) {
+                    if (current_page > 0) {
+                        current_page--;
+                        selected_index = current_page * ENTRIES_PER_PAGE;
+                        set_selection(content, renderer, font, colors, selected_index, current_page);
+                    }
+                }
+
+                if (event.jbutton.button == JOY_R) {
+                    if (current_page < total_pages - 1) {
+                        current_page++;
+                        selected_index = current_page * ENTRIES_PER_PAGE;
+                        set_selection(content, renderer, font, colors, selected_index, current_page);
+                    }
                 }
 
                 if (event.jbutton.button == JOY_PLUS) {
