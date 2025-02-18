@@ -56,6 +56,7 @@ int main(int argc, char** argv) {
     // Load config and favorites
     load_config();
     load_favorites();
+    init_default_core_mappings();
     log_message(LOG_INFO, "Config and favorites loaded");
 
     romfsInit();
@@ -434,9 +435,10 @@ int main(int argc, char** argv) {
     SDL_Quit();
     romfsExit();
 
-    // Free config and favorites hash tables
+    // Free config, favorites, and core mappings hash tables
     free_config();
     free_favorites();
+    free_default_core_mappings();
 
     log_close();
     return 0;
