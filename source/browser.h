@@ -8,6 +8,11 @@
 #define ENTRIES_PER_PAGE 15
 #define MAX_PATH_LEN 512
 
+// External declarations
+extern char current_path[MAX_PATH_LEN];
+extern int is_favorite(const char *path);
+extern void toggle_favorite(const char *path);
+
 typedef struct {
     char **dirs;
     char **files;
@@ -27,5 +32,8 @@ void go_up_directory(DirContent* content, char* current_path, const char* rom_di
 void change_directory(DirContent* content, int selected_index, char* current_path);
 void set_selection(DirContent* content, SDL_Renderer *renderer, TTF_Font *font,
                   SDL_Color *colors, int selected_index, int current_page);
+
+// Favorites management
+void toggle_current_favorite(DirContent* content, int selected_index, const char* current_path);
 
 #endif // BROWSER_H

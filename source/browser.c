@@ -10,7 +10,17 @@ SDL_Texture* render_text(SDL_Renderer *renderer, const char* text,
     SDL_Surface *surface;
     SDL_Texture *texture;
 
-    surface = TTF_RenderText_Solid(font, text, color);
+    // Check if this path is a favorite
+    char full_path[MAX_PATH_LEN * 2];  // Double buffer size to ensure space for path + filename
+    char display_text[MAX_PATH_LEN * 2 + 2];  // Extra space for "* " prefix
+    snprintf(full_path, MAX_PATH_LEN * 2, "%s/%s", current_path, text);
+    
+    if (is_favorite(full_path)) {
+        snprintf(display_text, sizeof(display_text), "* %s", text);
+        surface = TTF_RenderText_Solid(font, display_text, color);
+    } else {
+        surface = TTF_RenderText_Solid(font, text, color);
+    }
     texture = SDL_CreateTextureFromSurface(renderer, surface);
     rect->w = surface->w;
     rect->h = surface->h;
@@ -170,6 +180,21 @@ void change_directory(DirContent* content, int selected_index, char* current_pat
         content->file_rects = new_content->file_rects;
         free(new_content);
     }
+}
+
+void toggle_current_favorite(DirContent* content, int selected_index, const char* current_path) {
+    if (!content) return;
+    
+    // Only allow favoriting files, not directories
+    if (selected_index < content->dir_count) return;
+    
+    int file_index = selected_index - content->dir_count;
+    if (file_index >= content->file_count) return;
+    
+    char full_path[MAX_PATH_LEN];
+    snprintf(full_path, MAX_PATH_LEN, "%s/%s", current_path, content->files[file_index]);
+    
+    toggle_favorite(full_path);
 }
 
 void set_selection(DirContent* content, SDL_Renderer *renderer, TTF_Font *font,

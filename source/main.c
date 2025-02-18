@@ -45,9 +45,10 @@ int main(int argc, char** argv) {
 
     log_message(LOG_INFO, "Starting romlauncher");
 
-    // Load config file
+    // Load config and favorites
     load_config();
-    log_message(LOG_INFO, "Config loaded");
+    load_favorites();
+    log_message(LOG_INFO, "Config and favorites loaded");
 
     romfsInit();
     chdir("romfs:/");
@@ -220,6 +221,11 @@ int main(int argc, char** argv) {
                     }
                 }
 
+                if (event.jbutton.button == JOY_X) {
+                    toggle_current_favorite(content, selected_index, current_path);
+                    set_selection(content, renderer, font, colors, selected_index, current_page);
+                }
+                
                 if (event.jbutton.button == JOY_B) {
                     go_up_directory(content, current_path, rom_directory);
                     selected_index = 0;
@@ -300,8 +306,9 @@ int main(int argc, char** argv) {
     SDL_Quit();
     romfsExit();
 
-    // Free config hash table
+    // Free config and favorites hash tables
     free_config();
+    free_favorites();
 
     log_close();
     return 0;

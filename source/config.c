@@ -1,6 +1,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include "config.h"
 #include "uthash.h"
 #include "logging.h"
@@ -82,6 +84,84 @@ void free_config(void) {
     config_entry *current, *tmp;
     HASH_ITER(hh, config, current, tmp) {
         HASH_DEL(config, current);
+        free(current);
+    }
+}
+
+// Favorites management
+static config_entry *favorites = NULL;
+
+void load_favorites(void) {
+    FILE *fp = fopen("sdmc:/romlauncher/favorites.ini", "r");
+    if (!fp) {
+        log_message(LOG_INFO, "No favorites file found");
+        return;
+    }
+
+    char line[768];
+    while (fgets(line, sizeof(line), fp)) {
+        // Remove newline
+        line[strcspn(line, "\n")] = 0;
+        if (strlen(line) > 0) {
+            config_entry *entry = malloc(sizeof(config_entry));
+            strncpy(entry->key, line, sizeof(entry->key)-1);
+            entry->key[sizeof(entry->key)-1] = '\0';
+            entry->value[0] = '1';
+            entry->value[1] = '\0';
+            HASH_ADD_STR(favorites, key, entry);
+            log_message(LOG_DEBUG, "Loaded favorite: %s", line);
+        }
+    }
+    fclose(fp);
+}
+
+void save_favorites(void) {
+    // Create directory if it doesn't exist
+    mkdir("sdmc:/romlauncher", 0755);
+    
+    FILE *fp = fopen("sdmc:/romlauncher/favorites.ini", "w");
+    if (!fp) {
+        log_message(LOG_ERROR, "Could not open favorites file for writing");
+        return;
+    }
+
+    config_entry *entry, *tmp;
+    HASH_ITER(hh, favorites, entry, tmp) {
+        fprintf(fp, "%s\n", entry->key);
+    }
+    fclose(fp);
+}
+
+int is_favorite(const char *path) {
+    config_entry *entry;
+    HASH_FIND_STR(favorites, path, entry);
+    return entry != NULL;
+}
+
+void toggle_favorite(const char *path) {
+    config_entry *entry;
+    HASH_FIND_STR(favorites, path, entry);
+
+    if (entry) {
+        HASH_DEL(favorites, entry);
+        free(entry);
+        log_message(LOG_INFO, "Removed favorite: %s", path);
+    } else {
+        entry = malloc(sizeof(config_entry));
+        strncpy(entry->key, path, sizeof(entry->key)-1);
+        entry->key[sizeof(entry->key)-1] = '\0';
+        entry->value[0] = '1';
+        entry->value[1] = '\0';
+        HASH_ADD_STR(favorites, key, entry);
+        log_message(LOG_INFO, "Added favorite: %s", path);
+    }
+    save_favorites();
+}
+
+void free_favorites(void) {
+    config_entry *current, *tmp;
+    HASH_ITER(hh, favorites, current, tmp) {
+        HASH_DEL(favorites, current);
         free(current);
     }
 }
