@@ -52,7 +52,7 @@ APP_AUTHOR  := luke
 #---------------------------------------------------------------------------------
 ARCH	:=	-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIE
 
-CFLAGS	:=	`$(PREFIX)pkg-config --cflags sdl2 SDL2_mixer SDL2_image` -Wall -O2 -ffunction-sections \
+CFLAGS	:=	`$(PREFIX)pkg-config --cflags sdl2 SDL2_mixer SDL2_image` -Wall -Werror -O2 -ffunction-sections \
 			$(ARCH) $(DEFINES)
 
 CFLAGS	+=	$(INCLUDE) -D__SWITCH__
