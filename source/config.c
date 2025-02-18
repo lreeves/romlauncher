@@ -7,13 +7,6 @@
 #include "uthash.h"
 #include "logging.h"
 
-// Config hash table structure
-typedef struct {
-    char key[256];           // key string
-    char value[512];         // value string
-    UT_hash_handle hh;       // makes this structure hashable
-} config_entry;
-
 static config_entry *config = NULL;
 
 void config_put(const char *key, const char *value) {
@@ -89,7 +82,7 @@ void free_config(void) {
 }
 
 // Favorites management
-static config_entry *favorites = NULL;
+config_entry *favorites = NULL;
 
 void load_favorites(void) {
     FILE *fp = fopen("sdmc:/romlauncher/favorites.ini", "r");

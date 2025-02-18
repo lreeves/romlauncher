@@ -18,6 +18,8 @@
 #define JOY_B     1
 #define JOY_X     2
 #define JOY_Y     3
+#define MODE_BROWSER 0
+#define MODE_FAVORITES 1
 #define JOY_PLUS  10
 #define JOY_MINUS 11
 #define JOY_LEFT  12
@@ -55,6 +57,9 @@ int main(int argc, char** argv) {
 
     int exit_requested = 0;
     int wait = 25;
+    int current_mode = MODE_BROWSER;
+    DirContent* favorites_content = NULL;
+    char saved_path[MAX_PATH_LEN];
 
     SDL_Texture *switchlogo_tex = NULL, *sdllogo_tex = NULL, *helloworld_tex = NULL;
     Mix_Music *music = NULL;
@@ -224,6 +229,46 @@ int main(int argc, char** argv) {
                 if (event.jbutton.button == JOY_X) {
                     toggle_current_favorite(content, selected_index, current_path);
                     set_selection(content, renderer, font, colors, selected_index, current_page);
+                    
+                    // If we're in favorites mode, refresh the list
+                    if (current_mode == MODE_FAVORITES) {
+                        if (favorites_content) free_dir_content(favorites_content);
+                        favorites_content = list_favorites();
+                        selected_index = 0;
+                        current_page = 0;
+                        if (favorites_content) {
+                            total_entries = favorites_content->file_count;
+                            total_pages = (total_entries + ENTRIES_PER_PAGE - 1) / ENTRIES_PER_PAGE;
+                            set_selection(favorites_content, renderer, font, colors, selected_index, current_page);
+                        }
+                    }
+                }
+
+                if (event.jbutton.button == JOY_Y) {
+                    if (current_mode == MODE_BROWSER) {
+                        // Switch to favorites mode
+                        strncpy(saved_path, current_path, MAX_PATH_LEN-1);
+                        saved_path[MAX_PATH_LEN-1] = '\0';
+                        favorites_content = list_favorites();
+                        if (favorites_content) {
+                            current_mode = MODE_FAVORITES;
+                            selected_index = 0;
+                            current_page = 0;
+                            total_entries = favorites_content->file_count;
+                            total_pages = (total_entries + ENTRIES_PER_PAGE - 1) / ENTRIES_PER_PAGE;
+                            set_selection(favorites_content, renderer, font, colors, selected_index, current_page);
+                        }
+                    } else {
+                        // Switch back to browser mode
+                        if (favorites_content) free_dir_content(favorites_content);
+                        favorites_content = NULL;
+                        current_mode = MODE_BROWSER;
+                        strncpy(current_path, saved_path, MAX_PATH_LEN-1);
+                        current_path[MAX_PATH_LEN-1] = '\0';
+                        selected_index = 0;
+                        current_page = 0;
+                        set_selection(content, renderer, font, colors, selected_index, current_page);
+                    }
                 }
                 
                 if (event.jbutton.button == JOY_B) {
@@ -265,21 +310,27 @@ int main(int argc, char** argv) {
         SDL_RenderClear(renderer);
 
         // Render directory and file listings
-        if (content) {
-            for (int i = 0; i < content->dir_count; i++) {
-                if (content->dir_textures[i]) {
-                    SDL_RenderCopy(renderer, content->dir_textures[i], NULL, &content->dir_rects[i]);
+        DirContent* current_content = (current_mode == MODE_FAVORITES) ? favorites_content : content;
+        if (current_content) {
+            for (int i = 0; i < current_content->dir_count; i++) {
+                if (current_content->dir_textures[i]) {
+                    SDL_RenderCopy(renderer, current_content->dir_textures[i], NULL, &current_content->dir_rects[i]);
                 }
             }
-            for (int i = 0; i < content->file_count; i++) {
-                if (content->file_textures[i]) {
-                    SDL_RenderCopy(renderer, content->file_textures[i], NULL, &content->file_rects[i]);
+            for (int i = 0; i < current_content->file_count; i++) {
+                if (current_content->file_textures[i]) {
+                    SDL_RenderCopy(renderer, current_content->file_textures[i], NULL, &current_content->file_rects[i]);
                 }
             }
         }
 
         SDL_RenderPresent(renderer);
         SDL_Delay(wait);
+    }
+
+    // Free favorites content if it exists
+    if (favorites_content) {
+        free_dir_content(favorites_content);
     }
 
     // clean up your textures when you are done with them

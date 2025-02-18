@@ -4,6 +4,7 @@
 #include <string.h>
 #include "browser.h"
 #include "logging.h"
+#include "config.h"
 
 SDL_Texture* render_text(SDL_Renderer *renderer, const char* text, 
                               TTF_Font *font, SDL_Color color, SDL_Rect *rect) {
@@ -180,6 +181,70 @@ void change_directory(DirContent* content, int selected_index, char* current_pat
         content->file_rects = new_content->file_rects;
         free(new_content);
     }
+}
+
+void free_dir_content(DirContent* content) {
+    if (!content) return;
+
+    for (int i = 0; i < content->dir_count; i++) {
+        free(content->dirs[i]);
+        if (content->dir_textures[i]) SDL_DestroyTexture(content->dir_textures[i]);
+    }
+    for (int i = 0; i < content->file_count; i++) {
+        free(content->files[i]);
+        if (content->file_textures[i]) SDL_DestroyTexture(content->file_textures[i]);
+    }
+    
+    free(content->dirs);
+    free(content->files);
+    free(content->dir_textures);
+    free(content->file_textures);
+    free(content->dir_rects);
+    free(content->file_rects);
+    free(content);
+}
+
+DirContent* list_favorites(void) {
+    DirContent* content = malloc(sizeof(DirContent));
+    if (!content) return NULL;
+
+    content->dirs = calloc(MAX_ENTRIES, sizeof(char*));
+    content->files = calloc(MAX_ENTRIES, sizeof(char*));
+    content->dir_textures = calloc(MAX_ENTRIES, sizeof(SDL_Texture*));
+    content->file_textures = calloc(MAX_ENTRIES, sizeof(SDL_Texture*));
+    content->dir_rects = calloc(MAX_ENTRIES, sizeof(SDL_Rect));
+    content->file_rects = calloc(MAX_ENTRIES, sizeof(SDL_Rect));
+
+    if (!content->dirs || !content->files || !content->dir_textures ||
+        !content->file_textures || !content->dir_rects || !content->file_rects) {
+        free_dir_content(content);
+        return NULL;
+    }
+
+    content->dir_count = 0;
+    content->file_count = 0;
+
+    config_entry *current, *tmp;
+    HASH_ITER(hh, favorites, current, tmp) {
+        if (content->file_count >= MAX_ENTRIES) break;
+        
+        content->files[content->file_count] = strdup(current->key);
+        if (content->files[content->file_count]) {
+            content->file_rects[content->file_count].x = 50;
+            content->file_rects[content->file_count].y = 50 + (content->file_count * 40);
+            content->file_textures[content->file_count] = NULL;
+            content->file_count++;
+        }
+    }
+
+    if (content->file_count > 0) {
+        qsort(content->files, content->file_count, sizeof(char*), compare_strings);
+        for (int i = 0; i < content->file_count; i++) {
+            content->file_rects[i].y = 50 + ((i % ENTRIES_PER_PAGE) * 40);
+        }
+    }
+
+    return content;
 }
 
 void toggle_current_favorite(DirContent* content, int selected_index, const char* current_path) {

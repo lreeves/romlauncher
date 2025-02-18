@@ -2,6 +2,15 @@
 #define CONFIG_H
 
 #include <stdio.h>
+#include "uthash.h"
+
+typedef struct {
+    char key[256];           // key string
+    char value[512];         // value string
+    UT_hash_handle hh;       // makes this structure hashable
+} config_entry;
+
+extern config_entry *favorites;  // Global favorites hash table
 
 // Function declarations
 void config_put(const char *key, const char *value);

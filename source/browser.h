@@ -3,6 +3,7 @@
 
 #include <SDL.h>
 #include <SDL_ttf.h>
+#include "config.h"
 
 #define MAX_ENTRIES 1024
 #define ENTRIES_PER_PAGE 15
@@ -35,5 +36,9 @@ void set_selection(DirContent* content, SDL_Renderer *renderer, TTF_Font *font,
 
 // Favorites management
 void toggle_current_favorite(DirContent* content, int selected_index, const char* current_path);
+
+// Favorites menu
+DirContent* list_favorites(void);
+void free_dir_content(DirContent* content);
 
 #endif // BROWSER_H
