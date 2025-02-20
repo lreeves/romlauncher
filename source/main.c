@@ -98,12 +98,45 @@ int main(int argc, char** argv) {
 
     srand(time(NULL));
 
-    SDL_Init(SDL_INIT_VIDEO|SDL_INIT_TIMER);
-    IMG_Init(IMG_INIT_PNG);
-    TTF_Init();
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_JOYSTICK) < 0) {
+        log_message(LOG_ERROR, "SDL_Init failed: %s", SDL_GetError());
+        return 1;
+    }
 
-    SDL_Window* window = SDL_CreateWindow("sdl2+mixer+image+ttf demo", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_W, SCREEN_H, SDL_WINDOW_SHOWN);
+    int img_flags = IMG_INIT_PNG;
+    if ((IMG_Init(img_flags) & img_flags) != img_flags) {
+        log_message(LOG_ERROR, "IMG_Init failed: %s", IMG_GetError());
+        SDL_Quit();
+        return 1;
+    }
+
+    if (TTF_Init() < 0) {
+        log_message(LOG_ERROR, "TTF_Init failed: %s", TTF_GetError());
+        IMG_Quit();
+        SDL_Quit();
+        return 1;
+    }
+
+    SDL_Window* window = SDL_CreateWindow("sdl2+mixer+image+ttf demo", 
+                                        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 
+                                        SCREEN_W, SCREEN_H, SDL_WINDOW_SHOWN);
+    if (!window) {
+        log_message(LOG_ERROR, "Window creation failed: %s", SDL_GetError());
+        TTF_Quit();
+        IMG_Quit();
+        SDL_Quit();
+        return 1;
+    }
+
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    if (!renderer) {
+        log_message(LOG_ERROR, "Renderer creation failed: %s", SDL_GetError());
+        SDL_DestroyWindow(window);
+        TTF_Quit();
+        IMG_Quit();
+        SDL_Quit();
+        return 1;
+    }
 
     // load logos from file
     SDL_Surface *sdllogo = IMG_Load("data/sdl.png");
@@ -119,7 +152,6 @@ int main(int argc, char** argv) {
     }
 
 
-    SDL_InitSubSystem(SDL_INIT_JOYSTICK);
     SDL_JoystickEventState(SDL_ENABLE);
     SDL_JoystickOpen(0);
 
@@ -456,9 +488,13 @@ int main(int argc, char** argv) {
     if (notification.texture)
         SDL_DestroyTexture(notification.texture);
 
-    // Clean up remaining system
-    IMG_Quit();
+    // Clean up SDL systems in reverse order of initialization
+    if (renderer)
+        SDL_DestroyRenderer(renderer);
+    if (window)
+        SDL_DestroyWindow(window);
     TTF_Quit();
+    IMG_Quit();
     SDL_Quit();
     romfsExit();
 
