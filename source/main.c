@@ -106,6 +106,7 @@ int main(int argc, char** argv) {
         log_message(LOG_ERROR, "SDL_Init failed: %s", SDL_GetError());
         return 1;
     }
+    log_message(LOG_DEBUG, "SDL_Init completed");
 
     int img_flags = IMG_INIT_PNG;
     if ((IMG_Init(img_flags) & img_flags) != img_flags) {
@@ -113,6 +114,7 @@ int main(int argc, char** argv) {
         SDL_Quit();
         return 1;
     }
+    log_message(LOG_DEBUG, "IMG_Init completed");
 
     if (TTF_Init() < 0) {
         log_message(LOG_ERROR, "TTF_Init failed: %s", TTF_GetError());
@@ -120,6 +122,7 @@ int main(int argc, char** argv) {
         SDL_Quit();
         return 1;
     }
+    log_message(LOG_DEBUG, "TTF_Init completed");
 
     SDL_Window* window = SDL_CreateWindow("romlauncher",
                                         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
@@ -131,6 +134,7 @@ int main(int argc, char** argv) {
         SDL_Quit();
         return 1;
     }
+    log_message(LOG_DEBUG, "SDL window created");
 
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     if (!renderer) {
@@ -141,6 +145,7 @@ int main(int argc, char** argv) {
         SDL_Quit();
         return 1;
     }
+    log_message(LOG_DEBUG, "SDL renderer created");
 
     // load logos from file
     SDL_Surface *sdllogo = IMG_Load("data/sdl.png");
@@ -155,9 +160,12 @@ int main(int argc, char** argv) {
         SDL_FreeSurface(switchlogo);
     }
 
+    log_message(LOG_DEBUG, "SDL surfaces initialized");
 
     SDL_JoystickEventState(SDL_ENABLE);
     SDL_JoystickOpen(0);
+
+    log_message(LOG_DEBUG, "SDL joystick initialized");
 
     // load font from romfs
     TTF_Font* font = TTF_OpenFont("data/LeroyLetteringLightBeta01.ttf", 36);
