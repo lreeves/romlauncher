@@ -35,6 +35,11 @@ if [ "$1" == "--skip-emulator" ]; then
   exit 0
 fi
 
+if [ ! -d "/home/luke/Source/ryujinx/build/Ryujinx" ]; then
+  echo "Emulator source build not found, exiting"
+  exit 0
+fi
+
 echo "Launching Ryujinx"
 
 #if [ ! -e ~/.config/Ryujinx/sdcard/romlauncher.ini ]; then
