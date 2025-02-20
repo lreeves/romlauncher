@@ -69,6 +69,8 @@ int main(int argc, char** argv) {
     romfsInit();
     chdir("romfs:/");
 
+    log_message(LOG_DEBUG, "romFS initialized");
+
     int exit_requested = 0;
     int wait = 25;
     int current_mode = MODE_BROWSER;
@@ -117,8 +119,8 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    SDL_Window* window = SDL_CreateWindow("sdl2+mixer+image+ttf demo", 
-                                        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 
+    SDL_Window* window = SDL_CreateWindow("romlauncher",
+                                        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                         SCREEN_W, SCREEN_H, SDL_WINDOW_SHOWN);
     if (!window) {
         log_message(LOG_ERROR, "Window creation failed: %s", SDL_GetError());
