@@ -61,7 +61,7 @@ CFLAGS	+=	$(INCLUDE) -D__SWITCH__
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
 
 ASFLAGS	:=	-g $(ARCH)
-LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g -ggdb $(ARCH) -Wl,-Map,$(notdir $*.map) -Wl,--no-strip-debug
+LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g -ggdb $(ARCH) -Wl,-Map,$(notdir $*.map)
 
 LIBS	:=	`$(PREFIX)pkg-config --libs sdl2 SDL2_mixer SDL2_image SDL2_ttf` \
 			-lnx
