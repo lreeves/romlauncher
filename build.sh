@@ -37,10 +37,10 @@ fi
 
 echo "Launching Ryujinx"
 
-if [ ! -e ~/.config/Ryujinx/sdcard/romlauncher.ini ]; then
-  echo "Installing default config"
-  cp romlauncher.ini ~/.config/Ryujinx/sdcard/romlauncher.ini
-fi
+#if [ ! -e ~/.config/Ryujinx/sdcard/romlauncher.ini ]; then
+#  echo "Installing default config"
+#  cp romlauncher.ini ~/.config/Ryujinx/sdcard/romlauncher.ini
+#fi
 
 DOTNET_ROOT=~/Tools/dotnet-90-200 /home/luke/Source/ryujinx/build/Ryujinx /home/luke/Source/romlauncher/romlauncher.nro &>/home/luke/ryujinx.log
 

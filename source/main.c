@@ -6,7 +6,6 @@
 #include "config.h"
 #include "browser.h"
 #include <SDL.h>
-#include <SDL_mixer.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
 #include <switch.h>
@@ -75,12 +74,10 @@ int main(int argc, char** argv) {
     int current_mode = MODE_BROWSER;
     DirContent* favorites_content = NULL;
     char saved_path[MAX_PATH_LEN];
-    
+
     Notification notification = {0};
 
     SDL_Texture *switchlogo_tex = NULL, *sdllogo_tex = NULL, *helloworld_tex = NULL;
-    Mix_Music *music = NULL;
-    Mix_Chunk *sound[4] = { NULL };
     SDL_Event event;
 
     SDL_Color colors[] = {
@@ -94,7 +91,6 @@ int main(int argc, char** argv) {
         { 255, 0, 255, 0 },   // purple
         { 0, 128, 255, 0 },   // bright blue
     };
-    int snd = 0;
     int selected_index = 0;
     int total_entries = 0;
     int current_page = 0;
@@ -103,7 +99,6 @@ int main(int argc, char** argv) {
     srand(time(NULL));
 
     SDL_Init(SDL_INIT_VIDEO|SDL_INIT_TIMER);
-    Mix_Init(MIX_INIT_OGG);
     IMG_Init(IMG_INIT_PNG);
     TTF_Init();
 
@@ -135,17 +130,6 @@ int main(int argc, char** argv) {
     SDL_Rect helloworld_rect = { 0, SCREEN_H - 36, 0, 0 };
     helloworld_tex = render_text(renderer, "Hello, world!", font, colors[1], &helloworld_rect);
 
-    SDL_InitSubSystem(SDL_INIT_AUDIO);
-    Mix_AllocateChannels(5);
-    Mix_OpenAudio(48000, AUDIO_S16, 2, 4096);
-
-    // load music and sounds from files
-    music = Mix_LoadMUS("data/background.ogg");
-    sound[0] = Mix_LoadWAV("data/pop1.wav");
-    sound[1] = Mix_LoadWAV("data/pop2.wav");
-    sound[2] = Mix_LoadWAV("data/pop3.wav");
-    sound[3] = Mix_LoadWAV("data/pop4.wav");
-
     log_message(LOG_INFO, "About to list files");
     strncpy(current_path, rom_directory, sizeof(current_path) - 1);
     DirContent* content = list_files(current_path);
@@ -172,7 +156,7 @@ int main(int argc, char** argv) {
             // main event queue handler - use Switch controller inputs
             if (event.type == SDL_JOYBUTTONDOWN) {
                 log_message(LOG_DEBUG, "Button pressed: %d", event.jbutton.button);
-                
+
                 // If notification is active, any button dismisses it
                 if (notification.active) {
                     notification.active = 0;
@@ -220,7 +204,7 @@ int main(int argc, char** argv) {
 
                                 if (!core_entry) {
                                     log_message(LOG_ERROR, "No core mapping found for extension: %s", ext);
-                                    
+
                                     // Show notification
                                     if (notification.texture) {
                                         SDL_DestroyTexture(notification.texture);
@@ -468,21 +452,13 @@ int main(int argc, char** argv) {
 
     if (helloworld_tex)
         SDL_DestroyTexture(helloworld_tex);
-        
+
     if (notification.texture)
         SDL_DestroyTexture(notification.texture);
 
-    // stop sounds and free loaded data
-    Mix_HaltChannel(-1);
-    Mix_FreeMusic(music);
-    for (snd = 0; snd < 4; snd++)
-        if (sound[snd])
-            Mix_FreeChunk(sound[snd]);
-
+    // Clean up remaining system
     IMG_Quit();
-    Mix_CloseAudio();
     TTF_Quit();
-    Mix_Quit();
     SDL_Quit();
     romfsExit();
 
@@ -490,6 +466,8 @@ int main(int argc, char** argv) {
     free_config();
     free_favorites();
     free_default_core_mappings();
+
+    log_message(LOG_INFO, "Finished cleanup - all done!");
 
     log_close();
     return 0;
