@@ -56,7 +56,9 @@ int rand_range(int min, int max){
 
 
 int main(int argc, char** argv) {
-    log_init("/retrolauncher.log");
+    char log_filename[256];
+    snprintf(log_filename, sizeof(log_filename), "/romlauncher-%ld.log", (long)time(NULL));
+    log_init(log_filename);
 
     log_message(LOG_INFO, "Starting romlauncher");
 
