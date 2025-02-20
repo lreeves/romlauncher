@@ -6,11 +6,11 @@ CONTAINER_NAME="switch-build-container"
 SOURCE_DIR=$(pwd)
 OUTPUT_DIR="${SOURCE_DIR}/output"
 
-rm romlauncher.nro romlauncher.nacp romlauncher.elf
+[ -f romlauncher.nro ] && rm romlauncher.nro
+[ -f romlauncher.nacp ] && rm romlauncher.nacp
+[ -f romlauncher.elf ] && rm romlauncher.elf
 
-if [ -d "build" ]; then
-	rm -Rf build
-fi
+[ -d "build" ] && rm -Rf build
 
 podman build -t "${IMAGE_NAME}" .
 echo "Running container to build the project..."
