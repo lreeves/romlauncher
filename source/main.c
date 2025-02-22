@@ -99,7 +99,7 @@ int launch_retroarch(const char* rom_path) {
     }
 }
 
-const char* rom_directory = "sdmc:/roms";
+const char* rom_directory = ROM_PATH;
 char current_path[MAX_PATH_LEN];
 
 int rand_range(int min, int max){

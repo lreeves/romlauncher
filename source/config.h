@@ -2,6 +2,7 @@
 #define CONFIG_H
 
 #define ROMLAUNCHER_DATA_DIRECTORY "sdmc:/romlauncher/"
+#define ROM_PATH "sdmc:/roms/"
 
 // Color definitions
 #define COLOR_BACKGROUND    (SDL_Color){200, 200, 200, 255}
