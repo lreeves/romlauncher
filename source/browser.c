@@ -6,7 +6,7 @@
 #include "logging.h"
 #include "config.h"
 
-SDL_Texture* render_text(SDL_Renderer *renderer, const char* text, 
+SDL_Texture* render_text(SDL_Renderer *renderer, const char* text,
                               TTF_Font *font, SDL_Color color, SDL_Rect *rect) {
     SDL_Surface *surface;
     SDL_Texture *texture;
@@ -15,7 +15,7 @@ SDL_Texture* render_text(SDL_Renderer *renderer, const char* text,
     char full_path[MAX_PATH_LEN * 2];  // Double buffer size to ensure space for path + filename
     char display_text[MAX_PATH_LEN * 2 + 2];  // Extra space for "* " prefix
     snprintf(full_path, MAX_PATH_LEN * 2, "%s/%s", current_path, text);
-    
+
     if (is_favorite(full_path)) {
         snprintf(display_text, sizeof(display_text), "* %s", text);
         surface = TTF_RenderText_Blended(font, display_text, color);
@@ -109,7 +109,7 @@ DirContent* list_files(const char* path) {
 
     if (content->file_count > 0) {
         qsort(content->files, content->file_count, sizeof(char*), compare_strings);
-        log_message(LOG_INFO, "Files:");
+        log_message(LOG_DEBUG, "Files:");
         for (int i = 0; i < content->file_count; i++) {
             log_message(LOG_DEBUG, "%s", content->files[i]);
             content->file_rects[i].x = 50;
@@ -194,7 +194,7 @@ void free_dir_content(DirContent* content) {
         free(content->files[i]);
         if (content->file_textures[i]) SDL_DestroyTexture(content->file_textures[i]);
     }
-    
+
     free(content->dirs);
     free(content->files);
     free(content->dir_textures);
@@ -227,7 +227,7 @@ DirContent* list_favorites(void) {
     config_entry *current, *tmp;
     HASH_ITER(hh, favorites, current, tmp) {
         if (content->file_count >= MAX_ENTRIES) break;
-        
+
         content->files[content->file_count] = strdup(current->key);
         if (content->files[content->file_count]) {
             content->file_rects[content->file_count].x = 50;
@@ -249,16 +249,16 @@ DirContent* list_favorites(void) {
 
 void toggle_current_favorite(DirContent* content, int selected_index, const char* current_path) {
     if (!content) return;
-    
+
     // Only allow favoriting files, not directories
     if (selected_index < content->dir_count) return;
-    
+
     int file_index = selected_index - content->dir_count;
     if (file_index >= content->file_count) return;
-    
+
     char full_path[MAX_PATH_LEN];
     snprintf(full_path, MAX_PATH_LEN, "%s/%s", current_path, content->files[file_index]);
-    
+
     toggle_favorite(full_path);
 }
 

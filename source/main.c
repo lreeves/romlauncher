@@ -494,7 +494,7 @@ int main(int argc, char** argv) {
     free_default_core_mappings();
 
     log_message(LOG_INFO, "Finished cleanup - all done!");
-
     log_close();
+
     return 0;
 }
