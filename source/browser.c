@@ -338,6 +338,26 @@ DirContent* list_favorites(void) {
         group->entry_count++;
     }
     
+    // If no favorites exist, create a single entry with the help message
+    if (!groups) {
+        content->files = calloc(1, sizeof(char*));
+        content->file_textures = calloc(1, sizeof(SDL_Texture*));
+        content->file_rects = calloc(1, sizeof(SDL_Rect));
+        
+        if (!content->files || !content->file_textures || !content->file_rects) {
+            free_dir_content(content);
+            return NULL;
+        }
+        
+        content->files[0] = strdup("Use the X button to add favorites!");
+        content->file_count = 1;
+        
+        // Center the message on screen
+        content->file_rects[0].x = 400; // Will be adjusted when rendered
+        content->file_rects[0].y = 300; // Will be adjusted when rendered
+        return content;
+    }
+
     // Count total entries needed
     int total_entries = 0;
     for (FavoriteGroup* group = groups; group != NULL; group = group->next) {
@@ -435,7 +455,18 @@ void set_selection(DirContent* content, SDL_Renderer *renderer, TTF_Font *font,
             SDL_DestroyTexture(content->file_textures[i]);
         }
         int entry_index = content->dir_count + i;
-        content->file_textures[i] = render_text(renderer, log_buf, font,
-            entry_index == selected_index ? COLOR_TEXT_HIGHLIGHT : COLOR_TEXT, &content->file_rects[i]);
+        
+        // Special handling for the "no favorites" message
+        if (content->is_favorites_view && content->file_count == 1 && i == 0) {
+            // Render the text first to get its dimensions
+            SDL_Texture* texture = render_text(renderer, log_buf, font, COLOR_TEXT, &content->file_rects[i]);
+            // Center the text on screen
+            content->file_rects[i].x = (1280 - content->file_rects[i].w) / 2;  // Assuming 1280x720 screen
+            content->file_rects[i].y = (720 - content->file_rects[i].h) / 2;
+            content->file_textures[i] = texture;
+        } else {
+            content->file_textures[i] = render_text(renderer, log_buf, font,
+                entry_index == selected_index ? COLOR_TEXT_HIGHLIGHT : COLOR_TEXT, &content->file_rects[i]);
+        }
     }
 }
