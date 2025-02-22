@@ -227,7 +227,7 @@ int main(int argc, char** argv) {
     log_message(LOG_DEBUG, "SDL joystick initialized");
 
     // load font from romfs
-    TTF_Font* font = TTF_OpenFont("data/LeroyLetteringLightBeta01.ttf", 36);
+    TTF_Font* font = TTF_OpenFont("data/Raleway-Regular.ttf", 32);
 
     // render text as texture
     SDL_Rect helloworld_rect = { 0, SCREEN_H - 36, 0, 0 };
