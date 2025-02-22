@@ -7,6 +7,24 @@
 #include "config.h"
 #include <SDL_image.h>
 
+// Derive the short system name from the ROM path or extension
+static const char* derive_system_name(const char* rom_path, const char* ext) {
+    // First try to find system name in the path
+    if (strstr(rom_path, "/snes/")) return "snes";
+    if (strstr(rom_path, "/tg16/")) return "tg16";
+    if (strstr(rom_path, "/gba/")) return "gba";
+    if (strstr(rom_path, "/gbc/")) return "gbc";
+    if (strstr(rom_path, "/gb/")) return "gb";
+    
+    // Fallback to extension-based detection
+    if (strcasecmp(ext, "gba") == 0) return "gba";
+    if (strcasecmp(ext, "gbc") == 0) return "gbc";
+    if (strcasecmp(ext, "gb") == 0) return "gb";
+    
+    // Return the extension as fallback
+    return ext;
+}
+
 SDL_Texture* render_text(SDL_Renderer *renderer, const char* text,
                               TTF_Font *font, const SDL_Color color, SDL_Rect *rect) {
     SDL_Surface *surface;
@@ -198,6 +216,10 @@ void load_box_art(DirContent* content, SDL_Renderer *renderer, const char* rom_p
     if (!ext) return;
     ext++; // Skip the dot
 
+    // Derive the system name
+    const char* system_name = derive_system_name(rom_path, ext);
+    log_message(LOG_DEBUG, "Derived system name: %s", system_name);
+
     // Get the ROM name without extension for the PNG filename
     char rom_basename[MAX_PATH_LEN];
     strncpy(rom_basename, rom_name, (ext - rom_name - 1));
@@ -208,7 +230,7 @@ void load_box_art(DirContent* content, SDL_Renderer *renderer, const char* rom_p
     char box_art_path[MAX_PATH_LEN];
     int path_len = snprintf(box_art_path, sizeof(box_art_path), 
              "%s/media/%s/2dboxart/", 
-             ROMLAUNCHER_DATA_DIRECTORY, ext);
+             ROMLAUNCHER_DATA_DIRECTORY, system_name);
     if (path_len > 0 && path_len < sizeof(box_art_path)) {
         strncat(box_art_path, rom_basename, sizeof(box_art_path) - path_len - 5); // -5 for ".png\0"
         strcat(box_art_path, ".png");
