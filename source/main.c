@@ -313,13 +313,10 @@ int main(int argc, char** argv) {
                                     exit_requested = 1;
                                 } else {
                                     // Show error notification
-                                    const char* ext = get_file_extension(content->files[file_index]);
                                     if (notification.texture) {
                                         SDL_DestroyTexture(notification.texture);
                                     }
-                                    char msg[256];
-                                    snprintf(msg, sizeof(msg), "No core mapping found for .%s files", ext);
-                                    notification.texture = render_text(renderer, msg, font, colors[2], &notification.rect);
+                                    notification.texture = render_text(renderer, "Error launching emulator", font, colors[2], &notification.rect);
                                     notification.rect.x = (SCREEN_W - notification.rect.w) / 2;
                                     notification.rect.y = SCREEN_H - notification.rect.h - 20; // 20px padding from bottom
                                     notification.active = 1;
@@ -331,7 +328,7 @@ int main(int argc, char** argv) {
                         if (selected_index >= 0 && selected_index < favorites_content->file_count) {
                             // The favorites list stores full paths, so we can use them directly
                             const char* rom_path = favorites_content->files[selected_index];
-                            
+
                             // Try to launch RetroArch
                             if (launch_retroarch(rom_path)) {
                                 exit_requested = 1;
