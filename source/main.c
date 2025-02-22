@@ -109,7 +109,7 @@ int rand_range(int min, int max){
 
 int main(int argc, char** argv) {
     char log_filename[256];
-    snprintf(log_filename, sizeof(log_filename), "/romlauncher-%ld.log", (long)time(NULL));
+    snprintf(log_filename, sizeof(log_filename), "%sromlauncher-%ld.log", ROMLAUNCHER_DATA_DIRECTORY, (long)time(NULL));
     log_init(log_filename);
 
     log_message(LOG_INFO, "Starting romlauncher");
