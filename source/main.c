@@ -163,7 +163,7 @@ int main(int argc, char** argv) {
     log_message(LOG_DEBUG, "SDL surfaces initialized");
 
     SDL_JoystickEventState(SDL_ENABLE);
-    SDL_JoystickOpen(0);
+    SDL_Joystick* joystick = SDL_JoystickOpen(0);
 
     log_message(LOG_DEBUG, "SDL joystick initialized");
 
@@ -499,6 +499,10 @@ int main(int argc, char** argv) {
 
     if (notification.texture)
         SDL_DestroyTexture(notification.texture);
+
+    // Close joystick if it was opened
+    if (joystick)
+        SDL_JoystickClose(joystick);
 
     // Clean up SDL systems in reverse order of initialization
     if (renderer)
