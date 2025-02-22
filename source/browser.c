@@ -9,17 +9,19 @@
 
 // Derive the short system name from the ROM path or extension
 static const char* derive_system_name(const char* rom_path, const char* ext) {
-    // First try to find system name in the path
+    // First check file extension
+    if (strcasecmp(ext, "nes") == 0) return "nes";
+    if (strcasecmp(ext, "sfc") == 0) return "snes";
+    if (strcasecmp(ext, "gba") == 0) return "gba";
+    if (strcasecmp(ext, "gbc") == 0) return "gbc";
+    if (strcasecmp(ext, "gb") == 0) return "gb";
+    
+    // Then try to find system name in the path
     if (strstr(rom_path, "/snes/")) return "snes";
     if (strstr(rom_path, "/tg16/")) return "tg16";
     if (strstr(rom_path, "/gba/")) return "gba";
     if (strstr(rom_path, "/gbc/")) return "gbc";
     if (strstr(rom_path, "/gb/")) return "gb";
-    
-    // Fallback to extension-based detection
-    if (strcasecmp(ext, "gba") == 0) return "gba";
-    if (strcasecmp(ext, "gbc") == 0) return "gbc";
-    if (strcasecmp(ext, "gb") == 0) return "gb";
     
     // Return the extension as fallback
     return ext;
