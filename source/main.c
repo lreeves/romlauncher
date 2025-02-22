@@ -18,6 +18,7 @@
 #define MODE_BROWSER 0
 #define MODE_FAVORITES 1
 #define MODE_MENU 2
+#define MODE_SCRAPING 3
 
 // Menu options
 #define MENU_HELP 0
@@ -154,6 +155,10 @@ int main(int argc, char** argv) {
     SDL_Texture* menu_textures[MENU_OPTIONS] = {NULL};
     SDL_Rect menu_rects[MENU_OPTIONS];
     const char* menu_options[] = {"Help", "Scraper", "Quit"};
+    
+    // Scraping mode message
+    SDL_Texture* scraping_message = NULL;
+    SDL_Rect scraping_rect;
 
     Notification notification = {0};
 
@@ -441,12 +446,20 @@ int main(int argc, char** argv) {
                 }
 
                 if (event.jbutton.button == JOY_B) {
-                    go_up_directory(content, current_path, rom_directory);
-                    selected_index = 0;
-                    total_entries = content->dir_count + content->file_count;
-                    current_page = 0;
-                    total_pages = (total_entries + ENTRIES_PER_PAGE - 1) / ENTRIES_PER_PAGE;
-                    set_selection(content, renderer, font, selected_index, current_page);
+                    if (current_mode == MODE_SCRAPING) {
+                        current_mode = MODE_BROWSER;
+                        if (scraping_message) {
+                            SDL_DestroyTexture(scraping_message);
+                            scraping_message = NULL;
+                        }
+                    } else {
+                        go_up_directory(content, current_path, rom_directory);
+                        selected_index = 0;
+                        total_entries = content->dir_count + content->file_count;
+                        current_page = 0;
+                        total_pages = (total_entries + ENTRIES_PER_PAGE - 1) / ENTRIES_PER_PAGE;
+                        set_selection(content, renderer, font, selected_index, current_page);
+                    }
                 }
 
                 if (event.jbutton.button == JOY_LEFT_SHOULDER) {
@@ -527,7 +540,11 @@ int main(int argc, char** argv) {
                                 // Help functionality to be implemented
                                 break;
                             case MENU_SCRAPER:
-                                // Scraper functionality to be implemented
+                                current_mode = MODE_SCRAPING;
+                                if (scraping_message) SDL_DestroyTexture(scraping_message);
+                                scraping_message = render_text(renderer, "Press B to stop", font, COLOR_TEXT, &scraping_rect);
+                                scraping_rect.x = (SCREEN_W - scraping_rect.w) / 2;
+                                scraping_rect.y = (SCREEN_H - scraping_rect.h) / 2;
                                 break;
                             case MENU_QUIT:
                                 exit_requested = 1;
@@ -557,8 +574,10 @@ int main(int argc, char** argv) {
             SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
         }
 
-        // Render directory and file listings or menu
-        if (current_mode == MODE_MENU) {
+        // Render directory and file listings, menu, or scraping message
+        if (current_mode == MODE_SCRAPING && scraping_message) {
+            SDL_RenderCopy(renderer, scraping_message, NULL, &scraping_rect);
+        } else if (current_mode == MODE_MENU) {
             // Render menu options
             for (int i = 0; i < MENU_OPTIONS; i++) {
                 if (menu_textures[i]) {
@@ -604,6 +623,9 @@ int main(int argc, char** argv) {
 
     if (notification.texture)
         SDL_DestroyTexture(notification.texture);
+    
+    if (scraping_message)
+        SDL_DestroyTexture(scraping_message);
         
     // Clean up menu textures
     for (int i = 0; i < MENU_OPTIONS; i++) {
