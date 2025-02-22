@@ -1,10 +1,69 @@
 #include <time.h>
 #include <stdarg.h>
+#include <stdlib.h>
 #include "logging.h"
+#include "config.h"
 
 static FILE* log_file = NULL;
 
+typedef struct {
+    char* name;
+    time_t mtime;
+} LogFile;
+
+static int compare_logfiles(const void* a, const void* b) {
+    const LogFile* fa = (const LogFile*)a;
+    const LogFile* fb = (const LogFile*)b;
+    // Sort in descending order (newest first)
+    return fb->mtime - fa->mtime;
+}
+
+void cleanup_old_logs(const char* directory) {
+    DIR* dir = opendir(directory);
+    if (!dir) return;
+
+    struct dirent* entry;
+    LogFile* logfiles = NULL;
+    int count = 0;
+    int capacity = 10;
+    logfiles = malloc(capacity * sizeof(LogFile));
+
+    while ((entry = readdir(dir)) != NULL) {
+        if (strstr(entry->d_name, ".log") == NULL) continue;
+
+        char fullpath[512];
+        snprintf(fullpath, sizeof(fullpath), "%s/%s", directory, entry->d_name);
+        
+        struct stat st;
+        if (stat(fullpath, &st) == 0) {
+            if (count >= capacity) {
+                capacity *= 2;
+                logfiles = realloc(logfiles, capacity * sizeof(LogFile));
+            }
+            logfiles[count].name = strdup(fullpath);
+            logfiles[count].mtime = st.st_mtime;
+            count++;
+        }
+    }
+    closedir(dir);
+
+    if (count > 5) {
+        qsort(logfiles, count, sizeof(LogFile), compare_logfiles);
+        // Keep the 5 newest files, delete the rest
+        for (int i = 5; i < count; i++) {
+            remove(logfiles[i].name);
+        }
+    }
+
+    // Cleanup
+    for (int i = 0; i < count; i++) {
+        free(logfiles[i].name);
+    }
+    free(logfiles);
+}
+
 void log_init(const char* filename) {
+    cleanup_old_logs(ROMLAUNCHER_DATA_DIRECTORY);
     log_file = fopen(filename, "w");
 }
 
