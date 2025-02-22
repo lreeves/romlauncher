@@ -18,9 +18,9 @@ SDL_Texture* render_text(SDL_Renderer *renderer, const char* text,
     
     if (is_favorite(full_path)) {
         snprintf(display_text, sizeof(display_text), "* %s", text);
-        surface = TTF_RenderText_Solid(font, display_text, color);
+        surface = TTF_RenderText_Blended(font, display_text, color);
     } else {
-        surface = TTF_RenderText_Solid(font, text, color);
+        surface = TTF_RenderText_Blended(font, text, color);
     }
     texture = SDL_CreateTextureFromSurface(renderer, surface);
     rect->w = surface->w;
