@@ -30,7 +30,15 @@ static char* extract_group_name(const char* full_path, const char* rom_path) {
     
     // Create group name from path without the filename
     char* group_name = strndup(relative_path, last_slash - relative_path);
-    return group_name ? group_name : strdup("");
+    if (!group_name) return strdup("");
+    
+    // Remove leading slash if present
+    if (group_name[0] == '/') {
+        char* tmp = strdup(group_name + 1);
+        free(group_name);
+        return tmp ? tmp : strdup("");
+    }
+    return group_name;
 }
 
 static char* get_display_name(const char* full_path) {
