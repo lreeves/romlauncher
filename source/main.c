@@ -10,8 +10,6 @@
 #include <SDL_ttf.h>
 #include <switch.h>
 
-
-
 // some switch buttons
 #define JOY_A     0
 #define JOY_B     1
@@ -124,7 +122,7 @@ int main(int argc, char** argv) {
     }
     log_message(LOG_DEBUG, "TTF_Init completed");
 
-    SDL_Window* window = SDL_CreateWindow("romlauncher",
+    SDL_Window* window = SDL_CreateWindow(NULL,
                                         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                         SCREEN_W, SCREEN_H, SDL_WINDOW_SHOWN);
     if (!window) {
