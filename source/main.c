@@ -140,20 +140,9 @@ int main(int argc, char** argv) {
 
     Notification notification = {0};
 
-    SDL_Texture *switchlogo_tex = NULL, *sdllogo_tex = NULL, *helloworld_tex = NULL;
+    SDL_Texture *switchlogo_tex = NULL, *sdllogo_tex = NULL;
     SDL_Event event;
 
-    SDL_Color colors[] = {
-        { 128, 128, 128, 0 }, // gray
-        { 255, 255, 255, 0 }, // white
-        { 255, 0, 0, 0 },     // red
-        { 0, 255, 0, 0 },     // green
-        { 0, 0, 255, 0 },     // blue
-        { 255, 255, 0, 0 },   // brown
-        { 0, 255, 255, 0 },   // cyan
-        { 255, 0, 255, 0 },   // purple
-        { 0, 128, 255, 0 },   // bright blue
-    };
     int selected_index = 0;
     int total_entries = 0;
     int current_page = 0;
@@ -229,10 +218,6 @@ int main(int argc, char** argv) {
     // load font from romfs
     TTF_Font* font = TTF_OpenFont("data/Raleway-Regular.ttf", 32);
 
-    // render text as texture
-    SDL_Rect helloworld_rect = { 0, SCREEN_H - 36, 0, 0 };
-    helloworld_tex = render_text(renderer, "Hello, world!", font, colors[1], &helloworld_rect);
-
     log_message(LOG_INFO, "About to list files");
     strncpy(current_path, rom_directory, sizeof(current_path) - 1);
     DirContent* content = list_files(current_path);
@@ -246,7 +231,7 @@ int main(int argc, char** argv) {
         log_message(LOG_INFO, "Calculating pages: total_entries=%d, ENTRIES_PER_PAGE=%d",
                    total_entries, ENTRIES_PER_PAGE);
         total_pages = (total_entries + ENTRIES_PER_PAGE - 1) / ENTRIES_PER_PAGE;
-        set_selection(content, renderer, font, colors, selected_index, current_page);
+        set_selection(content, renderer, font, selected_index, current_page);
     }
 
     while (!exit_requested
@@ -274,7 +259,7 @@ int main(int argc, char** argv) {
                     }
                     current_page = selected_index / ENTRIES_PER_PAGE;
                     set_selection(current_mode == MODE_FAVORITES ? favorites_content : content,
-                                renderer, font, colors, selected_index, current_page);
+                                renderer, font, selected_index, current_page);
                 }
                 if (event.jbutton.button == DPAD_DOWN) {
                     if (selected_index < total_entries - 1) {
@@ -284,7 +269,7 @@ int main(int argc, char** argv) {
                     }
                     current_page = selected_index / ENTRIES_PER_PAGE;
                     set_selection(current_mode == MODE_FAVORITES ? favorites_content : content,
-                                renderer, font, colors, selected_index, current_page);
+                                renderer, font, selected_index, current_page);
                 }
 
                 if (event.jbutton.button == JOY_A) {
@@ -295,7 +280,7 @@ int main(int argc, char** argv) {
                             total_entries = content->dir_count + content->file_count;
                             current_page = 0;
                             total_pages = (total_entries + ENTRIES_PER_PAGE - 1) / ENTRIES_PER_PAGE;
-                            set_selection(content, renderer, font, colors, selected_index, current_page);
+                            set_selection(content, renderer, font, selected_index, current_page);
                         } else {
                             // Calculate which file was selected (accounting for directories)
                             int file_index = selected_index - content->dir_count;
@@ -316,7 +301,7 @@ int main(int argc, char** argv) {
                                     if (notification.texture) {
                                         SDL_DestroyTexture(notification.texture);
                                     }
-                                    notification.texture = render_text(renderer, "Error launching emulator", font, colors[2], &notification.rect);
+                                    notification.texture = render_text(renderer, "Error launching emulator", font, COLOR_TEXT_ERROR, &notification.rect);
                                     notification.rect.x = (SCREEN_W - notification.rect.w) / 2;
                                     notification.rect.y = SCREEN_H - notification.rect.h - 20; // 20px padding from bottom
                                     notification.active = 1;
@@ -339,7 +324,7 @@ int main(int argc, char** argv) {
 
                 if (event.jbutton.button == JOY_X) {
                     toggle_current_favorite(content, selected_index, current_path);
-                    set_selection(content, renderer, font, colors, selected_index, current_page);
+                    set_selection(content, renderer, font, selected_index, current_page);
 
                     // If we're in favorites mode, refresh the list
                     if (current_mode == MODE_FAVORITES) {
@@ -350,7 +335,7 @@ int main(int argc, char** argv) {
                         if (favorites_content) {
                             total_entries = favorites_content->file_count;
                             total_pages = (total_entries + ENTRIES_PER_PAGE - 1) / ENTRIES_PER_PAGE;
-                            set_selection(favorites_content, renderer, font, colors, selected_index, current_page);
+                            set_selection(favorites_content, renderer, font, selected_index, current_page);
                         }
                     }
                 }
@@ -367,7 +352,7 @@ int main(int argc, char** argv) {
                             current_page = 0;
                             total_entries = favorites_content->file_count;
                             total_pages = (total_entries + ENTRIES_PER_PAGE - 1) / ENTRIES_PER_PAGE;
-                            set_selection(favorites_content, renderer, font, colors, selected_index, current_page);
+                            set_selection(favorites_content, renderer, font, selected_index, current_page);
                         }
                     } else {
                         // Switch back to browser mode
@@ -378,7 +363,7 @@ int main(int argc, char** argv) {
                         current_path[MAX_PATH_LEN-1] = '\0';
                         selected_index = 0;
                         current_page = 0;
-                        set_selection(content, renderer, font, colors, selected_index, current_page);
+                        set_selection(content, renderer, font, selected_index, current_page);
                     }
                 }
 
@@ -388,7 +373,7 @@ int main(int argc, char** argv) {
                     total_entries = content->dir_count + content->file_count;
                     current_page = 0;
                     total_pages = (total_entries + ENTRIES_PER_PAGE - 1) / ENTRIES_PER_PAGE;
-                    set_selection(content, renderer, font, colors, selected_index, current_page);
+                    set_selection(content, renderer, font, selected_index, current_page);
                 }
 
                 if (event.jbutton.button == JOY_LEFT_SHOULDER) {
@@ -399,7 +384,7 @@ int main(int argc, char** argv) {
                     }
                     selected_index = current_page * ENTRIES_PER_PAGE;
                     set_selection(current_mode == MODE_FAVORITES ? favorites_content : content,
-                                renderer, font, colors, selected_index, current_page);
+                                renderer, font, selected_index, current_page);
                 }
 
                 if (event.jbutton.button == JOY_RIGHT_SHOULDER) {
@@ -410,7 +395,7 @@ int main(int argc, char** argv) {
                     }
                     selected_index = current_page * ENTRIES_PER_PAGE;
                     set_selection(current_mode == MODE_FAVORITES ? favorites_content : content,
-                                renderer, font, colors, selected_index, current_page);
+                                renderer, font, selected_index, current_page);
                 }
 
                 if (event.jbutton.button == JOY_PLUS) {
@@ -419,7 +404,11 @@ int main(int argc, char** argv) {
             }
         }
 
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0xFF);
+        SDL_SetRenderDrawColor(renderer, 
+            COLOR_BACKGROUND.r, 
+            COLOR_BACKGROUND.g, 
+            COLOR_BACKGROUND.b, 
+            COLOR_BACKGROUND.a);
         SDL_RenderClear(renderer);
 
         // Draw semi-transparent background if notification is active
@@ -465,9 +454,6 @@ int main(int argc, char** argv) {
 
     if (switchlogo_tex)
         SDL_DestroyTexture(switchlogo_tex);
-
-    if (helloworld_tex)
-        SDL_DestroyTexture(helloworld_tex);
 
     if (notification.texture)
         SDL_DestroyTexture(notification.texture);

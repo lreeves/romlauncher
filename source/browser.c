@@ -7,7 +7,7 @@
 #include "config.h"
 
 SDL_Texture* render_text(SDL_Renderer *renderer, const char* text,
-                              TTF_Font *font, SDL_Color color, SDL_Rect *rect) {
+                              TTF_Font *font, const SDL_Color color, SDL_Rect *rect) {
     SDL_Surface *surface;
     SDL_Texture *texture;
 
@@ -263,7 +263,7 @@ void toggle_current_favorite(DirContent* content, int selected_index, const char
 }
 
 void set_selection(DirContent* content, SDL_Renderer *renderer, TTF_Font *font,
-                  SDL_Color *colors, int selected_index, int current_page) {
+                  int selected_index, int current_page) {
     if (!content) return;
 
     char log_buf[MAX_PATH_LEN];
@@ -284,7 +284,7 @@ void set_selection(DirContent* content, SDL_Renderer *renderer, TTF_Font *font,
             SDL_DestroyTexture(content->dir_textures[i]);
         }
         content->dir_textures[i] = render_text(renderer, log_buf, font,
-            colors[i == selected_index ? 8 : 1], &content->dir_rects[i]);
+            i == selected_index ? COLOR_TEXT_HIGHLIGHT : COLOR_TEXT, &content->dir_rects[i]);
     }
 
     for (int i = 0; i < content->file_count; i++) {
@@ -302,6 +302,6 @@ void set_selection(DirContent* content, SDL_Renderer *renderer, TTF_Font *font,
         }
         int entry_index = content->dir_count + i;
         content->file_textures[i] = render_text(renderer, log_buf, font,
-            colors[entry_index == selected_index ? 8 : 0], &content->file_rects[i]);
+            entry_index == selected_index ? COLOR_TEXT_HIGHLIGHT : COLOR_TEXT, &content->file_rects[i]);
     }
 }
