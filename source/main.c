@@ -509,6 +509,8 @@ int main(int argc, char** argv) {
         SDL_DestroyRenderer(renderer);
     if (window)
         SDL_DestroyWindow(window);
+    if (font)
+        TTF_CloseFont(font);
     TTF_Quit();
     IMG_Quit();
     SDL_Quit();
