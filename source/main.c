@@ -224,15 +224,19 @@ int main(int argc, char** argv) {
     if (content == NULL) {
         log_message(LOG_INFO, "list_files returned NULL");
     } else {
-        log_message(LOG_INFO, "Got valid content");
+        log_message(LOG_DEBUG, "Got valid content");
         total_entries = content->dir_count + content->file_count;
-        log_message(LOG_INFO, "Found %d directories and %d files",
+        log_message(LOG_DEBUG, "Found %d directories and %d files",
                    content->dir_count, content->file_count);
-        log_message(LOG_INFO, "Calculating pages: total_entries=%d, ENTRIES_PER_PAGE=%d",
+        log_message(LOG_DEBUG, "Calculating pages: total_entries=%d, ENTRIES_PER_PAGE=%d",
                    total_entries, ENTRIES_PER_PAGE);
         total_pages = (total_entries + ENTRIES_PER_PAGE - 1) / ENTRIES_PER_PAGE;
+
+        log_message(LOG_DEBUG, "Calling set_selection");
         set_selection(content, renderer, font, selected_index, current_page);
     }
+
+    log_message(LOG_DEBUG, "Starting main loop");
 
     while (!exit_requested
         && appletMainLoop()
@@ -404,10 +408,10 @@ int main(int argc, char** argv) {
             }
         }
 
-        SDL_SetRenderDrawColor(renderer, 
-            COLOR_BACKGROUND.r, 
-            COLOR_BACKGROUND.g, 
-            COLOR_BACKGROUND.b, 
+        SDL_SetRenderDrawColor(renderer,
+            COLOR_BACKGROUND.r,
+            COLOR_BACKGROUND.g,
+            COLOR_BACKGROUND.b,
             COLOR_BACKGROUND.a);
         SDL_RenderClear(renderer);
 
