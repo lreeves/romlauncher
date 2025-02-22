@@ -48,8 +48,12 @@ const char* get_file_extension(const char* filename) {
 
 // Launch RetroArch with the given ROM path
 int launch_retroarch(const char* rom_path) {
+    log_message(LOG_INFO, "Launch request for ROM: %s", rom_path);
+
     // Get file extension and look up core
     const char* ext = get_file_extension(rom_path);
+    log_message(LOG_INFO, "ROM extension: %s", ext);
+
     config_entry *core_entry;
     HASH_FIND_STR(default_core_mappings, ext, core_entry);
 
@@ -57,6 +61,8 @@ int launch_retroarch(const char* rom_path) {
         log_message(LOG_ERROR, "No core mapping found for extension: %s", ext);
         return 0;
     }
+
+    log_message(LOG_INFO, "Found core mapping: %s -> %s", ext, core_entry->value);
 
     // Construct core path
     char core_path[MAX_PATH_LEN];
@@ -255,21 +261,26 @@ int main(int argc, char** argv) {
                     continue;
                 }
 
-                if (event.jbutton.button == DPAD_UP) {
-                    if (selected_index > 0) {
-                        selected_index--;
+                if (event.jbutton.button == DPAD_UP || event.jbutton.button == DPAD_DOWN) {
+                    if (current_mode == MODE_FAVORITES && favorites_content) {
+                        // In favorites mode, skip group headers
+                        int direction = (event.jbutton.button == DPAD_UP) ? -1 : 1;
+                        selected_index = find_next_rom(favorites_content, selected_index, direction);
                     } else {
-                        selected_index = total_entries - 1;
-                    }
-                    current_page = selected_index / ENTRIES_PER_PAGE;
-                    set_selection(current_mode == MODE_FAVORITES ? favorites_content : content,
-                                renderer, font, selected_index, current_page);
-                }
-                if (event.jbutton.button == DPAD_DOWN) {
-                    if (selected_index < total_entries - 1) {
-                        selected_index++;
-                    } else {
-                        selected_index = 0;
+                        // Normal directory browsing behavior
+                        if (event.jbutton.button == DPAD_UP) {
+                            if (selected_index > 0) {
+                                selected_index--;
+                            } else {
+                                selected_index = total_entries - 1;
+                            }
+                        } else { // DPAD_DOWN
+                            if (selected_index < total_entries - 1) {
+                                selected_index++;
+                            } else {
+                                selected_index = 0;
+                            }
+                        }
                     }
                     current_page = selected_index / ENTRIES_PER_PAGE;
                     set_selection(current_mode == MODE_FAVORITES ? favorites_content : content,
@@ -277,6 +288,9 @@ int main(int argc, char** argv) {
                 }
 
                 if (event.jbutton.button == JOY_A) {
+                    log_message(LOG_DEBUG, "A button pressed in mode: %s", 
+                              current_mode == MODE_BROWSER ? "BROWSER" : "FAVORITES");
+                    
                     if (current_mode == MODE_BROWSER) {
                         if (selected_index < content->dir_count) {
                             change_directory(content, selected_index, current_path);
@@ -313,14 +327,57 @@ int main(int argc, char** argv) {
                             }
                         }
                     } else if (current_mode == MODE_FAVORITES) {
+                        log_message(LOG_DEBUG, "Favorites mode: selected_index=%d, file_count=%d", 
+                                  selected_index, favorites_content ? favorites_content->file_count : -1);
+                        
                         // In favorites mode, directly launch the selected ROM
-                        if (selected_index >= 0 && selected_index < favorites_content->file_count) {
-                            // The favorites list stores full paths, so we can use them directly
-                            const char* rom_path = favorites_content->files[selected_index];
-
-                            // Try to launch RetroArch
-                            if (launch_retroarch(rom_path)) {
-                                exit_requested = 1;
+                        if (selected_index >= 0 && favorites_content && selected_index < favorites_content->file_count) {
+                            // Skip if this is a group header
+                            if (!is_group_header(favorites_content->files[selected_index])) {
+                                log_message(LOG_DEBUG, "Selected favorite is not a group header");
+                                // Find the actual path from the groups structure
+                                FavoriteGroup* group = favorites_content->groups;
+                                int count = 0;
+                                
+                                while (group) {
+                                    count++; // Skip the group header
+                                    if (selected_index < count + group->entry_count) {
+                                        // Found the right group, now find the entry
+                                        FavoriteEntry* entry = group->entries;
+                                        // Reverse through the linked list since entries were added in reverse
+                                        for (int i = 0; i < (group->entry_count - 1) - (selected_index - count); i++) {
+                                            entry = entry->next;
+                                        }
+                                        if (entry && entry->path) {
+                                            // Ensure path starts with "sdmc:"
+                                            char launch_path[MAX_PATH_LEN];
+                                            if (strncmp(entry->path, "sdmc:", 5) != 0) {
+                                                snprintf(launch_path, sizeof(launch_path), "sdmc:%s", entry->path);
+                                            } else {
+                                                strncpy(launch_path, entry->path, sizeof(launch_path)-1);
+                                                launch_path[sizeof(launch_path)-1] = '\0';
+                                            }
+                                            log_message(LOG_INFO, "Attempting to launch favorite: %s", launch_path);
+                                            if (launch_retroarch(launch_path)) {
+                                                exit_requested = 1;
+                                            } else {
+                                                // Show error notification
+                                                if (notification.texture) {
+                                                    SDL_DestroyTexture(notification.texture);
+                                                }
+                                                notification.texture = render_text(renderer, "Error launching emulator", font, COLOR_TEXT_ERROR, &notification.rect);
+                                                notification.rect.x = (SCREEN_W - notification.rect.w) / 2;
+                                                notification.rect.y = SCREEN_H - notification.rect.h - 20;
+                                                notification.active = 1;
+                                            }
+                                        } else {
+                                            log_message(LOG_ERROR, "Invalid favorite entry or path");
+                                        }
+                                        break;
+                                    }
+                                    count += group->entry_count;
+                                    group = group->next;
+                                }
                             }
                         }
                     }
@@ -352,8 +409,9 @@ int main(int argc, char** argv) {
                         favorites_content = list_favorites();
                         if (favorites_content) {
                             current_mode = MODE_FAVORITES;
-                            selected_index = 0;
-                            current_page = 0;
+                            // Find first non-header entry
+                            selected_index = find_next_rom(favorites_content, -1, 1);
+                            current_page = selected_index / ENTRIES_PER_PAGE;
                             total_entries = favorites_content->file_count;
                             total_pages = (total_entries + ENTRIES_PER_PAGE - 1) / ENTRIES_PER_PAGE;
                             set_selection(favorites_content, renderer, font, selected_index, current_page);

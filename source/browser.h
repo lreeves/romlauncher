@@ -14,6 +14,19 @@ extern char current_path[MAX_PATH_LEN];
 extern int is_favorite(const char *path);
 extern void toggle_favorite(const char *path);
 
+typedef struct FavoriteEntry {
+    char *path;
+    char *display_name;
+    struct FavoriteEntry *next;
+} FavoriteEntry;
+
+typedef struct FavoriteGroup {
+    char *group_name;
+    FavoriteEntry *entries;
+    int entry_count;
+    struct FavoriteGroup *next;
+} FavoriteGroup;
+
 typedef struct {
     char **dirs;
     char **files;
@@ -23,9 +36,13 @@ typedef struct {
     SDL_Texture **file_textures;
     SDL_Rect *dir_rects;
     SDL_Rect *file_rects;
+    FavoriteGroup *groups;  // Used only for favorites view
+    int is_favorites_view;
 } DirContent;
 
 // Function declarations
+int is_group_header(const char* text);
+int find_next_rom(DirContent* content, int current_index, int direction);
 SDL_Texture* render_text(SDL_Renderer *renderer, const char* text,
                         TTF_Font *font, const SDL_Color color, SDL_Rect *rect);
 DirContent* list_files(const char* path);
