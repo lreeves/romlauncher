@@ -41,7 +41,7 @@
 #define STATUS_BAR_HEIGHT 30
 
 // Status bar colors - inverted from main colors
-#define COLOR_STATUS_BAR (SDL_Color){220, 220, 220, 255}  
+#define COLOR_STATUS_BAR (SDL_Color){220, 220, 220, 255}
 #define COLOR_STATUS_TEXT (SDL_Color){20, 20, 20, 255}
 
 typedef struct {
@@ -140,7 +140,7 @@ int main(int argc, char** argv) {
         mkdir(ROMLAUNCHER_DATA_DIRECTORY, 0755);
         log_message(LOG_INFO, "Created data directory: %s", ROMLAUNCHER_DATA_DIRECTORY);
     }
-    
+
     if (stat(ROMLAUNCHER_MEDIA_DIRECTORY, &st) == -1) {
         mkdir(ROMLAUNCHER_MEDIA_DIRECTORY, 0755);
         log_message(LOG_INFO, "Created media directory: %s", ROMLAUNCHER_MEDIA_DIRECTORY);
@@ -166,7 +166,7 @@ int main(int argc, char** argv) {
     SDL_Texture* menu_textures[MENU_OPTIONS] = {NULL};
     SDL_Rect menu_rects[MENU_OPTIONS];
     const char* menu_options[] = {"Help", "Scraper", "Quit"};
-    
+
     // Scraping mode message
     SDL_Texture* scraping_message = NULL;
     SDL_Rect scraping_rect;
@@ -316,9 +316,9 @@ int main(int argc, char** argv) {
                 }
 
                 if (event.jbutton.button == JOY_A) {
-                    log_message(LOG_DEBUG, "A button pressed in mode: %s", 
+                    log_message(LOG_DEBUG, "A button pressed in mode: %s",
                               current_mode == MODE_BROWSER ? "BROWSER" : "FAVORITES");
-                    
+
                     if (current_mode == MODE_BROWSER) {
                         if (selected_index < content->dir_count) {
                             change_directory(content, selected_index, current_path);
@@ -355,9 +355,9 @@ int main(int argc, char** argv) {
                             }
                         }
                     } else if (current_mode == MODE_FAVORITES) {
-                        log_message(LOG_DEBUG, "Favorites mode: selected_index=%d, file_count=%d", 
+                        log_message(LOG_DEBUG, "Favorites mode: selected_index=%d, file_count=%d",
                                   selected_index, favorites_content ? favorites_content->file_count : -1);
-                        
+
                         // In favorites mode, directly launch the selected ROM
                         if (selected_index >= 0 && favorites_content && selected_index < favorites_content->file_count) {
                             // Skip if this is a group header
@@ -366,7 +366,7 @@ int main(int argc, char** argv) {
                                 // Find the actual path from the groups structure
                                 FavoriteGroup* group = favorites_content->groups;
                                 int count = 0;
-                                
+
                                 while (group) {
                                     count++; // Skip the group header
                                     if (selected_index < count + group->entry_count) {
@@ -500,7 +500,7 @@ int main(int argc, char** argv) {
                     if (current_mode != MODE_MENU) {
                         current_mode = MODE_MENU;
                         menu_selection = 0;
-                        
+
                         // Create menu textures
                         for (int i = 0; i < MENU_OPTIONS; i++) {
                             if (menu_textures[i]) {
@@ -527,7 +527,7 @@ int main(int argc, char** argv) {
                     if (event.jbutton.button == DPAD_UP) {
                         if (menu_selection > 0) menu_selection--;
                         else menu_selection = MENU_OPTIONS - 1;
-                        
+
                         // Update menu textures
                         for (int i = 0; i < MENU_OPTIONS; i++) {
                             if (menu_textures[i]) SDL_DestroyTexture(menu_textures[i]);
@@ -538,7 +538,7 @@ int main(int argc, char** argv) {
                     else if (event.jbutton.button == DPAD_DOWN) {
                         if (menu_selection < MENU_OPTIONS - 1) menu_selection++;
                         else menu_selection = 0;
-                        
+
                         // Update menu textures
                         for (int i = 0; i < MENU_OPTIONS; i++) {
                             if (menu_textures[i]) SDL_DestroyTexture(menu_textures[i]);
@@ -618,7 +618,7 @@ int main(int argc, char** argv) {
         }
 
         // Render status bar
-        SDL_SetRenderDrawColor(renderer, 
+        SDL_SetRenderDrawColor(renderer,
             COLOR_STATUS_BAR.r,
             COLOR_STATUS_BAR.g,
             COLOR_STATUS_BAR.b,
@@ -629,8 +629,8 @@ int main(int argc, char** argv) {
         // Render status text
         SDL_Color status_color = COLOR_STATUS_TEXT;
         SDL_Rect status_rect;
-        SDL_Texture* status_text = render_text(renderer, 
-            "- MENU    + QUIT    X FAVORITES    Y ADD FAVORITE",
+        SDL_Texture* status_text = render_text(renderer,
+            "- MENU    + QUIT    X FAVORITES    Y TOGGLE FAVORITE",
             small_font, status_color, &status_rect);
         if (status_text) {
             status_rect.x = (SCREEN_W - status_rect.w) / 2;
@@ -657,10 +657,10 @@ int main(int argc, char** argv) {
 
     if (notification.texture)
         SDL_DestroyTexture(notification.texture);
-    
+
     if (scraping_message)
         SDL_DestroyTexture(scraping_message);
-        
+
     // Clean up menu textures
     for (int i = 0; i < MENU_OPTIONS; i++) {
         if (menu_textures[i])
