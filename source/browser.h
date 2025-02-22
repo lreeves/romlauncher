@@ -41,8 +41,6 @@ typedef struct {
 } DirContent;
 
 // Function declarations
-int is_group_header(const char* text);
-int find_next_rom(DirContent* content, int current_index, int direction);
 SDL_Texture* render_text(SDL_Renderer *renderer, const char* text,
                         TTF_Font *font, const SDL_Color color, SDL_Rect *rect);
 DirContent* list_files(const char* path);
@@ -50,12 +48,6 @@ void go_up_directory(DirContent* content, char* current_path, const char* rom_di
 void change_directory(DirContent* content, int selected_index, char* current_path);
 void set_selection(DirContent* content, SDL_Renderer *renderer, TTF_Font *font,
                   int selected_index, int current_page);
-
-// Favorites management
-void toggle_current_favorite(DirContent* content, int selected_index, const char* current_path);
-
-// Favorites menu
-DirContent* list_favorites(void);
 void free_dir_content(DirContent* content);
 
 #endif // BROWSER_H

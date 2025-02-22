@@ -5,6 +5,7 @@
 #include "logging.h"
 #include "config.h"
 #include "browser.h"
+#include "favorites.h"
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
