@@ -85,6 +85,10 @@ DirContent* list_files(const char* path) {
 
     content->dir_count = 0;
     content->file_count = 0;
+    content->box_art_texture = NULL;
+    content->prev_box_art_texture = NULL;
+    content->fade_alpha = 255;
+    content->is_fading = 0;
 
     dir = opendir(path);
     if (dir == NULL) {
@@ -205,10 +209,15 @@ void change_directory(DirContent* content, int selected_index, char* current_pat
 }
 
 void load_box_art(DirContent* content, SDL_Renderer *renderer, const char* rom_path, const char* rom_name) {
-    // Clear existing box art texture
+    // Store current texture as previous for fade effect
     if (content->box_art_texture) {
-        SDL_DestroyTexture(content->box_art_texture);
+        if (content->prev_box_art_texture) {
+            SDL_DestroyTexture(content->prev_box_art_texture);
+        }
+        content->prev_box_art_texture = content->box_art_texture;
         content->box_art_texture = NULL;
+        content->fade_alpha = 255;
+        content->is_fading = 1;
     }
 
     if (!rom_name) return;
@@ -277,6 +286,9 @@ void free_dir_content(DirContent* content) {
 
     if (content->box_art_texture) {
         SDL_DestroyTexture(content->box_art_texture);
+    }
+    if (content->prev_box_art_texture) {
+        SDL_DestroyTexture(content->prev_box_art_texture);
     }
 
     for (int i = 0; i < content->dir_count; i++) {

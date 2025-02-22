@@ -41,6 +41,9 @@ typedef struct {
     int is_favorites_view;
     SDL_Texture *box_art_texture;
     SDL_Rect box_art_rect;
+    SDL_Texture *prev_box_art_texture;  // For fade effect
+    Uint8 fade_alpha;                   // Current fade alpha value
+    int is_fading;                      // Whether fade effect is active
 } DirContent;
 
 // Function to load box art for a ROM
