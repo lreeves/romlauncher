@@ -45,6 +45,59 @@ const char* get_file_extension(const char* filename) {
     return dot + 1;
 }
 
+// Launch RetroArch with the given ROM path
+int launch_retroarch(const char* rom_path) {
+    // Get file extension and look up core
+    const char* ext = get_file_extension(rom_path);
+    config_entry *core_entry;
+    HASH_FIND_STR(default_core_mappings, ext, core_entry);
+
+    if (!core_entry) {
+        log_message(LOG_ERROR, "No core mapping found for extension: %s", ext);
+        return 0;
+    }
+
+    // Construct core path
+    char core_path[MAX_PATH_LEN];
+    int written = snprintf(core_path, sizeof(core_path), "sdmc:/retroarch/cores/%s_libretro_libnx.nro", core_entry->value);
+    if (written < 0 || (size_t)written >= sizeof(core_path)) {
+        log_message(LOG_ERROR, "Core path construction failed (truncation or error)");
+        return 0;
+    }
+
+    // Check if core exists
+    FILE *core_file = fopen(core_path, "r");
+    if (core_file == NULL) {
+        log_message(LOG_ERROR, "Core not found at: %s", core_path);
+        return 0;
+    }
+    fclose(core_file);
+
+    // Skip the "sdmc:" prefix if present for the arguments
+    const char* rom_arg = strncmp(rom_path, "sdmc:", 5) == 0 ? rom_path + 5 : rom_path;
+
+    // Construct the arguments string
+    char full_arguments[MAX_PATH_LEN];
+    written = snprintf(full_arguments, sizeof(full_arguments), "x \"%s\"", rom_arg);
+    if (written < 0 || (size_t)written >= sizeof(full_arguments)) {
+        log_message(LOG_ERROR, "Arguments string construction failed (truncation or error)");
+        return 0;
+    }
+
+    // Log launch details
+    log_message(LOG_INFO, "Launching RetroArch: %s with args: %s", core_path, full_arguments);
+
+    // Launch RetroArch with the selected ROM
+    Result rc = envSetNextLoad(core_path, full_arguments);
+    if (R_SUCCEEDED(rc)) {
+        log_message(LOG_INFO, "Successfully set next load");
+        return 1;
+    } else {
+        log_message(LOG_ERROR, "Failed to set next load, error: %x", rc);
+        return 0;
+    }
+}
+
 const char* rom_directory = "sdmc:/roms";
 char current_path[MAX_PATH_LEN];
 
@@ -239,15 +292,20 @@ int main(int argc, char** argv) {
                             // Calculate which file was selected (accounting for directories)
                             int file_index = selected_index - content->dir_count;
                             if (file_index >= 0 && file_index < content->file_count) {
-                                // Get file extension and look up core
-                                const char* ext = get_file_extension(content->files[file_index]);
-                                config_entry *core_entry;
-                                HASH_FIND_STR(default_core_mappings, ext, core_entry);
+                                // First, construct the full ROM path safely
+                                char rom_path[MAX_PATH_LEN];
+                                int written = snprintf(rom_path, sizeof(rom_path), "%s/%s", current_path + 5, content->files[file_index]);
+                                if (written < 0 || (size_t)written >= sizeof(rom_path)) {
+                                    log_message(LOG_ERROR, "ROM path construction failed (truncation or error)");
+                                    continue;
+                                }
 
-                                if (!core_entry) {
-                                    log_message(LOG_ERROR, "No core mapping found for extension: %s", ext);
-
-                                    // Show notification
+                                // Try to launch RetroArch
+                                if (launch_retroarch(rom_path)) {
+                                    exit_requested = 1;
+                                } else {
+                                    // Show error notification
+                                    const char* ext = get_file_extension(content->files[file_index]);
                                     if (notification.texture) {
                                         SDL_DestroyTexture(notification.texture);
                                     }
@@ -257,107 +315,18 @@ int main(int argc, char** argv) {
                                     notification.rect.x = (SCREEN_W - notification.rect.w) / 2;
                                     notification.rect.y = SCREEN_H - notification.rect.h - 20; // 20px padding from bottom
                                     notification.active = 1;
-                                    continue;
-                                }
-
-                                // Construct core path
-                                char core_path[MAX_PATH_LEN];
-                                int written = snprintf(core_path, sizeof(core_path), "sdmc:/retroarch/cores/%s_libretro_libnx.nro", core_entry->value);
-                                if (written < 0 || (size_t)written >= sizeof(core_path)) {
-                                    log_message(LOG_ERROR, "Core path construction failed (truncation or error)");
-                                    continue;
-                                }
-
-                                // Check if core exists
-                                FILE *core_file = fopen(core_path, "r");
-                                if (core_file == NULL) {
-                                    log_message(LOG_ERROR, "Core not found at: %s", core_path);
-                                } else {
-                                    fclose(core_file);
-
-                                    // First, construct the full ROM/core path safely
-                                    char rom_path[MAX_PATH_LEN];
-                                    int written = snprintf(rom_path, sizeof(rom_path), "%s/%s", current_path + 5, content->files[file_index]);
-                                    if (written < 0 || (size_t)written >= sizeof(rom_path)) {
-                                        log_message(LOG_ERROR, "ROM path construction failed (truncation or error)");
-                                        exit(1);
-                                    }
-
-                                    // Now, construct the full arguments string safely using the constructed path twice
-                                    char full_arguments[MAX_PATH_LEN];
-                                    written = snprintf(full_arguments, sizeof(full_arguments), "x \"%s\" \"%s\"", rom_path);
-                                    if (written < 0 || (size_t)written >= sizeof(full_arguments)) {
-                                        log_message(LOG_ERROR, "Arguments string construction failed (truncation or error)");
-                                        exit(1);
-                                    }
-
-                                    // Log launch details
-                                    log_message(LOG_INFO, "Launching RetroArch: %s with args: %s", core_path, full_arguments);
-
-                                    // Launch RetroArch with the selected ROM
-                                    Result rc = envSetNextLoad(core_path, full_arguments);
-                                    if (R_SUCCEEDED(rc)) {
-                                        log_message(LOG_INFO, "Successfully set next load");
-                                        exit_requested = 1;
-                                    } else {
-                                        log_message(LOG_ERROR, "Failed to set next load, error: %x", rc);
-                                    }
                                 }
                             }
                         }
                     } else if (current_mode == MODE_FAVORITES) {
                         // In favorites mode, directly launch the selected ROM
                         if (selected_index >= 0 && selected_index < favorites_content->file_count) {
-                            // Get file extension and look up core
-                            const char* ext = get_file_extension(favorites_content->files[selected_index]);
-                            config_entry *core_entry;
-                            HASH_FIND_STR(default_core_mappings, ext, core_entry);
-
-                            if (!core_entry) {
-                                log_message(LOG_ERROR, "No core mapping found for extension: %s", ext);
-                                continue;
-                            }
-
-                            // Construct core path
-                            char core_path[MAX_PATH_LEN];
-                            int written = snprintf(core_path, sizeof(core_path), "sdmc:/retroarch/cores/%s_libretro_libnx.nro", core_entry->value);
-                            if (written < 0 || (size_t)written >= sizeof(core_path)) {
-                                log_message(LOG_ERROR, "Core path construction failed (truncation or error)");
-                                continue;
-                            }
-
-                            // Check if core exists
-                            FILE *core_file = fopen(core_path, "r");
-                            if (core_file == NULL) {
-                                log_message(LOG_ERROR, "Core not found at: %s", core_path);
-                            } else {
-                                fclose(core_file);
-
-                                // The favorites list stores full paths, so we can use them directly
-                                const char* full_path = favorites_content->files[selected_index];
-
-                                // Skip the "sdmc:" prefix if present
-                                const char* rom_path = strncmp(full_path, "sdmc:", 5) == 0 ? full_path + 5 : full_path;
-
-                                // Construct the arguments string
-                                char full_arguments[MAX_PATH_LEN];
-                                int written = snprintf(full_arguments, sizeof(full_arguments), "x \"%s\"", rom_path);
-                                if (written < 0 || (size_t)written >= sizeof(full_arguments)) {
-                                    log_message(LOG_ERROR, "Arguments string construction failed (truncation or error)");
-                                    exit(1);
-                                }
-
-                                // Log launch details
-                                log_message(LOG_INFO, "Launching RetroArch from favorites: %s with args: %s", core_path, full_arguments);
-
-                                // Launch RetroArch with the selected ROM
-                                Result rc = envSetNextLoad(core_path, full_arguments);
-                                if (R_SUCCEEDED(rc)) {
-                                    log_message(LOG_INFO, "Successfully set next load from favorites");
-                                    exit_requested = 1;
-                                } else {
-                                    log_message(LOG_ERROR, "Failed to set next load from favorites, error: %x", rc);
-                                }
+                            // The favorites list stores full paths, so we can use them directly
+                            const char* rom_path = favorites_content->files[selected_index];
+                            
+                            // Try to launch RetroArch
+                            if (launch_retroarch(rom_path)) {
+                                exit_requested = 1;
                             }
                         }
                     }
