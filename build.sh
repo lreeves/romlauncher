@@ -49,5 +49,17 @@ echo "Launching Ryujinx"
 
 DOTNET_ROOT=~/Tools/dotnet-90-200 /home/luke/Source/ryujinx/build/Ryujinx /home/luke/Source/romlauncher/romlauncher.nro &>/home/luke/ryujinx.log
 
-cat /home/luke/.config/Ryujinx/sdcard/retrolauncher.log | grep -v DEBUG
+if [ ! -d "/home/luke/.config/Ryujinx/sdcard/romlauncher/" ]; then
+  echo "Log directory not found, exiting"
+  exit 0
+fi
+
+LAST_LOG=`ls -rt /home/luke/.config/Ryujinx/sdcard/romlauncher/*.log | tail -1`
+
+if [ ! -f "$LAST_LOG" ]; then
+  echo "Couldn't find log file"
+  exit 1
+fi
+
+cat "$LAST_LOG" | grep -v DEBUG
 
