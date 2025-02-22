@@ -4,6 +4,18 @@
 #include "config.h"
 #include "logging.h"
 
+static int compare_strings(const void* a, const void* b) {
+    const char* str_a = (*(FavoriteGroup**)a)->group_name;
+    const char* str_b = (*(FavoriteGroup**)b)->group_name;
+    return strcmp(str_a, str_b);
+}
+
+static int compare_entries(const void* a, const void* b) {
+    const char* str_a = (*(FavoriteEntry**)a)->display_name;
+    const char* str_b = (*(FavoriteEntry**)b)->display_name;
+    return strcmp(str_a, str_b);
+}
+
 static char* extract_group_name(const char* full_path, const char* rom_path) {
     // Skip the ROM path prefix
     const char* relative_path = strstr(full_path, rom_path);
@@ -77,6 +89,7 @@ DirContent* list_favorites(void) {
     FavoriteGroup* groups = NULL;
     config_entry *current, *tmp;
     
+    // Process favorites
     HASH_ITER(hh, favorites, current, tmp) {
         char* group_name = extract_group_name(current->key, rom_path);
         char* display_name = get_display_name(current->key);
@@ -156,9 +169,47 @@ DirContent* list_favorites(void) {
         return NULL;
     }
     
-    // Fill arrays with group names and entries
-    int idx = 0;
+    // Convert linked list to array for sorting
+    FavoriteGroup** group_array = malloc(sizeof(FavoriteGroup*) * total_entries);
+    if (!group_array) {
+        free_dir_content(content);
+        return NULL;
+    }
+    
+    int group_idx = 0;
     for (FavoriteGroup* group = groups; group != NULL; group = group->next) {
+        group_array[group_idx++] = group;
+        
+        // Convert linked list of entries to array and sort
+        FavoriteEntry** entry_array = malloc(sizeof(FavoriteEntry*) * group->entry_count);
+        if (entry_array) {
+            int entry_idx = 0;
+            for (FavoriteEntry* entry = group->entries; entry != NULL; entry = entry->next) {
+                entry_array[entry_idx++] = entry;
+            }
+            
+            // Sort entries by display name
+            qsort(entry_array, group->entry_count, sizeof(FavoriteEntry*),
+                  compare_entries);
+            
+            // Rebuild linked list in sorted order
+            group->entries = NULL;
+            for (int i = group->entry_count - 1; i >= 0; i--) {
+                entry_array[i]->next = group->entries;
+                group->entries = entry_array[i];
+            }
+            free(entry_array);
+        }
+    }
+    
+    // Sort groups by name
+    qsort(group_array, group_idx, sizeof(FavoriteGroup*),
+          compare_strings);
+    
+    // Fill arrays with sorted group names and entries
+    int idx = 0;
+    for (int i = 0; i < group_idx; i++) {
+        FavoriteGroup* group = group_array[i];
         // Add group name
         char group_display[MAX_PATH_LEN];
         snprintf(group_display, sizeof(group_display), "[%s]", group->group_name);
@@ -179,6 +230,7 @@ DirContent* list_favorites(void) {
     content->file_count = idx;
     content->groups = groups; // Store for later cleanup
     
+    free(group_array);
     return content;
 }
 
