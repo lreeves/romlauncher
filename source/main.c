@@ -247,8 +247,9 @@ int main(int argc, char** argv) {
 
     log_message(LOG_DEBUG, "SDL joystick initialized");
 
-    // load font from romfs
+    // load fonts from romfs
     TTF_Font* font = TTF_OpenFont("data/Raleway-Regular.ttf", 32);
+    TTF_Font* small_font = TTF_OpenFont("data/Raleway-Regular.ttf", 16);
 
     log_message(LOG_INFO, "About to list files");
     strncpy(current_path, rom_directory, sizeof(current_path) - 1);
@@ -629,7 +630,7 @@ int main(int argc, char** argv) {
         SDL_Rect status_rect;
         SDL_Texture* status_text = render_text(renderer, 
             "- MENU    + QUIT    X FAVORITES    Y ADD FAVORITE",
-            font, status_color, &status_rect);
+            small_font, status_color, &status_rect);
         if (status_text) {
             status_rect.x = (SCREEN_W - status_rect.w) / 2;
             status_rect.y = SCREEN_H - STATUS_BAR_HEIGHT + (STATUS_BAR_HEIGHT - status_rect.h) / 2;
@@ -676,6 +677,8 @@ int main(int argc, char** argv) {
         SDL_DestroyWindow(window);
     if (font)
         TTF_CloseFont(font);
+    if (small_font)
+        TTF_CloseFont(small_font);
     TTF_Quit();
     IMG_Quit();
     SDL_Quit();
