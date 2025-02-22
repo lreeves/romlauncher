@@ -26,6 +26,7 @@
 #define DPAD_UP    13
 #define DPAD_DOWN  15
 
+#define ROMLAUNCHER_DATA_DIRECTORY "sdmc:/romlauncher/"
 #define SCREEN_W 1280
 #define SCREEN_H 720
 
@@ -112,6 +113,13 @@ int main(int argc, char** argv) {
     log_init(log_filename);
 
     log_message(LOG_INFO, "Starting romlauncher");
+
+    // Create data directory if it doesn't exist
+    struct stat st = {0};
+    if (stat(ROMLAUNCHER_DATA_DIRECTORY, &st) == -1) {
+        mkdir(ROMLAUNCHER_DATA_DIRECTORY, 0755);
+        log_message(LOG_INFO, "Created data directory: %s", ROMLAUNCHER_DATA_DIRECTORY);
+    }
 
     // Load config and favorites
     load_config();
