@@ -5,6 +5,7 @@
 #include "browser.h"
 #include "logging.h"
 #include "config.h"
+#include <SDL_image.h>
 
 SDL_Texture* render_text(SDL_Renderer *renderer, const char* text,
                               TTF_Font *font, const SDL_Color color, SDL_Rect *rect) {
@@ -183,8 +184,76 @@ void change_directory(DirContent* content, int selected_index, char* current_pat
     }
 }
 
+void load_box_art(DirContent* content, SDL_Renderer *renderer, const char* rom_path, const char* rom_name) {
+    // Clear existing box art texture
+    if (content->box_art_texture) {
+        SDL_DestroyTexture(content->box_art_texture);
+        content->box_art_texture = NULL;
+    }
+
+    if (!rom_name) return;
+
+    // Get file extension
+    const char* ext = strrchr(rom_name, '.');
+    if (!ext) return;
+    ext++; // Skip the dot
+
+    // Get the ROM name without extension for the PNG filename
+    char rom_basename[MAX_PATH_LEN];
+    strncpy(rom_basename, rom_name, (ext - rom_name - 1));
+    rom_basename[(ext - rom_name - 1)] = '\0';
+    log_message(LOG_DEBUG, "ROM basename: %s", rom_basename);
+
+    // Construct box art path
+    char box_art_path[MAX_PATH_LEN];
+    int path_len = snprintf(box_art_path, sizeof(box_art_path), 
+             "%s/media/%s/2dboxart/", 
+             ROMLAUNCHER_DATA_DIRECTORY, ext);
+    if (path_len > 0 && path_len < sizeof(box_art_path)) {
+        strncat(box_art_path, rom_basename, sizeof(box_art_path) - path_len - 5); // -5 for ".png\0"
+        strcat(box_art_path, ".png");
+    } else {
+        log_message(LOG_ERROR, "Box art path construction failed");
+        return;
+    }
+
+    log_message(LOG_DEBUG, "Checking for box art at: %s", box_art_path);
+
+    // Check if file exists first
+    FILE* test = fopen(box_art_path, "r");
+    if (!test) {
+        log_message(LOG_DEBUG, "Box art file does not exist");
+        return;
+    }
+    fclose(test);
+
+    // Try to load the image
+    SDL_Surface* surface = IMG_Load(box_art_path);
+    if (surface) {
+        content->box_art_texture = SDL_CreateTextureFromSurface(renderer, surface);
+        
+        // Calculate display size (right side of screen, maintaining aspect ratio)
+        float aspect = (float)surface->w / surface->h;
+        content->box_art_rect.h = 600; // Max height
+        content->box_art_rect.w = (int)(content->box_art_rect.h * aspect);
+        
+        // Position on right side of screen
+        content->box_art_rect.x = 1280 - content->box_art_rect.w - 20; // 20px padding
+        content->box_art_rect.y = (720 - content->box_art_rect.h) / 2; // Centered vertically
+        
+        SDL_FreeSurface(surface);
+        log_message(LOG_INFO, "Loaded box art: %s", box_art_path);
+    } else {
+        log_message(LOG_INFO, "No box art found at: %s", box_art_path);
+    }
+}
+
 void free_dir_content(DirContent* content) {
     if (!content) return;
+
+    if (content->box_art_texture) {
+        SDL_DestroyTexture(content->box_art_texture);
+    }
 
     for (int i = 0; i < content->dir_count; i++) {
         free(content->dirs[i]);

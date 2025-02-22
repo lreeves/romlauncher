@@ -38,7 +38,12 @@ typedef struct {
     SDL_Rect *file_rects;
     FavoriteGroup *groups;  // Used only for favorites view
     int is_favorites_view;
+    SDL_Texture *box_art_texture;
+    SDL_Rect box_art_rect;
 } DirContent;
+
+// Function to load box art for a ROM
+void load_box_art(DirContent* content, SDL_Renderer *renderer, const char* rom_path, const char* rom_name);
 
 // Function declarations
 SDL_Texture* render_text(SDL_Renderer *renderer, const char* text,

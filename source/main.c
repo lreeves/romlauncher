@@ -313,6 +313,16 @@ int main(int argc, char** argv) {
                     current_page = selected_index / ENTRIES_PER_PAGE;
                     set_selection(current_mode == MODE_FAVORITES ? favorites_content : content,
                                 renderer, font, selected_index, current_page);
+                    
+                    // Load box art for selected file when navigating
+                    if (current_mode == MODE_BROWSER && 
+                        selected_index >= content->dir_count && 
+                        selected_index < content->dir_count + content->file_count) {
+                        int file_index = selected_index - content->dir_count;
+                        const char* filename = content->files[file_index];
+                        log_message(LOG_DEBUG, "Selected file for box art check: %s", filename);
+                        load_box_art(content, renderer, current_path, filename);
+                    }
                 }
 
                 if (event.jbutton.button == JOY_A) {
@@ -414,6 +424,22 @@ int main(int argc, char** argv) {
                 if (event.jbutton.button == JOY_X) {
                     toggle_current_favorite(content, selected_index, current_path);
                     set_selection(content, renderer, font, selected_index, current_page);
+                    
+                    // Load box art for selected file
+                    if (selected_index >= content->dir_count && 
+                        selected_index < content->dir_count + content->file_count) {
+                        int file_index = selected_index - content->dir_count;
+                        const char* filename = content->files[file_index];
+                        log_message(LOG_DEBUG, "Selected file for box art check: %s", filename);
+                        load_box_art(content, renderer, current_path, filename);
+                    } else {
+                        log_message(LOG_DEBUG, "Directory selected, clearing box art");
+                        // Clear box art when directory is selected
+                        if (content->box_art_texture) {
+                            SDL_DestroyTexture(content->box_art_texture);
+                            content->box_art_texture = NULL;
+                        }
+                    }
 
                     // If we're in favorites mode, refresh the list
                     if (current_mode == MODE_FAVORITES) {
@@ -610,6 +636,12 @@ int main(int argc, char** argv) {
                     }
                 }
             }
+        }
+
+        // Render box art if available
+        if (current_mode != MODE_MENU && current_mode != MODE_SCRAPING && 
+            content && content->box_art_texture) {
+            SDL_RenderCopy(renderer, content->box_art_texture, NULL, &content->box_art_rect);
         }
 
         // Render notification if active
