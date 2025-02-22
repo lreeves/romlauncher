@@ -8,6 +8,7 @@
 #define COLOR_BACKGROUND    (SDL_Color){200, 200, 200, 255}
 #define COLOR_TEXT         (SDL_Color){0, 0, 0, 255}
 #define COLOR_TEXT_HIGHLIGHT (SDL_Color){0, 0, 255, 255}
+#define COLOR_TEXT_SELECTED (SDL_Color){0, 128, 0, 255}
 #define COLOR_TEXT_ERROR    (SDL_Color){255, 0, 0, 255}
 
 #include <stdio.h>

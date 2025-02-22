@@ -17,6 +17,13 @@
 #define JOY_Y     3
 #define MODE_BROWSER 0
 #define MODE_FAVORITES 1
+#define MODE_MENU 2
+
+// Menu options
+#define MENU_HELP 0
+#define MENU_SCRAPER 1
+#define MENU_QUIT 2
+#define MENU_OPTIONS 3  // Total number of menu options
 #define JOY_PLUS  10
 #define JOY_MINUS 11
 #define JOY_LEFT  12
@@ -143,6 +150,10 @@ int main(int argc, char** argv) {
     int current_mode = MODE_BROWSER;
     DirContent* favorites_content = NULL;
     char saved_path[MAX_PATH_LEN];
+    int menu_selection = 0;
+    SDL_Texture* menu_textures[MENU_OPTIONS] = {NULL};
+    SDL_Rect menu_rects[MENU_OPTIONS];
+    const char* menu_options[] = {"Help", "Scraper", "Quit"};
 
     Notification notification = {0};
 
@@ -460,6 +471,71 @@ int main(int argc, char** argv) {
                                 renderer, font, selected_index, current_page);
                 }
 
+                if (event.jbutton.button == JOY_MINUS) {
+                    if (current_mode != MODE_MENU) {
+                        current_mode = MODE_MENU;
+                        menu_selection = 0;
+                        
+                        // Create menu textures
+                        for (int i = 0; i < MENU_OPTIONS; i++) {
+                            if (menu_textures[i]) {
+                                SDL_DestroyTexture(menu_textures[i]);
+                            }
+                            SDL_Color color = (i == menu_selection) ? COLOR_TEXT_SELECTED : COLOR_TEXT;
+                            menu_textures[i] = render_text(renderer, menu_options[i], font, color, &menu_rects[i]);
+                            menu_rects[i].x = (SCREEN_W - menu_rects[i].w) / 2;
+                            menu_rects[i].y = SCREEN_H/3 + i * 60;
+                        }
+                    } else {
+                        current_mode = MODE_BROWSER;
+                        // Cleanup menu textures
+                        for (int i = 0; i < MENU_OPTIONS; i++) {
+                            if (menu_textures[i]) {
+                                SDL_DestroyTexture(menu_textures[i]);
+                                menu_textures[i] = NULL;
+                            }
+                        }
+                    }
+                }
+
+                if (current_mode == MODE_MENU) {
+                    if (event.jbutton.button == DPAD_UP) {
+                        if (menu_selection > 0) menu_selection--;
+                        else menu_selection = MENU_OPTIONS - 1;
+                        
+                        // Update menu textures
+                        for (int i = 0; i < MENU_OPTIONS; i++) {
+                            if (menu_textures[i]) SDL_DestroyTexture(menu_textures[i]);
+                            SDL_Color color = (i == menu_selection) ? COLOR_TEXT_SELECTED : COLOR_TEXT;
+                            menu_textures[i] = render_text(renderer, menu_options[i], font, color, &menu_rects[i]);
+                        }
+                    }
+                    else if (event.jbutton.button == DPAD_DOWN) {
+                        if (menu_selection < MENU_OPTIONS - 1) menu_selection++;
+                        else menu_selection = 0;
+                        
+                        // Update menu textures
+                        for (int i = 0; i < MENU_OPTIONS; i++) {
+                            if (menu_textures[i]) SDL_DestroyTexture(menu_textures[i]);
+                            SDL_Color color = (i == menu_selection) ? COLOR_TEXT_SELECTED : COLOR_TEXT;
+                            menu_textures[i] = render_text(renderer, menu_options[i], font, color, &menu_rects[i]);
+                        }
+                    }
+                    else if (event.jbutton.button == JOY_A) {
+                        switch (menu_selection) {
+                            case MENU_HELP:
+                                // Help functionality to be implemented
+                                break;
+                            case MENU_SCRAPER:
+                                // Scraper functionality to be implemented
+                                break;
+                            case MENU_QUIT:
+                                exit_requested = 1;
+                                break;
+                        }
+                    }
+                }
+
                 if (event.jbutton.button == JOY_PLUS) {
                     exit_requested = 1;
                 }
@@ -481,17 +557,26 @@ int main(int argc, char** argv) {
             SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
         }
 
-        // Render directory and file listings
-        DirContent* current_content = (current_mode == MODE_FAVORITES) ? favorites_content : content;
-        if (current_content) {
-            for (int i = 0; i < current_content->dir_count; i++) {
-                if (current_content->dir_textures[i]) {
-                    SDL_RenderCopy(renderer, current_content->dir_textures[i], NULL, &current_content->dir_rects[i]);
+        // Render directory and file listings or menu
+        if (current_mode == MODE_MENU) {
+            // Render menu options
+            for (int i = 0; i < MENU_OPTIONS; i++) {
+                if (menu_textures[i]) {
+                    SDL_RenderCopy(renderer, menu_textures[i], NULL, &menu_rects[i]);
                 }
             }
-            for (int i = 0; i < current_content->file_count; i++) {
-                if (current_content->file_textures[i]) {
-                    SDL_RenderCopy(renderer, current_content->file_textures[i], NULL, &current_content->file_rects[i]);
+        } else {
+            DirContent* current_content = (current_mode == MODE_FAVORITES) ? favorites_content : content;
+            if (current_content) {
+                for (int i = 0; i < current_content->dir_count; i++) {
+                    if (current_content->dir_textures[i]) {
+                        SDL_RenderCopy(renderer, current_content->dir_textures[i], NULL, &current_content->dir_rects[i]);
+                    }
+                }
+                for (int i = 0; i < current_content->file_count; i++) {
+                    if (current_content->file_textures[i]) {
+                        SDL_RenderCopy(renderer, current_content->file_textures[i], NULL, &current_content->file_rects[i]);
+                    }
                 }
             }
         }
@@ -519,6 +604,12 @@ int main(int argc, char** argv) {
 
     if (notification.texture)
         SDL_DestroyTexture(notification.texture);
+        
+    // Clean up menu textures
+    for (int i = 0; i < MENU_OPTIONS; i++) {
+        if (menu_textures[i])
+            SDL_DestroyTexture(menu_textures[i]);
+    }
 
     // Close joystick if it was opened
     if (joystick)
