@@ -8,6 +8,7 @@
 #define MAX_ENTRIES 1024
 #define ENTRIES_PER_PAGE 15
 #define MAX_PATH_LEN 512
+#define BOXART_MAX_WIDTH 200
 
 // External declarations
 extern char current_path[MAX_PATH_LEN];

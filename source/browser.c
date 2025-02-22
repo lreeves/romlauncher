@@ -256,10 +256,10 @@ void load_box_art(DirContent* content, SDL_Renderer *renderer, const char* rom_p
     if (surface) {
         content->box_art_texture = SDL_CreateTextureFromSurface(renderer, surface);
         
-        // Calculate display size (right side of screen, maintaining aspect ratio)
+        // Calculate display size (maintaining aspect ratio with max width)
         float aspect = (float)surface->w / surface->h;
-        content->box_art_rect.h = 600; // Max height
-        content->box_art_rect.w = (int)(content->box_art_rect.h * aspect);
+        content->box_art_rect.w = BOXART_MAX_WIDTH;
+        content->box_art_rect.h = (int)(BOXART_MAX_WIDTH / aspect);
         
         // Position on right side of screen
         content->box_art_rect.x = 1280 - content->box_art_rect.w - 20; // 20px padding
