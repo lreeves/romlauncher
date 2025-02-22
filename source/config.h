@@ -1,6 +1,8 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#define ROMLAUNCHER_DATA_DIRECTORY "sdmc:/romlauncher/"
+
 #include <stdio.h>
 #include "uthash.h"
 

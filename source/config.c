@@ -110,7 +110,7 @@ void load_favorites(void) {
 }
 
 void save_favorites(void) {
-    FILE *fp = fopen(ROMLAUNCHER_DATA_DIRECTORY "favorites.ini", "w");
+    FILE *fp = fopen(ROMLAUNCHER_DATA_DIRECTORY "/favorites.ini", "w");
     if (!fp) {
         log_message(LOG_ERROR, "Could not open favorites file for writing");
         return;
