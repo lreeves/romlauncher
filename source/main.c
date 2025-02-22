@@ -100,7 +100,7 @@ int main(int argc, char** argv) {
 
     srand(time(NULL));
 
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_JOYSTICK) < 0) {
+    if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
         log_message(LOG_ERROR, "SDL_Init failed: %s", SDL_GetError());
         return 1;
     }
@@ -134,7 +134,7 @@ int main(int argc, char** argv) {
     }
     log_message(LOG_DEBUG, "SDL window created");
 
-    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
     if (!renderer) {
         log_message(LOG_ERROR, "Renderer creation failed: %s", SDL_GetError());
         SDL_DestroyWindow(window);
@@ -285,7 +285,7 @@ int main(int argc, char** argv) {
 
                                     // Now, construct the full arguments string safely using the constructed path twice
                                     char full_arguments[MAX_PATH_LEN];
-                                    written = snprintf(full_arguments, sizeof(full_arguments), "\"%s\" \"%s\"", rom_path, rom_path);
+                                    written = snprintf(full_arguments, sizeof(full_arguments), "x \"%s\" \"%s\"", rom_path);
                                     if (written < 0 || (size_t)written >= sizeof(full_arguments)) {
                                         log_message(LOG_ERROR, "Arguments string construction failed (truncation or error)");
                                         exit(1);
@@ -341,7 +341,7 @@ int main(int argc, char** argv) {
 
                                 // Construct the arguments string
                                 char full_arguments[MAX_PATH_LEN];
-                                int written = snprintf(full_arguments, sizeof(full_arguments), "\"%s\" \"%s\"", rom_path, rom_path);
+                                int written = snprintf(full_arguments, sizeof(full_arguments), "x \"%s\"", rom_path);
                                 if (written < 0 || (size_t)written >= sizeof(full_arguments)) {
                                     log_message(LOG_ERROR, "Arguments string construction failed (truncation or error)");
                                     exit(1);
