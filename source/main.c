@@ -128,11 +128,16 @@ int main(int argc, char** argv) {
 
     log_message(LOG_INFO, "Starting romlauncher");
 
-    // Create data directory if it doesn't exist
+    // Create data and media directories if they don't exist
     struct stat st = {0};
     if (stat(ROMLAUNCHER_DATA_DIRECTORY, &st) == -1) {
         mkdir(ROMLAUNCHER_DATA_DIRECTORY, 0755);
         log_message(LOG_INFO, "Created data directory: %s", ROMLAUNCHER_DATA_DIRECTORY);
+    }
+    
+    if (stat(ROMLAUNCHER_MEDIA_DIRECTORY, &st) == -1) {
+        mkdir(ROMLAUNCHER_MEDIA_DIRECTORY, 0755);
+        log_message(LOG_INFO, "Created media directory: %s", ROMLAUNCHER_MEDIA_DIRECTORY);
     }
 
     // Load config and favorites
