@@ -37,6 +37,11 @@
 #define ROMLAUNCHER_DATA_DIRECTORY "sdmc:/romlauncher/"
 #define SCREEN_W 1280
 #define SCREEN_H 720
+#define STATUS_BAR_HEIGHT 30
+
+// Status bar colors - inverted from main colors
+#define COLOR_STATUS_BAR (SDL_Color){220, 220, 220, 255}  
+#define COLOR_STATUS_TEXT (SDL_Color){20, 20, 20, 255}
 
 typedef struct {
     char message[256];
@@ -608,6 +613,28 @@ int main(int argc, char** argv) {
         // Render notification if active
         if (notification.active && notification.texture) {
             SDL_RenderCopy(renderer, notification.texture, NULL, &notification.rect);
+        }
+
+        // Render status bar
+        SDL_SetRenderDrawColor(renderer, 
+            COLOR_STATUS_BAR.r,
+            COLOR_STATUS_BAR.g,
+            COLOR_STATUS_BAR.b,
+            COLOR_STATUS_BAR.a);
+        SDL_Rect status_bar = {0, SCREEN_H - STATUS_BAR_HEIGHT, SCREEN_W, STATUS_BAR_HEIGHT};
+        SDL_RenderFillRect(renderer, &status_bar);
+
+        // Render status text
+        SDL_Color status_color = COLOR_STATUS_TEXT;
+        SDL_Rect status_rect;
+        SDL_Texture* status_text = render_text(renderer, 
+            "- MENU    + QUIT    X FAVORITES    Y ADD FAVORITE",
+            font, status_color, &status_rect);
+        if (status_text) {
+            status_rect.x = (SCREEN_W - status_rect.w) / 2;
+            status_rect.y = SCREEN_H - STATUS_BAR_HEIGHT + (STATUS_BAR_HEIGHT - status_rect.h) / 2;
+            SDL_RenderCopy(renderer, status_text, NULL, &status_rect);
+            SDL_DestroyTexture(status_text);
         }
 
         SDL_RenderPresent(renderer);
