@@ -78,7 +78,7 @@ int launch_retroarch(const char* rom_path) {
 
     // Construct the arguments string
     char full_arguments[MAX_PATH_LEN];
-    written = snprintf(full_arguments, sizeof(full_arguments), "x \"%s\"", rom_arg);
+    written = snprintf(full_arguments, sizeof(full_arguments), "%s \"%s\"", core_path, rom_arg);
     if (written < 0 || (size_t)written >= sizeof(full_arguments)) {
         log_message(LOG_ERROR, "Arguments string construction failed (truncation or error)");
         return 0;
