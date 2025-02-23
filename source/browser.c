@@ -55,6 +55,24 @@ static int compare_strings(const void* a, const void* b) {
     return strcmp(*(const char**)a, *(const char**)b);
 }
 
+static void truncate_text(TTF_Font* font, char* text, int max_width) {
+    int w, h;
+    TTF_SizeText(font, text, &w, &h);
+    if (w <= max_width) return;
+    const char *ellipsis = "...";
+    int ellipsis_w;
+    TTF_SizeText(font, ellipsis, &ellipsis_w, &h);
+    int target_width = max_width - ellipsis_w;
+    int len = strlen(text);
+    while (len > 0) {
+        text[len-1] = '\0';
+        TTF_SizeText(font, text, &w, &h);
+        if (w <= target_width) break;
+        len = strlen(text);
+    }
+    strcat(text, ellipsis);
+}
+
 DirContent* list_files(const char* path) {
     log_message(LOG_INFO, "Starting to list files");
 
@@ -209,22 +227,20 @@ void change_directory(DirContent* content, int selected_index, char* current_pat
 }
 
 void load_box_art(DirContent* content, SDL_Renderer *renderer, const char* rom_path, const char* rom_name) {
-    // Store current texture as previous for fade effect
-    if (content->box_art_texture) {
-        if (content->prev_box_art_texture) {
-            SDL_DestroyTexture(content->prev_box_art_texture);
-        }
-        content->prev_box_art_texture = content->box_art_texture;
-        content->box_art_texture = NULL;
-        content->fade_alpha = 255;
-        content->is_fading = 1;
+    // Prepare for fade transition: always update fade state
+    if (content->prev_box_art_texture) {
+        SDL_DestroyTexture(content->prev_box_art_texture);
     }
+    content->prev_box_art_texture = content->box_art_texture;
+    content->box_art_texture = NULL;
+    content->fade_alpha = 255;
+    content->is_fading = 1;
 
-    if (!rom_name) return;
+    if (!rom_name) { content->fade_alpha = 0; content->is_fading = 0; return; }
 
     // Get file extension
     const char* ext = strrchr(rom_name, '.');
-    if (!ext) return;
+    if (!ext) { content->fade_alpha = 0; content->is_fading = 0; return; }
     ext++; // Skip the dot
 
     // Derive the system name
@@ -278,6 +294,13 @@ void load_box_art(DirContent* content, SDL_Renderer *renderer, const char* rom_p
         log_message(LOG_INFO, "Loaded box art: %s", box_art_path);
     } else {
         log_message(LOG_INFO, "No box art found at: %s", box_art_path);
+        // If new box art could not be loaded, restore previous texture and cancel fading
+        if (content->prev_box_art_texture) {
+            content->box_art_texture = content->prev_box_art_texture;
+            content->prev_box_art_texture = NULL;
+            content->fade_alpha = 0;
+            content->is_fading = 0;
+        }
     }
 }
 
@@ -347,6 +370,7 @@ void set_selection(DirContent* content, SDL_Renderer *renderer, TTF_Font *font,
             continue;
         }
         snprintf(log_buf, sizeof(log_buf), "[DIR] %s", content->dirs[i]);
+        truncate_text(font, log_buf, 860);
         if (content->dir_textures[i]) {
             SDL_DestroyTexture(content->dir_textures[i]);
         }
@@ -367,6 +391,7 @@ void set_selection(DirContent* content, SDL_Renderer *renderer, TTF_Font *font,
         if (content->file_textures[i]) {
             SDL_DestroyTexture(content->file_textures[i]);
         }
+        truncate_text(font, log_buf, 860);
         int entry_index = content->dir_count + i;
         
         // Special handling for the "no favorites" message
