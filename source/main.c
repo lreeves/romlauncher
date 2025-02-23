@@ -247,6 +247,10 @@ int main(int argc, char** argv) {
     SDL_Joystick* joystick = SDL_JoystickOpen(0);
 
     log_message(LOG_DEBUG, "SDL joystick initialized");
+    Uint32 dpadUpRepeatTime = 0;
+    Uint32 dpadDownRepeatTime = 0;
+    int dpadUpHeld = 0;
+    int dpadDownHeld = 0;
 
     // load fonts from romfs
     TTF_Font* font = TTF_OpenFont("data/Raleway-Regular.ttf", 32);
