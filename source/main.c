@@ -251,6 +251,10 @@ int main(int argc, char** argv) {
     Uint32 dpadDownRepeatTime = 0;
     int dpadUpHeld = 0;
     int dpadDownHeld = 0;
+    Uint32 leftShoulderRepeatTime = 0;
+    Uint32 rightShoulderRepeatTime = 0;
+    int leftShoulderHeld = 0;
+    int rightShoulderHeld = 0;
 
     // load fonts from romfs
     TTF_Font* font = TTF_OpenFont("data/Raleway-Regular.ttf", 32);
@@ -653,6 +657,40 @@ int main(int argc, char** argv) {
                 }
             } else {
                 dpadDownHeld = 0;
+            }
+            if (SDL_JoystickGetButton(joystick, JOY_LEFT_SHOULDER)) {
+                if (!leftShoulderHeld) {
+                    leftShoulderHeld = 1;
+                    leftShoulderRepeatTime = now;
+                } else if (now - leftShoulderRepeatTime >= 50) {
+                    if (current_page > 0)
+                        current_page--;
+                    else
+                        current_page = total_pages - 1;
+                    selected_index = current_page * ENTRIES_PER_PAGE;
+                    set_selection(current_mode == MODE_FAVORITES ? favorites_content : content,
+                                  renderer, font, selected_index, current_page);
+                    leftShoulderRepeatTime = now;
+                }
+            } else {
+                leftShoulderHeld = 0;
+            }
+            if (SDL_JoystickGetButton(joystick, JOY_RIGHT_SHOULDER)) {
+                if (!rightShoulderHeld) {
+                    rightShoulderHeld = 1;
+                    rightShoulderRepeatTime = now;
+                } else if (now - rightShoulderRepeatTime >= 50) {
+                    if (current_page < total_pages - 1)
+                        current_page++;
+                    else
+                        current_page = 0;
+                    selected_index = current_page * ENTRIES_PER_PAGE;
+                    set_selection(current_mode == MODE_FAVORITES ? favorites_content : content,
+                                  renderer, font, selected_index, current_page);
+                    rightShoulderRepeatTime = now;
+                }
+            } else {
+                rightShoulderHeld = 0;
             }
         }
     
