@@ -407,4 +407,8 @@ void set_selection(DirContent* content, SDL_Renderer *renderer, TTF_Font *font,
                 entry_index == selected_index ? COLOR_TEXT_HIGHLIGHT : COLOR_TEXT, &content->file_rects[i]);
         }
     }
+    if (selected_index >= content->dir_count && selected_index < content->dir_count + content->file_count) {
+        int file_index = selected_index - content->dir_count;
+        load_box_art(content, renderer, current_path, content->files[file_index]);
+    }
 }
