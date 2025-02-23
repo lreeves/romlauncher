@@ -638,32 +638,9 @@ int main(int argc, char** argv) {
             }
         }
 
-        // Render box art with fade effect if available
+        // Render box art if available
         if (current_mode != MODE_MENU && current_mode != MODE_SCRAPING && content) {
-            if (content->is_fading && content->prev_box_art_texture) {
-                // Render previous texture with fading alpha
-                SDL_SetTextureAlphaMod(content->prev_box_art_texture, content->fade_alpha);
-                SDL_RenderCopy(renderer, content->prev_box_art_texture, NULL, &content->box_art_rect);
-                
-                // Render new texture with inverse alpha if available
-                if (content->box_art_texture) {
-                    SDL_SetTextureAlphaMod(content->box_art_texture, 255 - content->fade_alpha);
-                    SDL_RenderCopy(renderer, content->box_art_texture, NULL, &content->box_art_rect);
-                }
-                
-                // Update fade
-                if (content->fade_alpha > 0) {
-                    content->fade_alpha -= 15; // Adjust speed by changing this value
-                } else {
-                    // Fade complete
-                    content->is_fading = 0;
-                    SDL_DestroyTexture(content->prev_box_art_texture);
-                    content->prev_box_art_texture = NULL;
-                    if (content->box_art_texture) {
-                        SDL_SetTextureAlphaMod(content->box_art_texture, 255);
-                    }
-                }
-            } else if (content->box_art_texture) {
+            if (content->box_art_texture) {
                 SDL_RenderCopy(renderer, content->box_art_texture, NULL, &content->box_art_rect);
             }
         }
