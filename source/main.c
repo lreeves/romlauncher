@@ -596,7 +596,62 @@ int main(int argc, char** argv) {
                 }
             }
         }
-
+    
+        {
+            Uint32 now = SDL_GetTicks();
+            if (SDL_JoystickGetButton(joystick, DPAD_UP)) {
+                if (!dpadUpHeld) {
+                    dpadUpHeld = 1;
+                    dpadUpRepeatTime = now;
+                } else if (now - dpadUpRepeatTime >= 50) {
+                    if (selected_index > 0)
+                        selected_index--;
+                    else
+                        selected_index = total_entries - 1;
+                    current_page = selected_index / ENTRIES_PER_PAGE;
+                    set_selection(current_mode == MODE_FAVORITES ? favorites_content : content,
+                                  renderer, font, selected_index, current_page);
+                    if (current_mode == MODE_BROWSER && 
+                        selected_index >= content->dir_count && 
+                        selected_index < content->dir_count + content->file_count) {
+                        int file_index = selected_index - content->dir_count;
+                        const char* filename = content->files[file_index];
+                        log_message(LOG_DEBUG, "Auto repeat: DPAD_UP; new selection: %d, file: %s", selected_index, filename);
+                        load_box_art(content, renderer, current_path, filename);
+                    }
+                    dpadUpRepeatTime = now;
+                }
+            } else {
+                dpadUpHeld = 0;
+            }
+    
+            if (SDL_JoystickGetButton(joystick, DPAD_DOWN)) {
+                if (!dpadDownHeld) {
+                    dpadDownHeld = 1;
+                    dpadDownRepeatTime = now;
+                } else if (now - dpadDownRepeatTime >= 50) {
+                    if (selected_index < total_entries - 1)
+                        selected_index++;
+                    else
+                        selected_index = 0;
+                    current_page = selected_index / ENTRIES_PER_PAGE;
+                    set_selection(current_mode == MODE_FAVORITES ? favorites_content : content,
+                                  renderer, font, selected_index, current_page);
+                    if (current_mode == MODE_BROWSER && 
+                        selected_index >= content->dir_count && 
+                        selected_index < content->dir_count + content->file_count) {
+                        int file_index = selected_index - content->dir_count;
+                        const char* filename = content->files[file_index];
+                        log_message(LOG_DEBUG, "Auto repeat: DPAD_DOWN; new selection: %d, file: %s", selected_index, filename);
+                        load_box_art(content, renderer, current_path, filename);
+                    }
+                    dpadDownRepeatTime = now;
+                }
+            } else {
+                dpadDownHeld = 0;
+            }
+        }
+    
         SDL_SetRenderDrawColor(renderer,
             COLOR_BACKGROUND.r,
             COLOR_BACKGROUND.g,
