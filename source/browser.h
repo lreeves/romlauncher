@@ -48,7 +48,7 @@ void load_box_art(DirContent* content, SDL_Renderer *renderer, const char* rom_p
 
 // Function declarations
 SDL_Texture* render_text(SDL_Renderer *renderer, const char* text,
-                        TTF_Font *font, const SDL_Color color, SDL_Rect *rect);
+                        TTF_Font *font, const SDL_Color color, SDL_Rect *rect, int is_favorites_view);
 DirContent* list_files(const char* path);
 void go_up_directory(DirContent* content, char* current_path, const char* rom_directory);
 void change_directory(DirContent* content, int selected_index, char* current_path);

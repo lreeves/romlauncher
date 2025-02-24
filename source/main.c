@@ -164,21 +164,6 @@ int main(int argc, char** argv) {
     }
     log_message(LOG_DEBUG, "SDL renderer created");
 
-    // load logos from file
-    SDL_Surface *sdllogo = IMG_Load("data/sdl.png");
-    if (sdllogo) {
-        sdllogo_tex = SDL_CreateTextureFromSurface(renderer, sdllogo);
-        SDL_FreeSurface(sdllogo);
-    }
-
-    SDL_Surface *switchlogo = IMG_Load("data/switch.png");
-    if (switchlogo) {
-        switchlogo_tex = SDL_CreateTextureFromSurface(renderer, switchlogo);
-        SDL_FreeSurface(switchlogo);
-    }
-
-    log_message(LOG_DEBUG, "SDL surfaces initialized");
-
     SDL_JoystickEventState(SDL_ENABLE);
     SDL_Joystick* joystick = SDL_JoystickOpen(0);
 
@@ -257,10 +242,10 @@ int main(int argc, char** argv) {
                     current_page = selected_index / ENTRIES_PER_PAGE;
                     set_selection(current_mode == MODE_FAVORITES ? favorites_content : content,
                                 renderer, font, selected_index, current_page);
-                    
+
                     // Load box art for selected file when navigating
-                    if (current_mode == MODE_BROWSER && 
-                        selected_index >= content->dir_count && 
+                    if (current_mode == MODE_BROWSER &&
+                        selected_index >= content->dir_count &&
                         selected_index < content->dir_count + content->file_count) {
                         int file_index = selected_index - content->dir_count;
                         const char* filename = content->files[file_index];
@@ -301,7 +286,7 @@ int main(int argc, char** argv) {
                                     if (notification.texture) {
                                         SDL_DestroyTexture(notification.texture);
                                     }
-                                    notification.texture = render_text(renderer, "Error launching emulator", font, COLOR_TEXT_ERROR, &notification.rect);
+                                    notification.texture = render_text(renderer, "Error launching emulator", font, COLOR_TEXT_ERROR, &notification.rect, 0);
                                     notification.rect.x = (SCREEN_W - notification.rect.w) / 2;
                                     notification.rect.y = SCREEN_H - notification.rect.h - 20; // 20px padding from bottom
                                     notification.active = 1;
@@ -347,7 +332,7 @@ int main(int argc, char** argv) {
                                                 if (notification.texture) {
                                                     SDL_DestroyTexture(notification.texture);
                                                 }
-                                                notification.texture = render_text(renderer, "Error launching emulator", font, COLOR_TEXT_ERROR, &notification.rect);
+                                                notification.texture = render_text(renderer, "Error launching emulator", font, COLOR_TEXT_ERROR, &notification.rect, 0);
                                                 notification.rect.x = (SCREEN_W - notification.rect.w) / 2;
                                                 notification.rect.y = SCREEN_H - notification.rect.h - 20;
                                                 notification.active = 1;
@@ -368,9 +353,9 @@ int main(int argc, char** argv) {
                 if (event.jbutton.button == JOY_X) {
                     toggle_current_favorite(content, selected_index, current_path);
                     set_selection(content, renderer, font, selected_index, current_page);
-                    
+
                     // Load box art for selected file
-                    if (selected_index >= content->dir_count && 
+                    if (selected_index >= content->dir_count &&
                         selected_index < content->dir_count + content->file_count) {
                         int file_index = selected_index - content->dir_count;
                         const char* filename = content->files[file_index];
@@ -477,7 +462,7 @@ int main(int argc, char** argv) {
                                 SDL_DestroyTexture(menu_textures[i]);
                             }
                             SDL_Color color = (i == menu_selection) ? COLOR_TEXT_SELECTED : COLOR_TEXT;
-                            menu_textures[i] = render_text(renderer, menu_options[i], font, color, &menu_rects[i]);
+                            menu_textures[i] = render_text(renderer, menu_options[i], font, color, &menu_rects[i], 0);
                             menu_rects[i].x = (SCREEN_W - menu_rects[i].w) / 2;
                             menu_rects[i].y = SCREEN_H/3 + i * 60;
                         }
@@ -502,7 +487,7 @@ int main(int argc, char** argv) {
                         for (int i = 0; i < MENU_OPTIONS; i++) {
                             if (menu_textures[i]) SDL_DestroyTexture(menu_textures[i]);
                             SDL_Color color = (i == menu_selection) ? COLOR_TEXT_SELECTED : COLOR_TEXT;
-                            menu_textures[i] = render_text(renderer, menu_options[i], font, color, &menu_rects[i]);
+                            menu_textures[i] = render_text(renderer, menu_options[i], font, color, &menu_rects[i], 0);
                         }
                     }
                     else if (event.jbutton.button == DPAD_DOWN) {
@@ -513,7 +498,7 @@ int main(int argc, char** argv) {
                         for (int i = 0; i < MENU_OPTIONS; i++) {
                             if (menu_textures[i]) SDL_DestroyTexture(menu_textures[i]);
                             SDL_Color color = (i == menu_selection) ? COLOR_TEXT_SELECTED : COLOR_TEXT;
-                            menu_textures[i] = render_text(renderer, menu_options[i], font, color, &menu_rects[i]);
+                            menu_textures[i] = render_text(renderer, menu_options[i], font, color, &menu_rects[i], 0);
                         }
                     }
                     else if (event.jbutton.button == JOY_A) {
@@ -524,7 +509,7 @@ int main(int argc, char** argv) {
                             case MENU_SCRAPER:
                                 current_mode = MODE_SCRAPING;
                                 if (scraping_message) SDL_DestroyTexture(scraping_message);
-                                scraping_message = render_text(renderer, "Press B to stop", font, COLOR_TEXT, &scraping_rect);
+                                scraping_message = render_text(renderer, "Press B to stop", font, COLOR_TEXT, &scraping_rect, 0);
                                 scraping_rect.x = (SCREEN_W - scraping_rect.w) / 2;
                                 scraping_rect.y = (SCREEN_H - scraping_rect.h) / 2;
                                 break;
@@ -540,7 +525,7 @@ int main(int argc, char** argv) {
                 }
             }
         }
-    
+
         {
             Uint32 now = SDL_GetTicks();
             if (SDL_JoystickGetButton(joystick, DPAD_UP)) {
@@ -555,8 +540,8 @@ int main(int argc, char** argv) {
                     current_page = selected_index / ENTRIES_PER_PAGE;
                     set_selection(current_mode == MODE_FAVORITES ? favorites_content : content,
                                   renderer, font, selected_index, current_page);
-                    if (current_mode == MODE_BROWSER && 
-                        selected_index >= content->dir_count && 
+                    if (current_mode == MODE_BROWSER &&
+                        selected_index >= content->dir_count &&
                         selected_index < content->dir_count + content->file_count) {
                         int file_index = selected_index - content->dir_count;
                         const char* filename = content->files[file_index];
@@ -568,7 +553,7 @@ int main(int argc, char** argv) {
             } else {
                 dpadUpHeld = 0;
             }
-    
+
             if (SDL_JoystickGetButton(joystick, DPAD_DOWN)) {
                 if (!dpadDownHeld) {
                     dpadDownHeld = 1;
@@ -581,8 +566,8 @@ int main(int argc, char** argv) {
                     current_page = selected_index / ENTRIES_PER_PAGE;
                     set_selection(current_mode == MODE_FAVORITES ? favorites_content : content,
                                   renderer, font, selected_index, current_page);
-                    if (current_mode == MODE_BROWSER && 
-                        selected_index >= content->dir_count && 
+                    if (current_mode == MODE_BROWSER &&
+                        selected_index >= content->dir_count &&
                         selected_index < content->dir_count + content->file_count) {
                         int file_index = selected_index - content->dir_count;
                         const char* filename = content->files[file_index];
@@ -629,7 +614,7 @@ int main(int argc, char** argv) {
                 rightShoulderHeld = 0;
             }
         }
-    
+
         SDL_SetRenderDrawColor(renderer,
             COLOR_BACKGROUND.r,
             COLOR_BACKGROUND.g,
@@ -697,7 +682,7 @@ int main(int argc, char** argv) {
         SDL_Rect status_rect;
         SDL_Texture* status_text = render_text(renderer,
             "- MENU    + QUIT    X FAVORITES    Y TOGGLE FAVORITE",
-            small_font, status_color, &status_rect);
+            small_font, status_color, &status_rect, 0);
         if (status_text) {
             status_rect.x = (SCREEN_W - status_rect.w) / 2;
             status_rect.y = SCREEN_H - STATUS_BAR_HEIGHT + (STATUS_BAR_HEIGHT - status_rect.h) / 2;

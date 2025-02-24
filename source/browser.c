@@ -28,7 +28,7 @@ static const char* derive_system_name(const char* rom_path, const char* ext) {
 }
 
 SDL_Texture* render_text(SDL_Renderer *renderer, const char* text,
-                              TTF_Font *font, const SDL_Color color, SDL_Rect *rect) {
+                              TTF_Font *font, const SDL_Color color, SDL_Rect *rect, int is_favorites_view) {
     SDL_Surface *surface;
     SDL_Texture *texture;
 
@@ -37,7 +37,7 @@ SDL_Texture* render_text(SDL_Renderer *renderer, const char* text,
     char display_text[MAX_PATH_LEN * 2 + 2];  // Extra space for "* " prefix
     snprintf(full_path, MAX_PATH_LEN * 2, "%s/%s", current_path, text);
 
-    if (is_favorite(full_path)) {
+    if (is_favorite(full_path) && !is_favorites_view) {
         snprintf(display_text, sizeof(display_text), "* %s", text);
         surface = TTF_RenderText_Blended(font, display_text, color);
     } else {
@@ -351,7 +351,7 @@ void set_selection(DirContent* content, SDL_Renderer *renderer, TTF_Font *font,
             SDL_DestroyTexture(content->dir_textures[i]);
         }
         content->dir_textures[i] = render_text(renderer, log_buf, font,
-            i == selected_index ? COLOR_TEXT_HIGHLIGHT : COLOR_TEXT, &content->dir_rects[i]);
+            i == selected_index ? COLOR_TEXT_HIGHLIGHT : COLOR_TEXT, &content->dir_rects[i], content->is_favorites_view);
     }
 
     for (int i = 0; i < content->file_count; i++) {
@@ -373,14 +373,14 @@ void set_selection(DirContent* content, SDL_Renderer *renderer, TTF_Font *font,
         // Special handling for the "no favorites" message
         if (content->is_favorites_view && content->file_count == 1 && i == 0) {
             // Render the text first to get its dimensions
-            SDL_Texture* texture = render_text(renderer, log_buf, font, COLOR_TEXT, &content->file_rects[i]);
+            SDL_Texture* texture = render_text(renderer, log_buf, font, COLOR_TEXT, &content->file_rects[i], content->is_favorites_view);
             // Center the text on screen
             content->file_rects[i].x = (1280 - content->file_rects[i].w) / 2;  // Assuming 1280x720 screen
             content->file_rects[i].y = (720 - content->file_rects[i].h) / 2;
             content->file_textures[i] = texture;
         } else {
             content->file_textures[i] = render_text(renderer, log_buf, font,
-                entry_index == selected_index ? COLOR_TEXT_HIGHLIGHT : COLOR_TEXT, &content->file_rects[i]);
+                entry_index == selected_index ? COLOR_TEXT_HIGHLIGHT : COLOR_TEXT, &content->file_rects[i], content->is_favorites_view);
         }
     }
     if (selected_index >= content->dir_count && selected_index < content->dir_count + content->file_count) {
