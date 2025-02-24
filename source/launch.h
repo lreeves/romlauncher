@@ -9,4 +9,6 @@
  */
 int launch_retroarch(const char* rom_path);
 
+#define PPSSPP_PATH "sdmc:/switch/ppsspp/PPSSPP_GL.nro"
+
 #endif // LAUNCH_H
