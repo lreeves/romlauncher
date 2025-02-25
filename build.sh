@@ -35,7 +35,7 @@ if [ "$1" == "--skip-emulator" ]; then
   exit 0
 fi
 
-if [ ! -f "/home/luke/Source/ryujinx/build/Ryujinx" ]; then
+if [ ! -f "/home/luke/Source/ryujinx/debug/Ryujinx" ]; then
   echo "Emulator source build not found, exiting"
   exit 0
 fi
@@ -47,7 +47,7 @@ echo "Launching Ryujinx"
 #  cp romlauncher.ini ~/.config/Ryujinx/sdcard/romlauncher.ini
 #fi
 
-DOTNET_ROOT=~/Tools/dotnet-90-200 /home/luke/Source/ryujinx/build/Ryujinx /home/luke/Source/romlauncher/romlauncher.nro &>/home/luke/ryujinx.log
+DOTNET_ROOT=~/Tools/dotnet-90-200 /home/luke/Source/ryujinx/debug/Ryujinx /home/luke/Source/romlauncher/romlauncher.nro &>/home/luke/ryujinx.log
 
 if [ ! -d "/home/luke/.config/Ryujinx/sdcard/romlauncher/" ]; then
   echo "Log directory not found, exiting"
