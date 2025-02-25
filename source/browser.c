@@ -224,6 +224,12 @@ void change_directory(DirContent* content, int selected_index, char* current_pat
 }
 
 void load_box_art(DirContent* content, SDL_Renderer *renderer, const char* rom_path, const char* rom_name) {
+    // Free any existing box art texture first to prevent memory leaks
+    if (content->box_art_texture) {
+        SDL_DestroyTexture(content->box_art_texture);
+        content->box_art_texture = NULL;
+    }
+
     if (!rom_name) return;
     const char* ext = strrchr(rom_name, '.');
     if (!ext) return;
