@@ -381,7 +381,16 @@ void set_selection(DirContent* content, SDL_Renderer *renderer, TTF_Font *font,
             }
             continue;
         }
-        snprintf(log_buf, sizeof(log_buf), "%s", content->files[i]);
+        // Get filename without extension
+        char display_name[MAX_PATH_LEN];
+        strncpy(display_name, content->files[i], MAX_PATH_LEN - 1);
+        display_name[MAX_PATH_LEN - 1] = '\0';
+        
+        // Find and remove extension
+        char *dot = strrchr(display_name, '.');
+        if (dot) *dot = '\0';
+        
+        snprintf(log_buf, sizeof(log_buf), "%s", display_name);
         if (content->file_textures[i]) {
             SDL_DestroyTexture(content->file_textures[i]);
         }
