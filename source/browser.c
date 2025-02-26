@@ -168,6 +168,12 @@ void go_up_directory(DirContent* content, char* current_path, const char* rom_di
     if (last_slash && strcmp(current_path, rom_directory) != 0) {
         *last_slash = '\0';
 
+        // Clear box art texture when changing directories
+        if (content->box_art_texture) {
+            SDL_DestroyTexture(content->box_art_texture);
+            content->box_art_texture = NULL;
+        }
+
         for (int i = 0; i < content->dir_count; i++) {
             free(content->dirs[i]);
             if (content->dir_textures[i]) SDL_DestroyTexture(content->dir_textures[i]);
@@ -199,6 +205,12 @@ void change_directory(DirContent* content, int selected_index, char* current_pat
     snprintf(new_path, MAX_PATH_LEN, "%s/%s", current_path, content->dirs[selected_index]);
     strncpy(current_path, new_path, MAX_PATH_LEN - 1);
     current_path[MAX_PATH_LEN - 1] = '\0';
+
+    // Clear box art texture when changing directories
+    if (content->box_art_texture) {
+        SDL_DestroyTexture(content->box_art_texture);
+        content->box_art_texture = NULL;
+    }
 
     for (int i = 0; i < content->dir_count; i++) {
         free(content->dirs[i]);
