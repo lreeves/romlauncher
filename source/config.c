@@ -167,9 +167,11 @@ void init_default_core_mappings(void) {
         {"gba", "mgba"},
         {"md", "genesis_plus_gx"},
         {"nes", "fceumm"},
+        {"n64", "mupen64plus_next"},
         {"pce", "mednafen_pce"},
         {"sfc", "snes9x"},
-        {"sms", "genesis_plus_gx"}
+        {"sms", "genesis_plus_gx"},
+        {"z64", "mupen64plus_next"}
     };
 
     for (size_t i = 0; i < sizeof(default_cores) / sizeof(default_cores[0]); i++) {
