@@ -88,10 +88,6 @@ int main(int argc, char** argv) {
     init_default_core_mappings();
     log_message(LOG_INFO, "Config and favorites loaded");
 
-    romfsInit();
-    chdir("romfs:/");
-
-    log_message(LOG_DEBUG, "romFS initialized");
 
     int exit_requested = 0;
     int wait = 25;
@@ -119,26 +115,44 @@ int main(int argc, char** argv) {
 
     srand(time(NULL));
 
+    // Initialize SDL subsystems with proper error handling
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
         log_message(LOG_ERROR, "SDL_Init failed: %s", SDL_GetError());
         return 1;
     }
     log_message(LOG_DEBUG, "SDL_Init completed");
 
+    // Set initialization flags
+    int sdl_initialized = 1;
+    int img_initialized = 0;
+    int ttf_initialized = 0;
+    int romfs_initialized = 0;
+    
+    // Initialize romfs
+    Result rc = romfsInit();
+    if (R_FAILED(rc)) {
+        log_message(LOG_ERROR, "romfsInit failed: %08X", rc);
+        goto cleanup;
+    }
+    romfs_initialized = 1;
+    chdir("romfs:/");
+    log_message(LOG_DEBUG, "romFS initialized");
+    
+    // Initialize SDL_image
     int img_flags = IMG_INIT_PNG;
     if ((IMG_Init(img_flags) & img_flags) != img_flags) {
         log_message(LOG_ERROR, "IMG_Init failed: %s", IMG_GetError());
-        SDL_Quit();
-        return 1;
+        goto cleanup;
     }
+    img_initialized = 1;
     log_message(LOG_DEBUG, "IMG_Init completed");
 
+    // Initialize SDL_ttf
     if (TTF_Init() < 0) {
         log_message(LOG_ERROR, "TTF_Init failed: %s", TTF_GetError());
-        IMG_Quit();
-        SDL_Quit();
-        return 1;
+        goto cleanup;
     }
+    ttf_initialized = 1;
     log_message(LOG_DEBUG, "TTF_Init completed");
 
     SDL_Window* window = SDL_CreateWindow(NULL,
@@ -164,10 +178,15 @@ int main(int argc, char** argv) {
     }
     log_message(LOG_DEBUG, "SDL renderer created");
 
+    // Initialize joystick
     SDL_JoystickEventState(SDL_ENABLE);
     SDL_Joystick* joystick = SDL_JoystickOpen(0);
-
-    log_message(LOG_DEBUG, "SDL joystick initialized");
+    if (!joystick) {
+        log_message(LOG_ERROR, "Failed to open joystick: %s", SDL_GetError());
+        // Continue anyway, as this isn't fatal
+    } else {
+        log_message(LOG_DEBUG, "SDL joystick initialized");
+    }
     Uint32 dpadUpRepeatTime = 0;
     Uint32 dpadDownRepeatTime = 0;
     int dpadUpHeld = 0;
@@ -699,16 +718,14 @@ int main(int argc, char** argv) {
         free_dir_content(favorites_content);
     }
 
-    // clean up your textures when you are done with them
+cleanup:
+    // Clean up all textures
     if (sdllogo_tex)
         SDL_DestroyTexture(sdllogo_tex);
-
     if (switchlogo_tex)
         SDL_DestroyTexture(switchlogo_tex);
-
     if (notification.texture)
         SDL_DestroyTexture(notification.texture);
-
     if (scraping_message)
         SDL_DestroyTexture(scraping_message);
 
@@ -731,10 +748,16 @@ int main(int argc, char** argv) {
         TTF_CloseFont(font);
     if (small_font)
         TTF_CloseFont(small_font);
-    TTF_Quit();
-    IMG_Quit();
-    SDL_Quit();
-    romfsExit();
+    
+    // Quit SDL subsystems in reverse order
+    if (ttf_initialized)
+        TTF_Quit();
+    if (img_initialized)
+        IMG_Quit();
+    if (sdl_initialized)
+        SDL_Quit();
+    if (romfs_initialized)
+        romfsExit();
 
     // Free config, favorites, and core mappings hash tables
     free_config();
