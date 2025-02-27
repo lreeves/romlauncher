@@ -2,9 +2,11 @@
 #include <string.h>
 #include <stdlib.h>
 #include <switch.h>
+#include <time.h>
 #include "logging.h"
 #include "config.h"
 #include "launch.h"
+#include "history.h"
 
 #define MAX_PATH_LEN 512
 
@@ -17,6 +19,10 @@ const char* get_file_extension(const char* filename) {
 
 int launch_retroarch(const char* rom_path) {
     log_message(LOG_INFO, "Launch request for ROM: %s", rom_path);
+
+    // Add to history before launching
+    add_history_entry(rom_path, time(NULL));
+    save_history();
 
     // Get file extension and look up core
     const char* ext = get_file_extension(rom_path);

@@ -6,6 +6,7 @@
 #include "config.h"
 #include "browser.h"
 #include "favorites.h"
+#include "history.h"
 #include "launch.h"
 #include <SDL.h>
 #include <SDL_image.h>
@@ -21,12 +22,14 @@
 #define MODE_FAVORITES 1
 #define MODE_MENU 2
 #define MODE_SCRAPING 3
+#define MODE_HISTORY 4
 
 // Menu options
 #define MENU_HELP 0
-#define MENU_SCRAPER 1
-#define MENU_QUIT 2
-#define MENU_OPTIONS 3  // Total number of menu options
+#define MENU_HISTORY 1
+#define MENU_SCRAPER 2
+#define MENU_QUIT 3
+#define MENU_OPTIONS 4  // Total number of menu options
 #define JOY_PLUS  10
 #define JOY_MINUS 11
 #define JOY_LEFT  12
@@ -82,22 +85,24 @@ int main(int argc, char** argv) {
         log_message(LOG_INFO, "Created media directory: %s", ROMLAUNCHER_MEDIA_DIRECTORY);
     }
 
-    // Load config and favorites
+    // Load config, favorites, and history
     load_config();
     load_favorites();
+    load_history();
     init_default_core_mappings();
-    log_message(LOG_INFO, "Config and favorites loaded");
+    log_message(LOG_INFO, "Config, favorites, and history loaded");
 
 
     int exit_requested = 0;
     int wait = 25;
     int current_mode = MODE_BROWSER;
     DirContent* favorites_content = NULL;
+    DirContent* history_content = NULL;
     char saved_path[MAX_PATH_LEN];
     int menu_selection = 0;
     SDL_Texture* menu_textures[MENU_OPTIONS] = {NULL};
     SDL_Rect menu_rects[MENU_OPTIONS];
-    const char* menu_options[] = {"Help", "Scraper", "Quit"};
+    const char* menu_options[] = {"Help", "History", "Scraper", "Quit"};
 
     // Scraping mode message
     SDL_Texture* scraping_message = NULL;
@@ -366,6 +371,26 @@ int main(int argc, char** argv) {
                                 }
                             }
                         }
+                    } else if (current_mode == MODE_HISTORY) {
+                        // In history mode, directly launch the selected ROM
+                        if (selected_index >= 0 && history_content && selected_index < history_content->file_count) {
+                            const char* rom_path = history_content->files[selected_index];
+                            if (rom_path) {
+                                log_message(LOG_INFO, "Attempting to launch from history: %s", rom_path);
+                                if (launch_retroarch(rom_path)) {
+                                    exit_requested = 1;
+                                } else {
+                                    // Show error notification
+                                    if (notification.texture) {
+                                        SDL_DestroyTexture(notification.texture);
+                                    }
+                                    notification.texture = render_text(renderer, "Error launching emulator", font, COLOR_TEXT_ERROR, &notification.rect, 0);
+                                    notification.rect.x = (SCREEN_W - notification.rect.w) / 2;
+                                    notification.rect.y = SCREEN_H - notification.rect.h - 20;
+                                    notification.active = 1;
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -418,8 +443,18 @@ int main(int argc, char** argv) {
                             total_pages = (total_entries + ENTRIES_PER_PAGE - 1) / ENTRIES_PER_PAGE;
                             set_selection(favorites_content, renderer, font, selected_index, current_page);
                         }
+                    } else if (current_mode == MODE_HISTORY) {
+                        // Switch back to browser mode from history
+                        if (history_content) free_dir_content(history_content);
+                        history_content = NULL;
+                        current_mode = MODE_BROWSER;
+                        strncpy(current_path, saved_path, MAX_PATH_LEN-1);
+                        current_path[MAX_PATH_LEN-1] = '\0';
+                        selected_index = 0;
+                        current_page = 0;
+                        set_selection(content, renderer, font, selected_index, current_page);
                     } else {
-                        // Switch back to browser mode
+                        // Switch back to browser mode from favorites
                         if (favorites_content) free_dir_content(favorites_content);
                         favorites_content = NULL;
                         current_mode = MODE_BROWSER;
@@ -438,6 +473,16 @@ int main(int argc, char** argv) {
                             SDL_DestroyTexture(scraping_message);
                             scraping_message = NULL;
                         }
+                    } else if (current_mode == MODE_HISTORY) {
+                        // Switch back to browser mode from history
+                        if (history_content) free_dir_content(history_content);
+                        history_content = NULL;
+                        current_mode = MODE_BROWSER;
+                        strncpy(current_path, saved_path, MAX_PATH_LEN-1);
+                        current_path[MAX_PATH_LEN-1] = '\0';
+                        selected_index = 0;
+                        current_page = 0;
+                        set_selection(content, renderer, font, selected_index, current_page);
                     } else {
                         go_up_directory(content, current_path, rom_directory);
                         selected_index = 0;
@@ -524,6 +569,20 @@ int main(int argc, char** argv) {
                         switch (menu_selection) {
                             case MENU_HELP:
                                 // Help functionality to be implemented
+                                break;
+                            case MENU_HISTORY:
+                                // Switch to history mode
+                                strncpy(saved_path, current_path, MAX_PATH_LEN-1);
+                                saved_path[MAX_PATH_LEN-1] = '\0';
+                                history_content = list_history();
+                                if (history_content) {
+                                    current_mode = MODE_HISTORY;
+                                    selected_index = 0;
+                                    current_page = 0;
+                                    total_entries = history_content->file_count;
+                                    total_pages = (total_entries + ENTRIES_PER_PAGE - 1) / ENTRIES_PER_PAGE;
+                                    set_selection(history_content, renderer, font, selected_index, current_page);
+                                }
                                 break;
                             case MENU_SCRAPER:
                                 current_mode = MODE_SCRAPING;
@@ -660,7 +719,12 @@ int main(int argc, char** argv) {
                 }
             }
         } else {
-            DirContent* current_content = (current_mode == MODE_FAVORITES) ? favorites_content : content;
+            DirContent* current_content = content;
+            if (current_mode == MODE_FAVORITES) {
+                current_content = favorites_content;
+            } else if (current_mode == MODE_HISTORY) {
+                current_content = history_content;
+            }
             if (current_content) {
                 for (int i = 0; i < current_content->dir_count; i++) {
                     if (current_content->dir_textures[i]) {
@@ -676,9 +740,16 @@ int main(int argc, char** argv) {
         }
 
         // Render box art if available
-        if (current_mode != MODE_MENU && current_mode != MODE_SCRAPING && content) {
-            if (content->box_art_texture) {
-                SDL_RenderCopy(renderer, content->box_art_texture, NULL, &content->box_art_rect);
+        if (current_mode != MODE_MENU && current_mode != MODE_SCRAPING) {
+            DirContent* current_content = content;
+            if (current_mode == MODE_FAVORITES) {
+                current_content = favorites_content;
+            } else if (current_mode == MODE_HISTORY) {
+                current_content = history_content;
+            }
+            
+            if (current_content && current_content->box_art_texture) {
+                SDL_RenderCopy(renderer, current_content->box_art_texture, NULL, &current_content->box_art_rect);
             }
         }
 
@@ -713,9 +784,13 @@ int main(int argc, char** argv) {
         SDL_Delay(wait);
     }
 
-    // Free favorites content if it exists
+    // Free favorites and history content if they exist
     if (favorites_content) {
         free_dir_content(favorites_content);
+    }
+    
+    if (history_content) {
+        free_dir_content(history_content);
     }
 
 cleanup:
@@ -759,9 +834,10 @@ cleanup:
     if (romfs_initialized)
         romfsExit();
 
-    // Free config, favorites, and core mappings hash tables
+    // Free config, favorites, history, and core mappings hash tables
     free_config();
     free_favorites();
+    free_history();
     free_default_core_mappings();
 
     log_message(LOG_INFO, "Finished cleanup - all done!");

@@ -39,6 +39,7 @@ typedef struct {
     SDL_Rect *file_rects;
     FavoriteGroup *groups;  // Used only for favorites view
     int is_favorites_view;
+    int is_history_view;    // Flag for history view
     SDL_Texture *box_art_texture;
     SDL_Rect box_art_rect;
 } DirContent;
