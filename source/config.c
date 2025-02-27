@@ -32,7 +32,7 @@ const char* config_get(const char *key) {
 }
 
 void load_config(void) {
-    FILE *fp = fopen("sdmc:/romlauncher.ini", "r");
+    FILE *fp = fopen("sdmc:/romlauncher/romlauncher.ini", "r");
     if (!fp) {
         log_message(LOG_ERROR, "Could not open config file");
         return;
@@ -86,7 +86,7 @@ void free_config(void) {
 config_entry *favorites = NULL;
 
 void load_favorites(void) {
-    FILE *fp = fopen("sdmc:/romlauncher/favorites.ini", "r");
+    FILE *fp = fopen("sdmc:/romlauncher/favorites.txt", "r");
     if (!fp) {
         log_message(LOG_INFO, "No favorites file found");
         return;
@@ -110,7 +110,7 @@ void load_favorites(void) {
 }
 
 void save_favorites(void) {
-    FILE *fp = fopen(ROMLAUNCHER_DATA_DIRECTORY "/favorites.ini", "w");
+    FILE *fp = fopen(ROMLAUNCHER_DATA_DIRECTORY "/favorites.txt", "w");
     if (!fp) {
         log_message(LOG_ERROR, "Could not open favorites file for writing");
         return;
