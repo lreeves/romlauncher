@@ -15,14 +15,14 @@ static const char* derive_system_name(const char* rom_path, const char* ext) {
     if (strcasecmp(ext, "gba") == 0) return "gba";
     if (strcasecmp(ext, "gbc") == 0) return "gbc";
     if (strcasecmp(ext, "gb") == 0) return "gb";
-    
+
     // Then try to find system name in the path
     if (strstr(rom_path, "/snes/")) return "snes";
     if (strstr(rom_path, "/tg16/")) return "tg16";
     if (strstr(rom_path, "/gba/")) return "gba";
     if (strstr(rom_path, "/gbc/")) return "gbc";
     if (strstr(rom_path, "/gb/")) return "gb";
-    
+
     // Return the extension as fallback
     return ext;
 }
@@ -259,8 +259,8 @@ void load_box_art(DirContent* content, SDL_Renderer *renderer, const char* rom_p
 
     // Construct box art path
     char box_art_path[MAX_PATH_LEN];
-    int path_len = snprintf(box_art_path, sizeof(box_art_path), 
-             "%s/media/%s/2dboxart/", 
+    int path_len = snprintf(box_art_path, sizeof(box_art_path),
+             "%s/media/%s/2dboxart/",
              ROMLAUNCHER_DATA_DIRECTORY, system_name);
     if (path_len > 0 && path_len < sizeof(box_art_path)) {
         strncat(box_art_path, rom_basename, sizeof(box_art_path) - path_len - 5); // -5 for ".png\0"
@@ -284,20 +284,20 @@ void load_box_art(DirContent* content, SDL_Renderer *renderer, const char* rom_p
     SDL_Surface* surface = IMG_Load(box_art_path);
     if (surface) {
         content->box_art_texture = SDL_CreateTextureFromSurface(renderer, surface);
-        
+
         // Calculate display size (maintaining aspect ratio with max width)
         float aspect = (float)surface->w / surface->h;
         content->box_art_rect.w = BOXART_MAX_WIDTH;
         content->box_art_rect.h = (int)(BOXART_MAX_WIDTH / aspect);
-        
+
         // Position on right side of screen
         content->box_art_rect.x = 1280 - content->box_art_rect.w - 20; // 20px padding
         content->box_art_rect.y = (720 - content->box_art_rect.h) / 2; // Centered vertically
-        
+
         SDL_FreeSurface(surface);
-        log_message(LOG_INFO, "Loaded box art: %s", box_art_path);
+        log_message(LOG_DEBUG, "Loaded box art: %s", box_art_path);
     } else {
-        log_message(LOG_INFO, "No box art found at: %s", box_art_path);
+        log_message(LOG_DEBUG, "No box art found at: %s", box_art_path);
     }
 }
 
@@ -385,18 +385,18 @@ void set_selection(DirContent* content, SDL_Renderer *renderer, TTF_Font *font,
         char display_name[MAX_PATH_LEN];
         strncpy(display_name, content->files[i], MAX_PATH_LEN - 1);
         display_name[MAX_PATH_LEN - 1] = '\0';
-        
+
         // Find and remove extension
         char *dot = strrchr(display_name, '.');
         if (dot) *dot = '\0';
-        
+
         snprintf(log_buf, sizeof(log_buf), "%s", display_name);
         if (content->file_textures[i]) {
             SDL_DestroyTexture(content->file_textures[i]);
         }
         truncate_text(font, log_buf, 860);
         int entry_index = content->dir_count + i;
-        
+
         // Special handling for the "no favorites" message
         if (content->is_favorites_view && content->file_count == 1 && i == 0) {
             // Render the text first to get its dimensions
