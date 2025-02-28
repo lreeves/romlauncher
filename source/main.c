@@ -284,7 +284,14 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
                                     int file_index = selected_index - content->dir_count;
                                     if (file_index >= 0 && file_index < content->file_count) {
                                         char rom_path[MAX_PATH_LEN];
-                                        int written = snprintf(rom_path, sizeof(rom_path), "%s/%s", current_path + 5, content->files[file_index]);
+                                        int written;
+                                        #ifdef ROMLAUNCHER_BUILD_LINUX
+                                        // On Linux, use the full path
+                                        written = snprintf(rom_path, sizeof(rom_path), "%s/%s", current_path, content->files[file_index]);
+                                        #else
+                                        // On Switch, skip the "sdmc:" prefix
+                                        written = snprintf(rom_path, sizeof(rom_path), "%s/%s", current_path + 5, content->files[file_index]);
+                                        #endif
                                         if (written < 0 || (size_t)written >= sizeof(rom_path)) {
                                             log_message(LOG_ERROR, "ROM path construction failed (truncation or error)");
                                             continue;

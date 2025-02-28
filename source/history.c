@@ -6,6 +6,7 @@
 #include "logging.h"
 #include "config.h"
 #include "uthash.h"
+#include "path_utils.h"
 
 #define MAX_HISTORY_ENTRIES 25
 
@@ -90,12 +91,15 @@ void save_history(void) {
     int count = 0;
     for (int i = 0; i < history_count && count < MAX_HISTORY_ENTRIES; i++) {
         const char* path = sorted_history[i]->path;
-        if (strncmp(path, "sdmc:/", 6) == 0) {
-            fprintf(fp, "%lld|%s\n", (long long)sorted_history[i]->timestamp, path);
+        char* relative_path = absolute_rom_path_to_relative((char*)path);
+        
+        if (relative_path) {
+            fprintf(fp, "%lld|%s\n", (long long)sorted_history[i]->timestamp, relative_path);
+            free(relative_path);
+            count++;
         } else {
-            fprintf(fp, "%lld|sdmc:/%s\n", (long long)sorted_history[i]->timestamp, path);
+            log_message(LOG_ERROR, "Failed to convert path to relative: %s", path);
         }
-        count++;
     }
 
     fclose(fp);
