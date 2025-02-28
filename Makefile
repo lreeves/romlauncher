@@ -31,5 +31,8 @@ $(TARGET): $(OBJ)
 clean:
 	rm -f $(OBJ) $(TARGET)
 
+test: all
+	./romlauncher
+
 # Phony targets
-.PHONY: all build clean
+.PHONY: all build clean test
