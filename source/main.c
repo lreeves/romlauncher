@@ -231,9 +231,16 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
         log_message(LOG_DEBUG, "Calculating pages: total_entries=%d, ENTRIES_PER_PAGE=%d",
                    total_entries, ENTRIES_PER_PAGE);
         total_pages = (total_entries + ENTRIES_PER_PAGE - 1) / ENTRIES_PER_PAGE;
-
+        favorites_content = NULL;
+        history_content = NULL;
+        current_browser_mode = BROWSER_MODE_FILES;
+        content->is_history_view = 0;
         log_message(LOG_DEBUG, "Calling set_selection");
         set_selection(content, renderer, font, selected_index, current_page);
+        if (current_browser_mode != BROWSER_MODE_FILES) {
+            current_browser_mode = BROWSER_MODE_FILES;
+            log_message(LOG_DEBUG, "Reset browser mode to FILES");
+        }
     }
 
     log_message(LOG_DEBUG, "Starting main loop");
