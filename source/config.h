@@ -1,10 +1,6 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#define ROMLAUNCHER_DATA_DIRECTORY "sdmc:/romlauncher/"
-#define ROMLAUNCHER_MEDIA_DIRECTORY ROMLAUNCHER_DATA_DIRECTORY "media/"
-#define ROM_PATH "sdmc:/roms/"
-
 // Color definitions
 #define COLOR_BACKGROUND    (SDL_Color){200, 200, 200, 255}
 #define COLOR_TEXT         (SDL_Color){0, 0, 0, 255}
@@ -12,9 +8,18 @@
 #define COLOR_TEXT_SELECTED (SDL_Color){0, 128, 0, 255}
 #define COLOR_TEXT_ERROR    (SDL_Color){255, 0, 0, 255}
 
-#include <stdio.h>
 #include <SDL2/SDL.h>
 #include "uthash.h"
+
+#ifdef ROMLAUNCHER_BUILD_LINUX
+    #define ROMLAUNCHER_DATA_DIRECTORY "/home/luke/.config/Ryujinx/sdcard/romlauncher/"
+    #define ROM_DIRECTORY "/home/luke/.config/Ryujinx/sdcard/roms/"
+#else
+    #define ROMLAUNCHER_DATA_DIRECTORY "sdmc:/romlauncher/"
+    #define ROM_DIRECTORY "sdmc:/roms/"
+#endif
+
+#define ROMLAUNCHER_MEDIA_DIRECTORY ROMLAUNCHER_DATA_DIRECTORY "media/"
 
 typedef struct {
     char key[256];           // key string

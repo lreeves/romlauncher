@@ -6,6 +6,7 @@ CONTAINER_NAME="switch-build-container"
 SOURCE_DIR=$(pwd)
 OUTPUT_DIR="${SOURCE_DIR}/output"
 
+rm source/*.o
 [ -f romlauncher.nro ] && rm romlauncher.nro
 [ -f romlauncher.nacp ] && rm romlauncher.nacp
 [ -f romlauncher.elf ] && rm romlauncher.elf

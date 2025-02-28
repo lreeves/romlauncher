@@ -11,15 +11,18 @@
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
+
+#ifndef ROMLAUNCHER_BUILD_LINUX
 #include <switch.h>
+#endif
 
 // Function to update box art based on current selection
-void update_box_art_for_selection(DirContent* content, SDL_Renderer* renderer, 
+void update_box_art_for_selection(DirContent* content, SDL_Renderer* renderer,
                                  const char* current_path, int selected_index) {
     if (!content || selected_index < 0) return;
-    
+
     // Only load box art for files (not directories)
-    if (selected_index >= content->dir_count && 
+    if (selected_index >= content->dir_count &&
         selected_index < content->dir_count + content->file_count) {
         int file_index = selected_index - content->dir_count;
         if (file_index >= 0 && file_index < content->file_count) {
@@ -63,7 +66,6 @@ typedef enum {
 #define DPAD_UP    13
 #define DPAD_DOWN  15
 
-#define ROMLAUNCHER_DATA_DIRECTORY "sdmc:/romlauncher/"
 #define SCREEN_W 1280
 #define SCREEN_H 720
 #define STATUS_BAR_HEIGHT 30
@@ -81,11 +83,13 @@ typedef struct {
 
 #define MAX_PATH_LEN 512
 
-
-const char* rom_directory = ROM_PATH;
 char current_path[MAX_PATH_LEN];
 
-
+#ifdef ROMLAUNCHER_BUILD_LINUX
+int appletMainLoop() {
+    return 1;
+}
+#endif
 
 int main(int argc, char** argv) {
     char log_filename[256];
@@ -155,6 +159,7 @@ int main(int argc, char** argv) {
     int ttf_initialized = 0;
     int romfs_initialized = 0;
 
+#ifndef ROMLAUNCHER_BUILD_LINUX
     // Initialize romfs
     Result rc = romfsInit();
     if (R_FAILED(rc)) {
@@ -164,6 +169,7 @@ int main(int argc, char** argv) {
     romfs_initialized = 1;
     chdir("romfs:/");
     log_message(LOG_DEBUG, "romFS initialized");
+#endif
 
     // Initialize SDL_image
     int img_flags = IMG_INIT_PNG;
@@ -217,7 +223,7 @@ int main(int argc, char** argv) {
     // Timing constants for button repeat behavior
     const Uint32 INITIAL_DELAY_MS = 300;  // Initial delay before auto-repeat starts
     const Uint32 REPEAT_DELAY_MS = 50;    // Delay between repeats after initial delay
-    
+
     Uint32 dpadUpRepeatTime = 0;
     Uint32 dpadDownRepeatTime = 0;
     int dpadUpHeld = 0;
@@ -229,12 +235,22 @@ int main(int argc, char** argv) {
     int leftShoulderHeld = 0;
     int rightShoulderHeld = 0;
 
+#ifdef ROMLAUNCHER_BUILD_LINUX
     // load fonts from romfs
+    TTF_Font* font = TTF_OpenFont(ROMLAUNCHER_DATA_DIRECTORY "data/Raleway-Regular.ttf", 32);
+    TTF_Font* small_font = TTF_OpenFont(ROMLAUNCHER_DATA_DIRECTORY "data/Raleway-Regular.ttf", 16);
+#else
     TTF_Font* font = TTF_OpenFont("data/Raleway-Regular.ttf", 32);
     TTF_Font* small_font = TTF_OpenFont("data/Raleway-Regular.ttf", 16);
+#endif
+
+    if((!font) || (!small_font)) {
+        log_message(LOG_ERROR, "Couldn't load fonts");
+        exit(1);
+    }
 
     log_message(LOG_INFO, "About to list files");
-    strncpy(current_path, rom_directory, sizeof(current_path) - 1);
+    strncpy(current_path, ROM_DIRECTORY, sizeof(current_path) - 1);
     DirContent* content = list_files(current_path);
     if (content == NULL) {
         log_message(LOG_INFO, "list_files returned NULL");
@@ -441,7 +457,7 @@ int main(int argc, char** argv) {
                     if (current_app_mode == APP_MODE_BROWSER) {
                         strncpy(saved_path, current_path, MAX_PATH_LEN-1);
                         saved_path[MAX_PATH_LEN-1] = '\0';
-                        
+
                         switch (current_browser_mode) {
                             case BROWSER_MODE_FILES:
                                 log_message(LOG_INFO, "Switching to favorites");
@@ -458,7 +474,7 @@ int main(int argc, char** argv) {
                                     set_selection(favorites_content, renderer, font, selected_index, current_page);
                                 }
                                 break;
-                                
+
                             case BROWSER_MODE_FAVORITES:
                                 // Switch to history mode
                                 log_message(LOG_INFO, "Switching to history");
@@ -466,7 +482,7 @@ int main(int argc, char** argv) {
 
                                 if (favorites_content) free_dir_content(favorites_content);
                                 favorites_content = NULL;
-                                
+
                                 if (history_content) free_dir_content(history_content);
                                 history_content = list_history();
                                 if (history_content) {
@@ -477,7 +493,7 @@ int main(int argc, char** argv) {
                                     set_selection(history_content, renderer, font, selected_index, current_page);
                                 }
                                 break;
-                                
+
                             case BROWSER_MODE_HISTORY:
                                 log_message(LOG_INFO, "Switching to files");
                                 current_browser_mode = BROWSER_MODE_FILES;
@@ -500,7 +516,7 @@ int main(int argc, char** argv) {
                 if (event.jbutton.button == JOY_Y) {
                     // Y button now toggles favorites in any mode
                     toggle_current_favorite(content, selected_index, current_path);
-                    
+
                     // If we're in favorites mode, refresh the list
                     if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES) {
                         if (favorites_content) free_dir_content(favorites_content);
@@ -514,7 +530,7 @@ int main(int argc, char** argv) {
                         }
                     } else {
                         set_selection(content, renderer, font, selected_index, current_page);
-                        
+
                         // Load box art for selected file
                         update_box_art_for_selection(content, renderer, current_path, selected_index);
                     }
@@ -550,7 +566,7 @@ int main(int argc, char** argv) {
                                 current_page = 0;
                                 set_selection(content, renderer, font, selected_index, current_page);
                             } else {
-                                go_up_directory(content, current_path, rom_directory);
+                                go_up_directory(content, current_path, ROM_DIRECTORY);
                                 selected_index = 0;
                                 total_entries = content->dir_count + content->file_count;
                                 current_page = 0;
@@ -699,7 +715,7 @@ int main(int argc, char** argv) {
                 } else {
                     // Handle repeat with initial delay
                     Uint32 delay = dpadUpInitialDelay ? INITIAL_DELAY_MS : REPEAT_DELAY_MS;
-                    
+
                     if (now - dpadUpRepeatTime >= delay) {
                         if (selected_index > 0)
                             selected_index--;
@@ -723,7 +739,7 @@ int main(int argc, char** argv) {
                             update_box_art_for_selection(content, renderer, current_path, selected_index);
                             log_message(LOG_DEBUG, "Auto repeat: DPAD_UP; new selection: %d", selected_index);
                         }
-                        
+
                         dpadUpInitialDelay = 0;  // Switch to repeat phase
                         dpadUpRepeatTime = now;
                     }
@@ -741,7 +757,7 @@ int main(int argc, char** argv) {
                 } else {
                     // Handle repeat with initial delay
                     Uint32 delay = dpadDownInitialDelay ? INITIAL_DELAY_MS : REPEAT_DELAY_MS;
-                    
+
                     if (now - dpadDownRepeatTime >= delay) {
                         if (selected_index < total_entries - 1)
                             selected_index++;
@@ -765,7 +781,7 @@ int main(int argc, char** argv) {
                             update_box_art_for_selection(content, renderer, current_path, selected_index);
                             log_message(LOG_DEBUG, "Auto repeat: DPAD_DOWN; new selection: %d", selected_index);
                         }
-                        
+
                         dpadDownInitialDelay = 0;  // Switch to repeat phase
                         dpadDownRepeatTime = now;
                     }
@@ -958,8 +974,10 @@ cleanup:
         IMG_Quit();
     if (sdl_initialized)
         SDL_Quit();
+#ifndef ROMLAUNCHER_BUILD_LINUX
     if (romfs_initialized)
         romfsExit();
+#endif
 
     // Free config, favorites, history, and hash tables
     free_config();

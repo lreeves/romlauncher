@@ -94,6 +94,18 @@ void log_message(int level, const char* format, ...) {
     // Add newline and flush
     fprintf(log_file, "\n");
     fflush(log_file);
+
+#ifdef ROMLAUNCHER_BUILD_LINUX
+    if(level != LOG_DEBUG) {
+        printf("[%s] [%s] ", timestamp, level_str);
+        va_start(args, format);
+        vprintf(format, args);
+        va_end(args);
+
+        printf("\n");
+    }
+
+#endif
 }
 
 void log_close(void) {

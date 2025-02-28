@@ -32,6 +32,11 @@ SDL_Texture* render_text(SDL_Renderer *renderer, const char* text,
     SDL_Surface *surface;
     SDL_Texture *texture;
 
+    if(!renderer) {
+        log_message(LOG_ERROR, "Renderer is null when trying to render text");
+        exit(1);
+    }
+
     // Check if this path is a favorite
     char full_path[MAX_PATH_LEN * 2];  // Double buffer size to ensure space for path + filename
     char display_text[MAX_PATH_LEN * 2 + 2];  // Extra space for "* " prefix
@@ -43,7 +48,20 @@ SDL_Texture* render_text(SDL_Renderer *renderer, const char* text,
     } else {
         surface = TTF_RenderText_Blended(font, text, color);
     }
+    
+    if (!surface) {
+        log_message(LOG_ERROR, "TTF_RenderText_Blended failed: %s", TTF_GetError());
+        exit(1);
+    }
+    
     texture = SDL_CreateTextureFromSurface(renderer, surface);
+
+    if(!texture) {
+        log_message(LOG_ERROR, "Couldn't create SDL texture: %s", SDL_GetError());
+        SDL_FreeSurface(surface);
+        exit(1);
+    }
+
     rect->w = surface->w;
     rect->h = surface->h;
 

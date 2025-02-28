@@ -1,12 +1,15 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <switch.h>
 #include <time.h>
 #include "logging.h"
 #include "config.h"
 #include "launch.h"
 #include "history.h"
+
+#ifndef ROMLAUNCHER_BUILD_LINUX
+#include <switch.h>
+#endif
 
 #define MAX_PATH_LEN 512
 
@@ -68,6 +71,9 @@ int launch_retroarch(const char* rom_path) {
     // Log launch details
     log_message(LOG_INFO, "Launching RetroArch: %s with args: %s", core_path, full_arguments);
 
+#ifdef ROMLAUNCHER_BUILD_LINUX
+    log_message(LOG_INFO, "Skipping actual launch since we're not in a Switch environment");
+#else
     // Launch RetroArch with the selected ROM
     Result rc = envSetNextLoad(core_path, full_arguments);
     if (R_SUCCEEDED(rc)) {
@@ -77,4 +83,5 @@ int launch_retroarch(const char* rom_path) {
         log_message(LOG_ERROR, "Failed to set next load, error: %x", rc);
         return 0;
     }
+#endif
 }

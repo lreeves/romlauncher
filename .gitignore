@@ -1,5 +1,10 @@
 romlauncher.nacp
 romlauncher.nro
 romlauncher.elf
+romlauncher
 build/
+source/*.o
 .aider*
+.cache/
+compile_commands.json
+*-swp
