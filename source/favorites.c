@@ -134,14 +134,33 @@ DirContent* list_favorites(void) {
     
     log_message(LOG_INFO, "Listing favorites with ROM path: %s", rom_path);
     
+    // Count favorites to ensure we have some
+    int favorite_count = 0;
+    config_entry *current, *tmp;
+    HASH_ITER(hh, favorites, current, tmp) {
+        favorite_count++;
+    }
+    log_message(LOG_INFO, "Found %d favorites to list", favorite_count);
+    
     // First pass: group favorites by directory
     FavoriteGroup* groups = NULL;
     config_entry *current, *tmp;
     
     // Process favorites
     HASH_ITER(hh, favorites, current, tmp) {
+        log_message(LOG_DEBUG, "Processing favorite: %s", current->key);
         char* group_name = extract_group_name(current->key, rom_path);
         char* display_name = get_display_name(current->key);
+        
+        if (!group_name || !display_name) {
+            log_message(LOG_ERROR, "Failed to get group name or display name for %s", current->key);
+            if (group_name) free(group_name);
+            if (display_name) free(display_name);
+            continue;
+        }
+        
+        log_message(LOG_DEBUG, "Grouped '%s' into '%s' with display name '%s'", 
+                   current->key, group_name, display_name);
         
         // Find or create group
         FavoriteGroup* group = NULL;
@@ -181,8 +200,9 @@ DirContent* list_favorites(void) {
         group->entry_count++;
     }
     
-    // If no favorites exist, create a single entry with the help message
-    if (!groups) {
+    // If no favorites exist or we couldn't process any, create a single entry with the help message
+    if (!groups || group_idx == 0) {
+        log_message(LOG_INFO, "No favorite groups created, showing help message");
         content->files = calloc(1, sizeof(char*));
         content->file_textures = calloc(1, sizeof(SDL_Texture*));
         content->file_rects = calloc(1, sizeof(SDL_Rect));
@@ -281,6 +301,20 @@ DirContent* list_favorites(void) {
     
     free(group_array);
     return content;
+}
+
+void dump_favorites(void) {
+    log_message(LOG_INFO, "===== DUMPING FAVORITES =====");
+    int count = 0;
+    config_entry *current, *tmp;
+    
+    HASH_ITER(hh, favorites, current, tmp) {
+        count++;
+        log_message(LOG_INFO, "Favorite %d: %s", count, current->key);
+    }
+    
+    log_message(LOG_INFO, "Total favorites: %d", count);
+    log_message(LOG_INFO, "===== END FAVORITES DUMP =====");
 }
 
 void toggle_current_favorite(DirContent* content, int selected_index, const char* current_path) {

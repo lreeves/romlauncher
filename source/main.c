@@ -56,6 +56,7 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
     // Load config, favorites, and history
     load_config();
     load_favorites();
+    dump_favorites(); // Log favorites for debugging
     load_history();
     init_default_core_mappings();
     init_system_names_mappings();
@@ -68,6 +69,7 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
     current_browser_mode = BROWSER_MODE_FILES;
     favorites_content = NULL;
     history_content = NULL;
+    log_message(LOG_DEBUG, "Initialized favorites_content to NULL");
     char saved_path[MAX_PATH_LEN];
     menu_selection = 0;
     for (int i = 0; i < MENU_OPTIONS; i++) {
