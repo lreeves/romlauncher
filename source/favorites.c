@@ -67,6 +67,13 @@ static char* extract_group_name(const char* full_path, const char* rom_path) {
     char* group_name = strndup(relative_path, last_slash - relative_path);
     if (!group_name) return strdup("Uncategorized");
     
+    // Remove leading slash if present
+    if (group_name[0] == '/') {
+        char* fixed_name = strdup(group_name + 1);
+        free(group_name);
+        group_name = fixed_name ? fixed_name : strdup("Uncategorized");
+    }
+    
     // Log the resulting group name
     log_message(LOG_DEBUG, "Extracted group name: %s", group_name);
     
