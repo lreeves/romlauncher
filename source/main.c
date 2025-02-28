@@ -213,10 +213,16 @@ int main(int argc, char** argv) {
     } else {
         log_message(LOG_DEBUG, "SDL joystick initialized");
     }
+    // Timing constants for button repeat behavior
+    const Uint32 INITIAL_DELAY_MS = 300;  // Initial delay before auto-repeat starts
+    const Uint32 REPEAT_DELAY_MS = 50;    // Delay between repeats after initial delay
+    
     Uint32 dpadUpRepeatTime = 0;
     Uint32 dpadDownRepeatTime = 0;
     int dpadUpHeld = 0;
+    int dpadUpInitialDelay = 1;  // Flag to track if we're in initial delay phase
     int dpadDownHeld = 0;
+    int dpadDownInitialDelay = 1;  // Flag to track if we're in initial delay phase
     Uint32 leftShoulderRepeatTime = 0;
     Uint32 rightShoulderRepeatTime = 0;
     int leftShoulderHeld = 0;
@@ -686,31 +692,40 @@ int main(int argc, char** argv) {
             if (SDL_JoystickGetButton(joystick, DPAD_UP)) {
                 if (!dpadUpHeld) {
                     dpadUpHeld = 1;
+                    dpadUpInitialDelay = 1;  // Reset to initial delay phase
                     dpadUpRepeatTime = now;
-                } else if (now - dpadUpRepeatTime >= 50) {
-                    if (selected_index > 0)
-                        selected_index--;
-                    else
-                        selected_index = total_entries - 1;
-                    current_page = selected_index / ENTRIES_PER_PAGE;
+                    // Don't process immediately here - first press is handled in JOYBUTTONDOWN event
+                } else {
+                    // Handle repeat with initial delay
+                    Uint32 delay = dpadUpInitialDelay ? INITIAL_DELAY_MS : REPEAT_DELAY_MS;
+                    
+                    if (now - dpadUpRepeatTime >= delay) {
+                        if (selected_index > 0)
+                            selected_index--;
+                        else
+                            selected_index = total_entries - 1;
+                        current_page = selected_index / ENTRIES_PER_PAGE;
 
-                    DirContent* current_content = content;
-                    if (current_app_mode == APP_MODE_BROWSER) {
-                        if (current_browser_mode == BROWSER_MODE_FAVORITES) {
-                            current_content = favorites_content;
-                        } else if (current_browser_mode == BROWSER_MODE_HISTORY) {
-                            current_content = history_content;
+                        DirContent* current_content = content;
+                        if (current_app_mode == APP_MODE_BROWSER) {
+                            if (current_browser_mode == BROWSER_MODE_FAVORITES) {
+                                current_content = favorites_content;
+                            } else if (current_browser_mode == BROWSER_MODE_HISTORY) {
+                                current_content = history_content;
+                            }
                         }
-                    }
 
-                    set_selection(current_content, renderer, font, selected_index, current_page);
+                        set_selection(current_content, renderer, font, selected_index, current_page);
 
-                    if (current_app_mode == APP_MODE_BROWSER &&
-                        current_browser_mode == BROWSER_MODE_FILES) {
-                        update_box_art_for_selection(content, renderer, current_path, selected_index);
-                        log_message(LOG_DEBUG, "Auto repeat: DPAD_UP; new selection: %d", selected_index);
+                        if (current_app_mode == APP_MODE_BROWSER &&
+                            current_browser_mode == BROWSER_MODE_FILES) {
+                            update_box_art_for_selection(content, renderer, current_path, selected_index);
+                            log_message(LOG_DEBUG, "Auto repeat: DPAD_UP; new selection: %d", selected_index);
+                        }
+                        
+                        dpadUpInitialDelay = 0;  // Switch to repeat phase
+                        dpadUpRepeatTime = now;
                     }
-                    dpadUpRepeatTime = now;
                 }
             } else {
                 dpadUpHeld = 0;
@@ -719,31 +734,40 @@ int main(int argc, char** argv) {
             if (SDL_JoystickGetButton(joystick, DPAD_DOWN)) {
                 if (!dpadDownHeld) {
                     dpadDownHeld = 1;
+                    dpadDownInitialDelay = 1;  // Reset to initial delay phase
                     dpadDownRepeatTime = now;
-                } else if (now - dpadDownRepeatTime >= 50) {
-                    if (selected_index < total_entries - 1)
-                        selected_index++;
-                    else
-                        selected_index = 0;
-                    current_page = selected_index / ENTRIES_PER_PAGE;
+                    // Don't process immediately here - first press is handled in JOYBUTTONDOWN event
+                } else {
+                    // Handle repeat with initial delay
+                    Uint32 delay = dpadDownInitialDelay ? INITIAL_DELAY_MS : REPEAT_DELAY_MS;
+                    
+                    if (now - dpadDownRepeatTime >= delay) {
+                        if (selected_index < total_entries - 1)
+                            selected_index++;
+                        else
+                            selected_index = 0;
+                        current_page = selected_index / ENTRIES_PER_PAGE;
 
-                    DirContent* current_content = content;
-                    if (current_app_mode == APP_MODE_BROWSER) {
-                        if (current_browser_mode == BROWSER_MODE_FAVORITES) {
-                            current_content = favorites_content;
-                        } else if (current_browser_mode == BROWSER_MODE_HISTORY) {
-                            current_content = history_content;
+                        DirContent* current_content = content;
+                        if (current_app_mode == APP_MODE_BROWSER) {
+                            if (current_browser_mode == BROWSER_MODE_FAVORITES) {
+                                current_content = favorites_content;
+                            } else if (current_browser_mode == BROWSER_MODE_HISTORY) {
+                                current_content = history_content;
+                            }
                         }
-                    }
 
-                    set_selection(current_content, renderer, font, selected_index, current_page);
+                        set_selection(current_content, renderer, font, selected_index, current_page);
 
-                    if (current_app_mode == APP_MODE_BROWSER &&
-                        current_browser_mode == BROWSER_MODE_FILES) {
-                        update_box_art_for_selection(content, renderer, current_path, selected_index);
-                        log_message(LOG_DEBUG, "Auto repeat: DPAD_DOWN; new selection: %d", selected_index);
+                        if (current_app_mode == APP_MODE_BROWSER &&
+                            current_browser_mode == BROWSER_MODE_FILES) {
+                            update_box_art_for_selection(content, renderer, current_path, selected_index);
+                            log_message(LOG_DEBUG, "Auto repeat: DPAD_DOWN; new selection: %d", selected_index);
+                        }
+                        
+                        dpadDownInitialDelay = 0;  // Switch to repeat phase
+                        dpadDownRepeatTime = now;
                     }
-                    dpadDownRepeatTime = now;
                 }
             } else {
                 dpadDownHeld = 0;
