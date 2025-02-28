@@ -68,9 +68,6 @@ typedef struct {
 const char* rom_directory = ROM_PATH;
 char current_path[MAX_PATH_LEN];
 
-int rand_range(int min, int max){
-   return min + rand() / (RAND_MAX / (max - min + 1) + 1);
-}
 
 
 int main(int argc, char** argv) {
