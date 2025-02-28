@@ -60,10 +60,21 @@ void load_history(void) {
         if (separator) {
             *separator = '\0';
             timestamp = (time_t)atoll(line);
-            strncpy(path, separator + 1, MAX_PATH_LEN - 1);
-            path[MAX_PATH_LEN - 1] = '\0';
-
-            add_history_entry(path, timestamp);
+            
+            // Get the relative path from the file
+            char rel_path[MAX_PATH_LEN];
+            strncpy(rel_path, separator + 1, MAX_PATH_LEN - 1);
+            rel_path[MAX_PATH_LEN - 1] = '\0';
+            
+            // Convert relative path to absolute path
+            char* absolute_path = relative_rom_path_to_absolute(rel_path);
+            if (absolute_path) {
+                // Add the entry with the absolute path
+                add_history_entry(absolute_path, timestamp);
+                free(absolute_path);
+            } else {
+                log_message(LOG_ERROR, "Failed to convert history path to absolute: %s", rel_path);
+            }
         }
     }
 

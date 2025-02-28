@@ -99,13 +99,28 @@ void load_favorites(void) {
         // Remove newline
         line[strcspn(line, "\n")] = 0;
         if (strlen(line) > 0) {
+            // Convert relative path to absolute path
+            char* absolute_path = relative_rom_path_to_absolute(line);
+            if (!absolute_path) {
+                log_message(LOG_ERROR, "Failed to convert favorite path to absolute: %s", line);
+                continue;
+            }
+            
             config_entry *entry = malloc(sizeof(config_entry));
-            strncpy(entry->key, line, sizeof(entry->key)-1);
+            if (!entry) {
+                free(absolute_path);
+                log_message(LOG_ERROR, "Failed to allocate memory for favorite entry");
+                continue;
+            }
+            
+            strncpy(entry->key, absolute_path, sizeof(entry->key)-1);
             entry->key[sizeof(entry->key)-1] = '\0';
             entry->value[0] = '1';
             entry->value[1] = '\0';
             HASH_ADD_STR(favorites, key, entry);
-            log_message(LOG_DEBUG, "Loaded favorite: %s", line);
+            log_message(LOG_DEBUG, "Loaded favorite: %s (absolute: %s)", line, absolute_path);
+            
+            free(absolute_path);
         }
     }
     fclose(fp);
