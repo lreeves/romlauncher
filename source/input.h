@@ -19,6 +19,13 @@
 #define DPAD_UP    13
 #define DPAD_DOWN  15
 
+// Menu options
+#define MENU_OPTIONS 4  // Total number of menu options
+#define MENU_HELP 0
+#define MENU_HISTORY 1
+#define MENU_SCRAPER 2
+#define MENU_QUIT 3
+
 // Timing constants for button repeat behavior
 #define INITIAL_DELAY_MS 300  // Initial delay before auto-repeat starts
 #define REPEAT_DELAY_MS 50    // Delay between repeats after initial delay

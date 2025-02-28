@@ -17,11 +17,6 @@
 #include <switch.h>
 #endif
 
-// Menu options
-#define MENU_HELP 0
-#define MENU_HISTORY 1
-#define MENU_SCRAPER 2
-#define MENU_QUIT 3
 
 // Define current_path as a global variable so it can be accessed from other files
 char current_path[MAX_PATH_LEN];
