@@ -40,7 +40,6 @@ void load_history(void) {
     }
 
     char line[MAX_PATH_LEN];
-    char path[MAX_PATH_LEN];
     time_t timestamp;
 
     while (fgets(line, sizeof(line), fp)) {
