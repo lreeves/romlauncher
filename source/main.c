@@ -8,6 +8,7 @@
 #include "favorites.h"
 #include "history.h"
 #include "launch.h"
+#include "input.h"
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
@@ -16,228 +17,15 @@
 #include <switch.h>
 #endif
 
-// some switch buttons
-#define JOY_A     0
-#define JOY_B     1
-#define JOY_X     2
-#define JOY_Y     3
-
-// Timing constants for button repeat behavior
-#define INITIAL_DELAY_MS 300  // Initial delay before auto-repeat starts
-#define REPEAT_DELAY_MS 50    // Delay between repeats after initial delay
-
 // Menu options
-#define MENU_OPTIONS 4  // Total number of menu options
 #define MENU_HELP 0
 #define MENU_HISTORY 1
 #define MENU_SCRAPER 2
 #define MENU_QUIT 3
 
-typedef enum {
-    APP_MODE_BROWSER,
-    APP_MODE_MENU,
-    APP_MODE_SCRAPING,
-} AppMode;
-
-typedef enum {
-    BROWSER_MODE_FILES,
-    BROWSER_MODE_FAVORITES,
-    BROWSER_MODE_HISTORY
-} BrowserMode;
-
-// Forward declaration
-void update_box_art_for_selection(DirContent* content, SDL_Renderer* renderer,
-                                 const char* current_path, int selected_index);
-
-// Global variables needed by the helper functions
-static int selected_index;
-static int total_entries;
-static int current_page;
-static int total_pages;
-static int menu_selection;
-static DirContent* content;
-static DirContent* favorites_content;
-static DirContent* history_content;
-static SDL_Renderer* renderer;
-static TTF_Font* font;
-static SDL_Joystick* joystick;
-static AppMode current_app_mode;
-static BrowserMode current_browser_mode;
-static SDL_Texture* menu_textures[MENU_OPTIONS];
-static SDL_Rect menu_rects[MENU_OPTIONS];
-static const char* menu_options[] = {"Help", "History", "Scraper", "Quit"};
-
-// Define current_path as a global variable (not static) so it can be accessed from other files
+// Define current_path as a global variable so it can be accessed from other files
 char current_path[MAX_PATH_LEN];
 
-// Forward declarations
-static void handle_up_navigation(void);
-static void handle_down_navigation(void);
-static void handle_page_navigation(int direction);
-static void update_menu_selection(int new_selection);
-static DirContent* get_current_content(void);
-
-// Helper function to get current content based on browser mode
-static DirContent* get_current_content(void) {
-    if (current_app_mode == APP_MODE_BROWSER) {
-        if (current_browser_mode == BROWSER_MODE_FAVORITES) {
-            return favorites_content;
-        } else if (current_browser_mode == BROWSER_MODE_HISTORY) {
-            return history_content;
-        }
-    }
-    return content;
-}
-
-// Helper function for up navigation
-static void handle_up_navigation(void) {
-    if (selected_index > 0)
-        selected_index--;
-    else
-        selected_index = total_entries - 1;
-    
-    current_page = selected_index / ENTRIES_PER_PAGE;
-    DirContent* current_content = get_current_content();
-    set_selection(current_content, renderer, font, selected_index, current_page);
-    
-    if (current_app_mode == APP_MODE_BROWSER && 
-        current_browser_mode == BROWSER_MODE_FILES) {
-        update_box_art_for_selection(content, renderer, current_path, selected_index);
-        log_message(LOG_DEBUG, "Auto repeat: DPAD_UP; new selection: %d", selected_index);
-    }
-}
-
-// Helper function for down navigation
-static void handle_down_navigation(void) {
-    if (selected_index < total_entries - 1)
-        selected_index++;
-    else
-        selected_index = 0;
-    
-    current_page = selected_index / ENTRIES_PER_PAGE;
-    DirContent* current_content = get_current_content();
-    set_selection(current_content, renderer, font, selected_index, current_page);
-    
-    if (current_app_mode == APP_MODE_BROWSER && 
-        current_browser_mode == BROWSER_MODE_FILES) {
-        update_box_art_for_selection(content, renderer, current_path, selected_index);
-        log_message(LOG_DEBUG, "Auto repeat: DPAD_DOWN; new selection: %d", selected_index);
-    }
-}
-
-// Helper function to handle navigation input
-static void handle_navigation_input(int direction) {
-    if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES && favorites_content) {
-        // In favorites mode, skip group headers
-        selected_index = find_next_rom(favorites_content, selected_index, direction);
-    } else {
-        // Normal directory browsing behavior
-        if (direction < 0) {
-            if (selected_index > 0) {
-                selected_index--;
-            } else {
-                selected_index = total_entries - 1;
-            }
-        } else {
-            if (selected_index < total_entries - 1) {
-                selected_index++;
-            } else {
-                selected_index = 0;
-            }
-        }
-    }
-    
-    current_page = selected_index / ENTRIES_PER_PAGE;
-    DirContent* current_content = get_current_content();
-    set_selection(current_content, renderer, font, selected_index, current_page);
-    
-    // Load box art for selected file when navigating
-    if (current_app_mode == APP_MODE_BROWSER &&
-        current_browser_mode == BROWSER_MODE_FILES) {
-        update_box_art_for_selection(content, renderer, current_path, selected_index);
-    }
-}
-
-// Helper function to handle page navigation (for shoulder buttons)
-static void handle_page_navigation(int direction) {
-    if (direction < 0) {
-        if (current_page > 0)
-            current_page--;
-        else
-            current_page = total_pages - 1;
-    } else {
-        if (current_page < total_pages - 1)
-            current_page++;
-        else
-            current_page = 0;
-    }
-    
-    selected_index = current_page * ENTRIES_PER_PAGE;
-    DirContent* current_content = get_current_content();
-    set_selection(current_content, renderer, font, selected_index, current_page);
-}
-
-// Helper function to update menu selection
-static void update_menu_selection(int new_selection) {
-    menu_selection = new_selection;
-    
-    // Update menu textures
-    for (int i = 0; i < MENU_OPTIONS; i++) {
-        if (menu_textures[i]) SDL_DestroyTexture(menu_textures[i]);
-        SDL_Color color = (i == menu_selection) ? COLOR_TEXT_SELECTED : COLOR_TEXT;
-        menu_textures[i] = render_text(renderer, menu_options[i], font, color, &menu_rects[i], 0);
-    }
-}
-
-// Helper function to handle button repeat for navigation
-static void handle_button_repeat(int button, int *held_state, int *initial_delay_state, 
-                             Uint32 *repeat_time, Uint32 now, void (*action)(void)) {
-    if (SDL_JoystickGetButton(joystick, button)) {
-        if (!(*held_state)) {
-            *held_state = 1;
-            *initial_delay_state = 1;  // Reset to initial delay phase
-            *repeat_time = now;
-            // Don't process immediately - first press is handled in JOYBUTTONDOWN event
-        } else {
-            // Handle repeat with initial delay
-            Uint32 delay = (*initial_delay_state) ? INITIAL_DELAY_MS : REPEAT_DELAY_MS;
-            
-            if (now - (*repeat_time) >= delay) {
-                action();
-                *initial_delay_state = 0;  // Switch to repeat phase
-                *repeat_time = now;
-            }
-        }
-    } else {
-        *held_state = 0;
-    }
-}
-
-// Function to update box art based on current selection
-void update_box_art_for_selection(DirContent* content, SDL_Renderer* renderer,
-                                 const char* current_path, int selected_index) {
-    if (!content || selected_index < 0) return;
-
-    // Only load box art for files (not directories)
-    if (selected_index >= content->dir_count &&
-        selected_index < content->dir_count + content->file_count) {
-        int file_index = selected_index - content->dir_count;
-        if (file_index >= 0 && file_index < content->file_count) {
-            const char* filename = content->files[file_index];
-            log_message(LOG_DEBUG, "Loading box art for: %s", filename);
-            load_box_art(content, renderer, current_path, filename);
-        }
-    }
-}
-
-#define JOY_PLUS  10
-#define JOY_MINUS 11
-#define JOY_LEFT  12
-#define JOY_RIGHT 14
-#define JOY_LEFT_SHOULDER 6
-#define JOY_RIGHT_SHOULDER 7
-#define DPAD_UP    13
-#define DPAD_DOWN  15
 
 #define SCREEN_W 1280
 #define SCREEN_H 720
