@@ -373,6 +373,28 @@ int main(int argc, char** argv) {
                                         }
                                     }
                                 }
+                            } else if (current_browser_mode == BROWSER_MODE_HISTORY) {
+                                log_message(LOG_DEBUG, "History mode: selected_index=%d, file_count=%d",
+                                            selected_index, history_content ? history_content->file_count : -1);
+                                if (selected_index >= 0 && history_content && selected_index < history_content->file_count) {
+                                    const char* rom_path = get_history_rom_path(selected_index);
+                                    if (rom_path) {
+                                        log_message(LOG_INFO, "Attempting to launch history entry: %s", rom_path);
+                                        if (launch_retroarch(rom_path)) {
+                                            exit_requested = 1;
+                                        } else {
+                                            if (notification.texture) {
+                                                SDL_DestroyTexture(notification.texture);
+                                            }
+                                            notification.texture = render_text(renderer, "Error launching emulator", font, COLOR_TEXT_ERROR, &notification.rect, 0);
+                                            notification.rect.x = (SCREEN_W - notification.rect.w) / 2;
+                                            notification.rect.y = SCREEN_H - notification.rect.h - 20;
+                                            notification.active = 1;
+                                        }
+                                    } else {
+                                        log_message(LOG_ERROR, "Invalid history entry path");
+                                    }
+                                }
                             }
                             break;
                         case APP_MODE_MENU:
@@ -497,6 +519,15 @@ int main(int argc, char** argv) {
                                 selected_index = 0;
                                 current_page = 0;
                                 set_selection(content, renderer, font, selected_index, current_page);
+                            } else if (current_browser_mode == BROWSER_MODE_HISTORY) {
+                                if (history_content) free_dir_content(history_content);
+                                history_content = NULL;
+                                current_browser_mode = BROWSER_MODE_FILES;
+                                strncpy(current_path, saved_path, MAX_PATH_LEN-1);
+                                current_path[MAX_PATH_LEN-1] = '\0';
+                                selected_index = 0;
+                                current_page = 0;
+                                set_selection(content, renderer, font, selected_index, current_page);
                             } else {
                                 go_up_directory(content, current_path, rom_directory);
                                 selected_index = 0;
@@ -519,8 +550,12 @@ int main(int argc, char** argv) {
                     }
                     selected_index = current_page * ENTRIES_PER_PAGE;
                     DirContent* current_content = content;
-                    if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES) {
-                        current_content = favorites_content;
+                    if (current_app_mode == APP_MODE_BROWSER) {
+                        if (current_browser_mode == BROWSER_MODE_FAVORITES) {
+                            current_content = favorites_content;
+                        } else if (current_browser_mode == BROWSER_MODE_HISTORY) {
+                            current_content = history_content;
+                        }
                     }
                     set_selection(current_content, renderer, font, selected_index, current_page);
                 }
@@ -533,8 +568,12 @@ int main(int argc, char** argv) {
                     }
                     selected_index = current_page * ENTRIES_PER_PAGE;
                     DirContent* current_content = content;
-                    if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES) {
-                        current_content = favorites_content;
+                    if (current_app_mode == APP_MODE_BROWSER) {
+                        if (current_browser_mode == BROWSER_MODE_FAVORITES) {
+                            current_content = favorites_content;
+                        } else if (current_browser_mode == BROWSER_MODE_HISTORY) {
+                            current_content = history_content;
+                        }
                     }
                     set_selection(current_content, renderer, font, selected_index, current_page);
                 }
@@ -642,8 +681,12 @@ int main(int argc, char** argv) {
                     current_page = selected_index / ENTRIES_PER_PAGE;
 
                     DirContent* current_content = content;
-                    if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES) {
-                        current_content = favorites_content;
+                    if (current_app_mode == APP_MODE_BROWSER) {
+                        if (current_browser_mode == BROWSER_MODE_FAVORITES) {
+                            current_content = favorites_content;
+                        } else if (current_browser_mode == BROWSER_MODE_HISTORY) {
+                            current_content = history_content;
+                        }
                     }
 
                     set_selection(current_content, renderer, font, selected_index, current_page);
@@ -675,8 +718,12 @@ int main(int argc, char** argv) {
                     current_page = selected_index / ENTRIES_PER_PAGE;
 
                     DirContent* current_content = content;
-                    if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES) {
-                        current_content = favorites_content;
+                    if (current_app_mode == APP_MODE_BROWSER) {
+                        if (current_browser_mode == BROWSER_MODE_FAVORITES) {
+                            current_content = favorites_content;
+                        } else if (current_browser_mode == BROWSER_MODE_HISTORY) {
+                            current_content = history_content;
+                        }
                     }
 
                     set_selection(current_content, renderer, font, selected_index, current_page);
@@ -707,8 +754,12 @@ int main(int argc, char** argv) {
                     selected_index = current_page * ENTRIES_PER_PAGE;
 
                     DirContent* current_content = content;
-                    if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES) {
-                        current_content = favorites_content;
+                    if (current_app_mode == APP_MODE_BROWSER) {
+                        if (current_browser_mode == BROWSER_MODE_FAVORITES) {
+                            current_content = favorites_content;
+                        } else if (current_browser_mode == BROWSER_MODE_HISTORY) {
+                            current_content = history_content;
+                        }
                     }
 
                     set_selection(current_content, renderer, font, selected_index, current_page);
@@ -729,8 +780,12 @@ int main(int argc, char** argv) {
                     selected_index = current_page * ENTRIES_PER_PAGE;
 
                     DirContent* current_content = content;
-                    if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES) {
-                        current_content = favorites_content;
+                    if (current_app_mode == APP_MODE_BROWSER) {
+                        if (current_browser_mode == BROWSER_MODE_FAVORITES) {
+                            current_content = favorites_content;
+                        } else if (current_browser_mode == BROWSER_MODE_HISTORY) {
+                            current_content = history_content;
+                        }
                     }
 
                     set_selection(current_content, renderer, font, selected_index, current_page);
@@ -768,8 +823,12 @@ int main(int argc, char** argv) {
             }
         } else {
             DirContent* current_content = content;
-            if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES) {
-                current_content = favorites_content;
+            if (current_app_mode == APP_MODE_BROWSER) {
+                if (current_browser_mode == BROWSER_MODE_FAVORITES) {
+                    current_content = favorites_content;
+                } else if (current_browser_mode == BROWSER_MODE_HISTORY) {
+                    current_content = history_content;
+                }
             }
             if (current_content) {
                 for (int i = 0; i < current_content->dir_count; i++) {
@@ -788,8 +847,12 @@ int main(int argc, char** argv) {
         // Render box art if available
         if (current_app_mode != APP_MODE_MENU && current_app_mode != APP_MODE_SCRAPING) {
             DirContent* current_content = content;
-            if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES) {
-                current_content = favorites_content;
+            if (current_app_mode == APP_MODE_BROWSER) {
+                if (current_browser_mode == BROWSER_MODE_FAVORITES) {
+                    current_content = favorites_content;
+                } else if (current_browser_mode == BROWSER_MODE_HISTORY) {
+                    current_content = history_content;
+                }
             }
 
             if (current_content && current_content->box_art_texture) {
