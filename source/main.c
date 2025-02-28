@@ -16,6 +16,7 @@
 #ifndef ROMLAUNCHER_BUILD_LINUX
 #include <switch.h>
 #endif
+#define MAX_PATH_LEN 512
 
 
 // Define current_path as a global variable so it can be accessed from other files
@@ -36,8 +37,6 @@ typedef struct {
     SDL_Rect rect;
     int active;
 } Notification;
-
-#define MAX_PATH_LEN 512
 
 
 #ifdef ROMLAUNCHER_BUILD_LINUX
