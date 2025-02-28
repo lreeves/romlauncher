@@ -280,7 +280,7 @@ void load_box_art(DirContent* content, SDL_Renderer *renderer, const char* rom_p
     int path_len = snprintf(box_art_path, sizeof(box_art_path),
              "%s/media/%s/2dboxart/",
              ROMLAUNCHER_DATA_DIRECTORY, system_name);
-    if (path_len > 0 && path_len < sizeof(box_art_path)) {
+    if (path_len > 0 && (size_t)path_len < sizeof(box_art_path)) {
         strncat(box_art_path, rom_basename, sizeof(box_art_path) - path_len - 5); // -5 for ".png\0"
         strcat(box_art_path, ".png");
     } else {
