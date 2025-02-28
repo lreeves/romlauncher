@@ -44,7 +44,7 @@ static char* extract_group_name(const char* full_path, const char* rom_path) {
     // Find common ROM path prefix
     const char* relative_path = strstr(norm_full_path, norm_rom_path);
     if (!relative_path) {
-        log_message(LOG_WARNING, "ROM path not found in favorite path, using full path");
+        log_message(LOG_INFO, "ROM path not found in favorite path, using full path");
         // Extract directory path without filename
         char* last_slash = strrchr(norm_full_path, '/');
         if (!last_slash) return strdup("Uncategorized");
