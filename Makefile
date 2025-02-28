@@ -30,9 +30,15 @@ $(TARGET): $(OBJ)
 # Clean up
 clean:
 	rm -f $(OBJ) $(TARGET)
+	$(MAKE) -C tests clean
 
-test: all
+# Test target
+test:
+	$(MAKE) -C tests run
+
+# Run the application
+run: all
 	./romlauncher
 
 # Phony targets
-.PHONY: all build clean test
+.PHONY: all build clean test run
