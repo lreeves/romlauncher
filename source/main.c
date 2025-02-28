@@ -865,22 +865,31 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
             handle_button_repeat(DPAD_DOWN, &dpadDownHeld, &dpadDownInitialDelay, &dpadDownRepeatTime, now,
                                  handle_down_navigation);
             
-            // Helper functions for shoulder button repeats
-            void left_shoulder_action(void) {
-                handle_page_navigation(-1);
-            }
-            
-            void right_shoulder_action(void) {
-                handle_page_navigation(1);
-            }
-            
             // Left shoulder button repeat
-            handle_button_repeat(JOY_LEFT_SHOULDER, &leftShoulderHeld, &dpadUpInitialDelay, 
-                                &leftShoulderRepeatTime, now, left_shoulder_action);
+            if (SDL_JoystickGetButton(joystick, JOY_LEFT_SHOULDER)) {
+                if (!leftShoulderHeld) {
+                    leftShoulderHeld = 1;
+                    leftShoulderRepeatTime = now;
+                } else if (now - leftShoulderRepeatTime >= 50) {
+                    handle_page_navigation(-1);
+                    leftShoulderRepeatTime = now;
+                }
+            } else {
+                leftShoulderHeld = 0;
+            }
             
             // Right shoulder button repeat
-            handle_button_repeat(JOY_RIGHT_SHOULDER, &rightShoulderHeld, &dpadDownInitialDelay, 
-                                &rightShoulderRepeatTime, now, right_shoulder_action);
+            if (SDL_JoystickGetButton(joystick, JOY_RIGHT_SHOULDER)) {
+                if (!rightShoulderHeld) {
+                    rightShoulderHeld = 1;
+                    rightShoulderRepeatTime = now;
+                } else if (now - rightShoulderRepeatTime >= 50) {
+                    handle_page_navigation(1);
+                    rightShoulderRepeatTime = now;
+                }
+            } else {
+                rightShoulderHeld = 0;
+            }
         }
 
         SDL_SetRenderDrawColor(renderer,
