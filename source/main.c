@@ -115,7 +115,6 @@ int main(int argc, char** argv) {
 
     Notification notification = {0};
 
-    SDL_Texture *switchlogo_tex = NULL, *sdllogo_tex = NULL;
     SDL_Event event;
 
     int selected_index = 0;
@@ -902,10 +901,6 @@ int main(int argc, char** argv) {
 
 cleanup:
     // Clean up all textures
-    if (sdllogo_tex)
-        SDL_DestroyTexture(sdllogo_tex);
-    if (switchlogo_tex)
-        SDL_DestroyTexture(switchlogo_tex);
     if (notification.texture)
         SDL_DestroyTexture(notification.texture);
     if (scraping_message)
