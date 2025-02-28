@@ -384,7 +384,7 @@ int main(int argc, char** argv) {
                             break;
                         case APP_MODE_HISTORY:
                             if (selected_index >= 0 && history_content && selected_index < history_content->file_count) {
-                                const char* rom_path = history_content->files[selected_index];
+                                const char* rom_path = get_history_rom_path(selected_index);
                                 if (rom_path) {
                                     log_message(LOG_INFO, "Attempting to launch from history: %s", rom_path);
                                     if (launch_retroarch(rom_path)) {
@@ -437,6 +437,7 @@ int main(int argc, char** argv) {
                                 history_content = list_history();
                                 if (history_content) {
                                     current_browser_mode = BROWSER_MODE_HISTORY;
+                                    current_app_mode = APP_MODE_HISTORY;
                                     selected_index = 0;
                                     current_page = 0;
                                     total_entries = history_content->file_count;
@@ -449,7 +450,8 @@ int main(int argc, char** argv) {
                                 // Switch back to files mode
                                 if (history_content) free_dir_content(history_content);
                                 history_content = NULL;
-                                
+                
+                                current_app_mode = APP_MODE_BROWSER;
                                 current_browser_mode = BROWSER_MODE_FILES;
                                 strncpy(current_path, saved_path, MAX_PATH_LEN-1);
                                 current_path[MAX_PATH_LEN-1] = '\0';
@@ -653,6 +655,7 @@ int main(int argc, char** argv) {
                                     current_page = 0;
                                     total_entries = history_content->file_count;
                                     total_pages = (total_entries + ENTRIES_PER_PAGE - 1) / ENTRIES_PER_PAGE;
+                                    log_message(LOG_INFO, "Switching to history mode with %d entries", total_entries);
                                     set_selection(history_content, renderer, font, selected_index, current_page);
                                 }
                                 break;

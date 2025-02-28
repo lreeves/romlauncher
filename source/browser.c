@@ -354,7 +354,32 @@ void set_selection(DirContent* content, SDL_Renderer *renderer, TTF_Font *font,
 
     int start_index = current_page * ENTRIES_PER_PAGE;
     int end_index = start_index + ENTRIES_PER_PAGE;
-
+    
+    // Special handling for history view
+    if (content->is_history_view) {
+        log_message(LOG_DEBUG, "Setting selection for history view with %d entries", content->file_count);
+        for (int i = 0; i < content->file_count; i++) {
+            if (i < start_index || i >= end_index) {
+                if (content->file_textures[i]) {
+                    SDL_DestroyTexture(content->file_textures[i]);
+                    content->file_textures[i] = NULL;
+                }
+                continue;
+            }
+            
+            if (content->file_textures[i]) {
+                SDL_DestroyTexture(content->file_textures[i]);
+            }
+            
+            content->file_textures[i] = render_text(renderer, content->files[i], font,
+                i == selected_index ? COLOR_TEXT_HIGHLIGHT : COLOR_TEXT, 
+                &content->file_rects[i], 0);
+            
+            log_message(LOG_DEBUG, "Rendered history entry %d: %s", i, content->files[i]);
+        }
+        return;
+    }
+    
     for (int i = 0; i < content->dir_count; i++) {
         if (i < start_index || i >= end_index) {
             if (content->dir_textures[i]) {
