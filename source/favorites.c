@@ -144,7 +144,6 @@ DirContent* list_favorites(void) {
     
     // First pass: group favorites by directory
     FavoriteGroup* groups = NULL;
-    config_entry *current, *tmp;
     
     // Process favorites
     HASH_ITER(hh, favorites, current, tmp) {
@@ -200,8 +199,8 @@ DirContent* list_favorites(void) {
         group->entry_count++;
     }
     
-    // If no favorites exist or we couldn't process any, create a single entry with the help message
-    if (!groups || group_idx == 0) {
+    // If no favorites exist, create a single entry with the help message
+    if (!groups) {
         log_message(LOG_INFO, "No favorite groups created, showing help message");
         content->files = calloc(1, sizeof(char*));
         content->file_textures = calloc(1, sizeof(SDL_Texture*));
