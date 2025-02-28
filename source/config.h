@@ -1,15 +1,23 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#include <SDL2/SDL.h>
+#include "uthash.h"
+
 // Color definitions
 #define COLOR_BACKGROUND    (SDL_Color){200, 200, 200, 255}
 #define COLOR_TEXT         (SDL_Color){0, 0, 0, 255}
 #define COLOR_TEXT_HIGHLIGHT (SDL_Color){0, 0, 255, 255}
 #define COLOR_TEXT_SELECTED (SDL_Color){0, 128, 0, 255}
 #define COLOR_TEXT_ERROR    (SDL_Color){255, 0, 0, 255}
+#define COLOR_STATUS_BAR (SDL_Color){220, 220, 220, 255}
+#define COLOR_STATUS_TEXT (SDL_Color){20, 20, 20, 255}
+#define MAX_PATH_LEN 1024
 
-#include <SDL2/SDL.h>
-#include "uthash.h"
+#define SCREEN_W 1280
+#define SCREEN_H 720
+#define STATUS_BAR_HEIGHT 30
+
 
 #ifdef ROMLAUNCHER_BUILD_LINUX
     #define ROMLAUNCHER_DATA_DIRECTORY "/home/luke/.config/Ryujinx/sdcard/romlauncher/"

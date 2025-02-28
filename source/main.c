@@ -16,20 +16,9 @@
 #ifndef ROMLAUNCHER_BUILD_LINUX
 #include <switch.h>
 #endif
-#define MAX_PATH_LEN 512
-
 
 // Define current_path as a global variable so it can be accessed from other files
 char current_path[MAX_PATH_LEN];
-
-
-#define SCREEN_W 1280
-#define SCREEN_H 720
-#define STATUS_BAR_HEIGHT 30
-
-// Status bar colors - inverted from main colors
-#define COLOR_STATUS_BAR (SDL_Color){220, 220, 220, 255}
-#define COLOR_STATUS_TEXT (SDL_Color){20, 20, 20, 255}
 
 typedef struct {
     char message[256];

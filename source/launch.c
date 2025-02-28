@@ -11,8 +11,6 @@
 #include <switch.h>
 #endif
 
-#define MAX_PATH_LEN 512
-
 // Helper function to get file extension
 const char* get_file_extension(const char* filename) {
     const char* dot = strrchr(filename, '.');
@@ -73,6 +71,7 @@ int launch_retroarch(const char* rom_path) {
 
 #ifdef ROMLAUNCHER_BUILD_LINUX
     log_message(LOG_INFO, "Skipping actual launch since we're not in a Switch environment");
+    return 0;
 #else
     // Launch RetroArch with the selected ROM
     Result rc = envSetNextLoad(core_path, full_arguments);

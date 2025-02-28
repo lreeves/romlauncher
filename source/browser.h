@@ -7,7 +7,6 @@
 
 #define MAX_ENTRIES 1024
 #define ENTRIES_PER_PAGE 15
-#define MAX_PATH_LEN 512
 #define BOXART_MAX_WIDTH 350
 
 // External declarations
