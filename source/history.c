@@ -201,8 +201,11 @@ DirContent* list_history(void) {
 
     // If no history entries, show a message
     if (history_count == 0) {
-        content->files[0] = strdup("No history entries");
+        content->files[0] = strdup("No history yet - play some games!");
         content->file_count = 1;
+        // Initialize rect position for centering (will be adjusted in set_selection)
+        content->file_rects[0].x = 400; // Temporary value, will be centered
+        content->file_rects[0].y = 300; // Temporary value, will be centered
         log_message(LOG_INFO, "No history entries found");
         return content;
     }

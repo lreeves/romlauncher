@@ -440,14 +440,17 @@ void set_selection(DirContent* content, SDL_Renderer *renderer, TTF_Font *font,
         truncate_text(font, log_buf, 860);
         int entry_index = content->dir_count + i;
 
-        // Special handling for the "no favorites" message
-        if (content->is_favorites_view && content->file_count == 1 && i == 0) {
+        // Special handling for the "no favorites" or "no history" message
+        if ((content->is_favorites_view || content->is_history_view) && content->file_count == 1 && i == 0 && 
+            (strstr(content->files[i], "No history yet") || strstr(content->files[i], "Use the X button"))) {
             // Render the text first to get its dimensions
             SDL_Texture* texture = render_text(renderer, log_buf, font, COLOR_TEXT, &content->file_rects[i], content->is_favorites_view);
             // Center the text on screen
             content->file_rects[i].x = (1280 - content->file_rects[i].w) / 2;  // Assuming 1280x720 screen
-            content->file_rects[i].y = (720 - content->file_rects[i].h) / 2;
+            content->file_rects[i].y = (720 - content->file_rects[i].h - STATUS_BAR_HEIGHT) / 2;  // Account for status bar
             content->file_textures[i] = texture;
+            log_message(LOG_DEBUG, "Centered special message: %s at (%d, %d)", 
+                       content->files[i], content->file_rects[i].x, content->file_rects[i].y);
         } else {
             content->file_textures[i] = render_text(renderer, log_buf, font,
                 entry_index == selected_index ? COLOR_TEXT_HIGHLIGHT : COLOR_TEXT, &content->file_rects[i], content->is_favorites_view);
