@@ -23,12 +23,12 @@ typedef enum {
     APP_MODE_BROWSER,
     APP_MODE_MENU,
     APP_MODE_SCRAPING,
-    APP_MODE_HISTORY
 } AppMode;
 
 typedef enum {
     BROWSER_MODE_FILES,
-    BROWSER_MODE_FAVORITES
+    BROWSER_MODE_FAVORITES,
+    BROWSER_MODE_HISTORY
 } BrowserMode;
 
 // Menu options
@@ -140,7 +140,7 @@ int main(int argc, char** argv) {
     int img_initialized = 0;
     int ttf_initialized = 0;
     int romfs_initialized = 0;
-    
+
     // Initialize romfs
     Result rc = romfsInit();
     if (R_FAILED(rc)) {
@@ -150,7 +150,7 @@ int main(int argc, char** argv) {
     romfs_initialized = 1;
     chdir("romfs:/");
     log_message(LOG_DEBUG, "romFS initialized");
-    
+
     // Initialize SDL_image
     int img_flags = IMG_INIT_PNG;
     if ((IMG_Init(img_flags) & img_flags) != img_flags) {
@@ -273,15 +273,17 @@ int main(int argc, char** argv) {
                     }
                     current_page = selected_index / ENTRIES_PER_PAGE;
                     DirContent* current_content = content;
-                    if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES) {
-                        current_content = favorites_content;
-                    } else if (current_app_mode == APP_MODE_HISTORY) {
-                        current_content = history_content;
+                    if (current_app_mode == APP_MODE_BROWSER) {
+                        if (current_browser_mode == BROWSER_MODE_FAVORITES) {
+                            current_content = favorites_content;
+                        } else if (current_browser_mode == BROWSER_MODE_HISTORY) {
+                            current_content = history_content;
+                        }
                     }
                     set_selection(current_content, renderer, font, selected_index, current_page);
 
                     // Load box art for selected file when navigating
-                    if (current_app_mode == APP_MODE_BROWSER && 
+                    if (current_app_mode == APP_MODE_BROWSER &&
                         current_browser_mode == BROWSER_MODE_FILES &&
                         selected_index >= content->dir_count &&
                         selected_index < content->dir_count + content->file_count) {
@@ -371,29 +373,25 @@ int main(int argc, char** argv) {
                                         }
                                     }
                                 }
-                            }
-                            break;
-                        case APP_MODE_HISTORY:
-                            if (selected_index >= 0 && history_content && selected_index < history_content->file_count) {
-                                const char* rom_path = history_content->files[selected_index];
-                                if (rom_path) {
-                                    log_message(LOG_INFO, "Attempting to launch from history: %s", rom_path);
-                                    if (launch_retroarch(rom_path)) {
-                                        exit_requested = 1;
-                                    } else {
-                                        if (notification.texture) {
-                                            SDL_DestroyTexture(notification.texture);
+                            } else if (current_browser_mode == BROWSER_MODE_HISTORY) {
+                                if (selected_index >= 0 && history_content && selected_index < history_content->file_count) {
+                                    const char* rom_path = history_content->files[selected_index];
+                                    if (rom_path) {
+                                        log_message(LOG_INFO, "Attempting to launch from history: %s", rom_path);
+                                        if (launch_retroarch(rom_path)) {
+                                            exit_requested = 1;
+                                        } else {
+                                            if (notification.texture) {
+                                                SDL_DestroyTexture(notification.texture);
+                                            }
+                                            notification.texture = render_text(renderer, "Error launching emulator", font, COLOR_TEXT_ERROR, &notification.rect, 0);
+                                            notification.rect.x = (SCREEN_W - notification.rect.w) / 2;
+                                            notification.rect.y = SCREEN_H - notification.rect.h - 20;
+                                            notification.active = 1;
                                         }
-                                        notification.texture = render_text(renderer, "Error launching emulator", font, COLOR_TEXT_ERROR, &notification.rect, 0);
-                                        notification.rect.x = (SCREEN_W - notification.rect.w) / 2;
-                                        notification.rect.y = SCREEN_H - notification.rect.h - 20;
-                                        notification.active = 1;
                                     }
                                 }
                             }
-                            break;
-                        default:
-                            break;
                     }
                 }
 
@@ -651,17 +649,17 @@ int main(int argc, char** argv) {
                     else
                         selected_index = total_entries - 1;
                     current_page = selected_index / ENTRIES_PER_PAGE;
-                    
+
                     DirContent* current_content = content;
                     if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES) {
                         current_content = favorites_content;
                     } else if (current_app_mode == APP_MODE_HISTORY) {
                         current_content = history_content;
                     }
-                    
+
                     set_selection(current_content, renderer, font, selected_index, current_page);
-                    
-                    if (current_app_mode == APP_MODE_BROWSER && 
+
+                    if (current_app_mode == APP_MODE_BROWSER &&
                         current_browser_mode == BROWSER_MODE_FILES &&
                         selected_index >= content->dir_count &&
                         selected_index < content->dir_count + content->file_count) {
@@ -686,17 +684,17 @@ int main(int argc, char** argv) {
                     else
                         selected_index = 0;
                     current_page = selected_index / ENTRIES_PER_PAGE;
-                    
+
                     DirContent* current_content = content;
                     if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES) {
                         current_content = favorites_content;
                     } else if (current_app_mode == APP_MODE_HISTORY) {
                         current_content = history_content;
                     }
-                    
+
                     set_selection(current_content, renderer, font, selected_index, current_page);
-                    
-                    if (current_app_mode == APP_MODE_BROWSER && 
+
+                    if (current_app_mode == APP_MODE_BROWSER &&
                         current_browser_mode == BROWSER_MODE_FILES &&
                         selected_index >= content->dir_count &&
                         selected_index < content->dir_count + content->file_count) {
@@ -720,14 +718,14 @@ int main(int argc, char** argv) {
                     else
                         current_page = total_pages - 1;
                     selected_index = current_page * ENTRIES_PER_PAGE;
-                    
+
                     DirContent* current_content = content;
                     if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES) {
                         current_content = favorites_content;
                     } else if (current_app_mode == APP_MODE_HISTORY) {
                         current_content = history_content;
                     }
-                    
+
                     set_selection(current_content, renderer, font, selected_index, current_page);
                     leftShoulderRepeatTime = now;
                 }
@@ -744,14 +742,14 @@ int main(int argc, char** argv) {
                     else
                         current_page = 0;
                     selected_index = current_page * ENTRIES_PER_PAGE;
-                    
+
                     DirContent* current_content = content;
                     if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES) {
                         current_content = favorites_content;
                     } else if (current_app_mode == APP_MODE_HISTORY) {
                         current_content = history_content;
                     }
-                    
+
                     set_selection(current_content, renderer, font, selected_index, current_page);
                     rightShoulderRepeatTime = now;
                 }
@@ -814,7 +812,7 @@ int main(int argc, char** argv) {
             } else if (current_app_mode == APP_MODE_HISTORY) {
                 current_content = history_content;
             }
-            
+
             if (current_content && current_content->box_art_texture) {
                 SDL_RenderCopy(renderer, current_content->box_art_texture, NULL, &current_content->box_art_rect);
             }
@@ -838,7 +836,7 @@ int main(int argc, char** argv) {
         SDL_Color status_color = COLOR_STATUS_TEXT;
         SDL_Rect status_rect;
         SDL_Texture* status_text = render_text(renderer,
-            "- MENU    + QUIT    X FAVORITES    Y TOGGLE FAVORITE",
+            "- MENU    + QUIT    X FILES/FAVES/HISTORY    Y TOGGLE FAVORITE",
             small_font, status_color, &status_rect, 0);
         if (status_text) {
             status_rect.x = (SCREEN_W - status_rect.w) / 2;
@@ -855,7 +853,7 @@ int main(int argc, char** argv) {
     if (favorites_content) {
         free_dir_content(favorites_content);
     }
-    
+
     if (history_content) {
         free_dir_content(history_content);
     }
@@ -890,7 +888,7 @@ cleanup:
         TTF_CloseFont(font);
     if (small_font)
         TTF_CloseFont(small_font);
-    
+
     // Quit SDL subsystems in reverse order
     if (ttf_initialized)
         TTF_Quit();
