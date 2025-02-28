@@ -6,6 +6,7 @@
 #include "config.h"
 #include "uthash.h"
 #include "logging.h"
+#include "path_utils.h"
 
 static config_entry *config = NULL;
 config_entry *default_core_mappings = NULL;
@@ -119,7 +120,15 @@ void save_favorites(void) {
 
     config_entry *entry, *tmp;
     HASH_ITER(hh, favorites, entry, tmp) {
-        fprintf(fp, "%s\n", entry->key);
+        char* relative_path = absolute_rom_path_to_relative(entry->key);
+        if (relative_path) {
+            fprintf(fp, "%s\n", relative_path);
+            free(relative_path);
+        } else {
+            // Fallback to original path if conversion fails
+            fprintf(fp, "%s\n", entry->key);
+            log_message(LOG_ERROR, "Failed to convert favorite path to relative: %s", entry->key);
+        }
     }
     fclose(fp);
 }
