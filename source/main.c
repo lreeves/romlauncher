@@ -46,6 +46,8 @@ void update_box_art_for_selection(DirContent* content, SDL_Renderer* renderer,
 static int selected_index;
 static int total_entries;
 static int current_page;
+static int total_pages;
+static int menu_selection;
 static DirContent* content;
 static DirContent* favorites_content;
 static DirContent* history_content;
@@ -54,6 +56,9 @@ static TTF_Font* font;
 static SDL_Joystick* joystick;
 static AppMode current_app_mode;
 static BrowserMode current_browser_mode;
+static SDL_Texture* menu_textures[MENU_OPTIONS];
+static SDL_Rect menu_rects[MENU_OPTIONS];
+static const char* menu_options[] = {"Help", "History", "Scraper", "Quit"};
 
 // Define current_path as a global variable (not static) so it can be accessed from other files
 char current_path[MAX_PATH_LEN];
@@ -61,6 +66,8 @@ char current_path[MAX_PATH_LEN];
 // Forward declarations
 static void handle_up_navigation(void);
 static void handle_down_navigation(void);
+static void handle_page_navigation(int direction);
+static void update_menu_selection(int new_selection);
 static DirContent* get_current_content(void);
 
 // Helper function to get current content based on browser mode
@@ -141,6 +148,37 @@ static void handle_navigation_input(int direction) {
     if (current_app_mode == APP_MODE_BROWSER &&
         current_browser_mode == BROWSER_MODE_FILES) {
         update_box_art_for_selection(content, renderer, current_path, selected_index);
+    }
+}
+
+// Helper function to handle page navigation (for shoulder buttons)
+static void handle_page_navigation(int direction) {
+    if (direction < 0) {
+        if (current_page > 0)
+            current_page--;
+        else
+            current_page = total_pages - 1;
+    } else {
+        if (current_page < total_pages - 1)
+            current_page++;
+        else
+            current_page = 0;
+    }
+    
+    selected_index = current_page * ENTRIES_PER_PAGE;
+    DirContent* current_content = get_current_content();
+    set_selection(current_content, renderer, font, selected_index, current_page);
+}
+
+// Helper function to update menu selection
+static void update_menu_selection(int new_selection) {
+    menu_selection = new_selection;
+    
+    // Update menu textures
+    for (int i = 0; i < MENU_OPTIONS; i++) {
+        if (menu_textures[i]) SDL_DestroyTexture(menu_textures[i]);
+        SDL_Color color = (i == menu_selection) ? COLOR_TEXT_SELECTED : COLOR_TEXT;
+        menu_textures[i] = render_text(renderer, menu_options[i], font, color, &menu_rects[i], 0);
     }
 }
 
@@ -259,10 +297,10 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
     favorites_content = NULL;
     history_content = NULL;
     char saved_path[MAX_PATH_LEN];
-    int menu_selection = 0;
-    SDL_Texture* menu_textures[MENU_OPTIONS] = {NULL};
-    SDL_Rect menu_rects[MENU_OPTIONS];
-    const char* menu_options[] = {"Help", "History", "Scraper", "Quit"};
+    menu_selection = 0;
+    for (int i = 0; i < MENU_OPTIONS; i++) {
+        menu_textures[i] = NULL;
+    }
 
     // Scraping mode message
     SDL_Texture* scraping_message = NULL;
@@ -275,7 +313,7 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
     selected_index = 0;
     total_entries = 0;
     current_page = 0;
-    int total_pages = 0;
+    total_pages = 0;
 
     srand(time(NULL));
 
@@ -694,32 +732,11 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
                 }
 
                 if (event.jbutton.button == JOY_LEFT_SHOULDER) {
-                    if (current_page > 0) {
-                        current_page--;
-                    } else {
-                        current_page = total_pages - 1;
-                    }
-                    selected_index = current_page * ENTRIES_PER_PAGE;
-                    DirContent* current_content = get_current_content();
-                    set_selection(current_content, renderer, font, selected_index, current_page);
+                    handle_page_navigation(-1);
                 }
 
                 if (event.jbutton.button == JOY_RIGHT_SHOULDER) {
-                    if (current_page < total_pages - 1) {
-                        current_page++;
-                    } else {
-                        current_page = 0;
-                    }
-                    selected_index = current_page * ENTRIES_PER_PAGE;
-                    DirContent* current_content = content;
-                    if (current_app_mode == APP_MODE_BROWSER) {
-                        if (current_browser_mode == BROWSER_MODE_FAVORITES) {
-                            current_content = favorites_content;
-                        } else if (current_browser_mode == BROWSER_MODE_HISTORY) {
-                            current_content = history_content;
-                        }
-                    }
-                    set_selection(current_content, renderer, font, selected_index, current_page);
+                    handle_page_navigation(1);
                 }
 
                 if (event.jbutton.button == JOY_MINUS) {
@@ -728,12 +745,10 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
                         menu_selection = 0;
 
                         // Create menu textures
+                        update_menu_selection(0);
+                        
+                        // Position menu items
                         for (int i = 0; i < MENU_OPTIONS; i++) {
-                            if (menu_textures[i]) {
-                                SDL_DestroyTexture(menu_textures[i]);
-                            }
-                            SDL_Color color = (i == menu_selection) ? COLOR_TEXT_SELECTED : COLOR_TEXT;
-                            menu_textures[i] = render_text(renderer, menu_options[i], font, color, &menu_rects[i], 0);
                             menu_rects[i].x = (SCREEN_W - menu_rects[i].w) / 2;
                             menu_rects[i].y = SCREEN_H/3 + i * 60;
                         }
@@ -751,26 +766,12 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
 
                 if (current_app_mode == APP_MODE_MENU) {
                     if (event.jbutton.button == DPAD_UP) {
-                        if (menu_selection > 0) menu_selection--;
-                        else menu_selection = MENU_OPTIONS - 1;
-
-                        // Update menu textures
-                        for (int i = 0; i < MENU_OPTIONS; i++) {
-                            if (menu_textures[i]) SDL_DestroyTexture(menu_textures[i]);
-                            SDL_Color color = (i == menu_selection) ? COLOR_TEXT_SELECTED : COLOR_TEXT;
-                            menu_textures[i] = render_text(renderer, menu_options[i], font, color, &menu_rects[i], 0);
-                        }
+                        int new_selection = (menu_selection > 0) ? menu_selection - 1 : MENU_OPTIONS - 1;
+                        update_menu_selection(new_selection);
                     }
                     else if (event.jbutton.button == DPAD_DOWN) {
-                        if (menu_selection < MENU_OPTIONS - 1) menu_selection++;
-                        else menu_selection = 0;
-
-                        // Update menu textures
-                        for (int i = 0; i < MENU_OPTIONS; i++) {
-                            if (menu_textures[i]) SDL_DestroyTexture(menu_textures[i]);
-                            SDL_Color color = (i == menu_selection) ? COLOR_TEXT_SELECTED : COLOR_TEXT;
-                            menu_textures[i] = render_text(renderer, menu_options[i], font, color, &menu_rects[i], 0);
-                        }
+                        int new_selection = (menu_selection < MENU_OPTIONS - 1) ? menu_selection + 1 : 0;
+                        update_menu_selection(new_selection);
                     }
                     else if (event.jbutton.button == JOY_A) {
                         switch (menu_selection) {
@@ -864,45 +865,22 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
             handle_button_repeat(DPAD_DOWN, &dpadDownHeld, &dpadDownInitialDelay, &dpadDownRepeatTime, now,
                                  handle_down_navigation);
             
-            // Left shoulder button repeat
-            if (SDL_JoystickGetButton(joystick, JOY_LEFT_SHOULDER)) {
-                if (!leftShoulderHeld) {
-                    leftShoulderHeld = 1;
-                    leftShoulderRepeatTime = now;
-                } else if (now - leftShoulderRepeatTime >= 50) {
-                    if (current_page > 0)
-                        current_page--;
-                    else
-                        current_page = total_pages - 1;
-                    
-                    selected_index = current_page * ENTRIES_PER_PAGE;
-                    DirContent* current_content = get_current_content();
-                    set_selection(current_content, renderer, font, selected_index, current_page);
-                    leftShoulderRepeatTime = now;
-                }
-            } else {
-                leftShoulderHeld = 0;
+            // Helper functions for shoulder button repeats
+            void left_shoulder_action(void) {
+                handle_page_navigation(-1);
             }
             
-            // Right shoulder button repeat
-            if (SDL_JoystickGetButton(joystick, JOY_RIGHT_SHOULDER)) {
-                if (!rightShoulderHeld) {
-                    rightShoulderHeld = 1;
-                    rightShoulderRepeatTime = now;
-                } else if (now - rightShoulderRepeatTime >= 50) {
-                    if (current_page < total_pages - 1)
-                        current_page++;
-                    else
-                        current_page = 0;
-                    
-                    selected_index = current_page * ENTRIES_PER_PAGE;
-                    DirContent* current_content = get_current_content();
-                    set_selection(current_content, renderer, font, selected_index, current_page);
-                    rightShoulderRepeatTime = now;
-                }
-            } else {
-                rightShoulderHeld = 0;
+            void right_shoulder_action(void) {
+                handle_page_navigation(1);
             }
+            
+            // Left shoulder button repeat
+            handle_button_repeat(JOY_LEFT_SHOULDER, &leftShoulderHeld, &dpadUpInitialDelay, 
+                                &leftShoulderRepeatTime, now, left_shoulder_action);
+            
+            // Right shoulder button repeat
+            handle_button_repeat(JOY_RIGHT_SHOULDER, &rightShoulderHeld, &dpadDownInitialDelay, 
+                                &rightShoulderRepeatTime, now, right_shoulder_action);
         }
 
         SDL_SetRenderDrawColor(renderer,
