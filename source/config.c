@@ -3,6 +3,7 @@
 #include <ctype.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <errno.h>
 #include "config.h"
 #include "uthash.h"
 #include "logging.h"
@@ -88,9 +89,22 @@ void free_config(void) {
 config_entry *favorites = NULL;
 
 void load_favorites(void) {
-    FILE *fp = fopen("sdmc:/romlauncher/favorites.txt", "r");
+    char favorites_path[256];
+    snprintf(favorites_path, sizeof(favorites_path), "%sfavorites.txt", ROMLAUNCHER_DATA_DIRECTORY);
+    
+    log_message(LOG_INFO, "Trying to load favorites from: %s", favorites_path);
+    
+    // Check if file exists first
+    struct stat file_stat;
+    if (stat(favorites_path, &file_stat) != 0) {
+        log_message(LOG_INFO, "No favorites file found (stat check failed)");
+    } else {
+        log_message(LOG_INFO, "Favorites file exists, size: %ld bytes", (long)file_stat.st_size);
+    }
+    
+    FILE *fp = fopen(favorites_path, "r");
     if (!fp) {
-        log_message(LOG_INFO, "No favorites file found");
+        log_message(LOG_INFO, "No favorites file found (fopen failed: %s)", strerror(errno));
         return;
     }
 
@@ -127,9 +141,14 @@ void load_favorites(void) {
 }
 
 void save_favorites(void) {
-    FILE *fp = fopen(ROMLAUNCHER_DATA_DIRECTORY "/favorites.txt", "w");
+    char favorites_path[256];
+    snprintf(favorites_path, sizeof(favorites_path), "%sfavorites.txt", ROMLAUNCHER_DATA_DIRECTORY);
+    
+    log_message(LOG_INFO, "Saving favorites to: %s", favorites_path);
+    
+    FILE *fp = fopen(favorites_path, "w");
     if (!fp) {
-        log_message(LOG_ERROR, "Could not open favorites file for writing");
+        log_message(LOG_ERROR, "Could not open favorites file for writing: %s", strerror(errno));
         return;
     }
 
