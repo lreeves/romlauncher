@@ -211,11 +211,29 @@ int main(int argc, char** argv) {
     }
     log_message(LOG_DEBUG, "SDL renderer created");
 
-    // Initialize joystick
+    // Initialize joystick with better cross-platform support
     SDL_JoystickEventState(SDL_ENABLE);
-    SDL_Joystick* joystick = SDL_JoystickOpen(0);
+    SDL_Joystick* joystick = NULL;
+    
+    // Count available joysticks
+    int num_joysticks = SDL_NumJoysticks();
+    log_message(LOG_INFO, "Found %d joystick(s)", num_joysticks);
+    
+    // Try to open the first available joystick
+    for (int i = 0; i < num_joysticks; i++) {
+        log_message(LOG_INFO, "Joystick %d: %s", i, SDL_JoystickNameForIndex(i));
+        joystick = SDL_JoystickOpen(i);
+        if (joystick) {
+            log_message(LOG_INFO, "Using joystick: %s with %d buttons, %d axes", 
+                SDL_JoystickName(joystick),
+                SDL_JoystickNumButtons(joystick),
+                SDL_JoystickNumAxes(joystick));
+            break;
+        }
+    }
+    
     if (!joystick) {
-        log_message(LOG_ERROR, "Failed to open joystick: %s", SDL_GetError());
+        log_message(LOG_ERROR, "Failed to open any joystick: %s", SDL_GetError());
         // Continue anyway, as this isn't fatal
     } else {
         log_message(LOG_DEBUG, "SDL joystick initialized");
@@ -288,7 +306,7 @@ int main(int argc, char** argv) {
             if (event.type == SDL_QUIT)
                 exit_requested = 1;
 
-            // main event queue handler - use Switch controller inputs
+            // main event queue handler - handle multiple controller input types
             if (event.type == SDL_JOYBUTTONDOWN) {
                 log_message(LOG_DEBUG, "Button pressed: %d", event.jbutton.button);
 
@@ -700,6 +718,139 @@ int main(int argc, char** argv) {
 
                 if (event.jbutton.button == JOY_PLUS) {
                     exit_requested = 1;
+                }
+            }
+            // Handle hat events (D-pad on many controllers)
+            else if (event.type == SDL_JOYHATMOTION) {
+                log_message(LOG_DEBUG, "Hat motion: %d", event.jhat.value);
+                
+                // If notification is active, any input dismisses it
+                if (notification.active) {
+                    notification.active = 0;
+                    continue;
+                }
+                
+                if (event.jhat.value & SDL_HAT_UP) {
+                    // Handle as if DPAD_UP button was pressed
+                    if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES && favorites_content) {
+                        // In favorites mode, skip group headers
+                        selected_index = find_next_rom(favorites_content, selected_index, -1);
+                    } else {
+                        // Normal directory browsing behavior
+                        if (selected_index > 0) {
+                            selected_index--;
+                        } else {
+                            selected_index = total_entries - 1;
+                        }
+                    }
+                    current_page = selected_index / ENTRIES_PER_PAGE;
+                    DirContent* current_content = content;
+                    if (current_app_mode == APP_MODE_BROWSER) {
+                        if (current_browser_mode == BROWSER_MODE_FAVORITES) {
+                            current_content = favorites_content;
+                        } else if (current_browser_mode == BROWSER_MODE_HISTORY) {
+                            current_content = history_content;
+                        }
+                    }
+                    set_selection(current_content, renderer, font, selected_index, current_page);
+                    
+                    // Load box art for selected file when navigating
+                    if (current_app_mode == APP_MODE_BROWSER &&
+                        current_browser_mode == BROWSER_MODE_FILES) {
+                        update_box_art_for_selection(content, renderer, current_path, selected_index);
+                    }
+                }
+                else if (event.jhat.value & SDL_HAT_DOWN) {
+                    // Handle as if DPAD_DOWN button was pressed
+                    if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES && favorites_content) {
+                        // In favorites mode, skip group headers
+                        selected_index = find_next_rom(favorites_content, selected_index, 1);
+                    } else {
+                        // Normal directory browsing behavior
+                        if (selected_index < total_entries - 1) {
+                            selected_index++;
+                        } else {
+                            selected_index = 0;
+                        }
+                    }
+                    current_page = selected_index / ENTRIES_PER_PAGE;
+                    DirContent* current_content = content;
+                    if (current_app_mode == APP_MODE_BROWSER) {
+                        if (current_browser_mode == BROWSER_MODE_FAVORITES) {
+                            current_content = favorites_content;
+                        } else if (current_browser_mode == BROWSER_MODE_HISTORY) {
+                            current_content = history_content;
+                        }
+                    }
+                    set_selection(current_content, renderer, font, selected_index, current_page);
+                    
+                    // Load box art for selected file when navigating
+                    if (current_app_mode == APP_MODE_BROWSER &&
+                        current_browser_mode == BROWSER_MODE_FILES) {
+                        update_box_art_for_selection(content, renderer, current_path, selected_index);
+                    }
+                }
+            }
+            // Handle axis events (analog sticks and sometimes D-pad)
+            else if (event.type == SDL_JOYAXISMOTION) {
+                // Only process significant movements (avoid drift)
+                if (abs(event.jaxis.value) > 16000) {
+                    log_message(LOG_DEBUG, "Axis %d motion: %d", event.jaxis.axis, event.jaxis.value);
+                    
+                    // If notification is active, any input dismisses it
+                    if (notification.active) {
+                        notification.active = 0;
+                        continue;
+                    }
+                    
+                    // Vertical axis (typically 1 or 3 for left/right stick)
+                    if (event.jaxis.axis == 1 || event.jaxis.axis == 3) {
+                        if (event.jaxis.value < -16000) {
+                            // Up direction
+                            if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES && favorites_content) {
+                                // In favorites mode, skip group headers
+                                selected_index = find_next_rom(favorites_content, selected_index, -1);
+                            } else {
+                                // Normal directory browsing behavior
+                                if (selected_index > 0) {
+                                    selected_index--;
+                                } else {
+                                    selected_index = total_entries - 1;
+                                }
+                            }
+                        } 
+                        else if (event.jaxis.value > 16000) {
+                            // Down direction
+                            if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES && favorites_content) {
+                                // In favorites mode, skip group headers
+                                selected_index = find_next_rom(favorites_content, selected_index, 1);
+                            } else {
+                                // Normal directory browsing behavior
+                                if (selected_index < total_entries - 1) {
+                                    selected_index++;
+                                } else {
+                                    selected_index = 0;
+                                }
+                            }
+                        }
+                        
+                        current_page = selected_index / ENTRIES_PER_PAGE;
+                        DirContent* current_content = content;
+                        if (current_app_mode == APP_MODE_BROWSER) {
+                            if (current_browser_mode == BROWSER_MODE_FAVORITES) {
+                                current_content = favorites_content;
+                            } else if (current_browser_mode == BROWSER_MODE_HISTORY) {
+                                current_content = history_content;
+                            }
+                        }
+                        set_selection(current_content, renderer, font, selected_index, current_page);
+                        
+                        // Load box art for selected file when navigating
+                        if (current_app_mode == APP_MODE_BROWSER &&
+                            current_browser_mode == BROWSER_MODE_FILES) {
+                            update_box_art_for_selection(content, renderer, current_path, selected_index);
+                        }
+                    }
                 }
             }
         }
