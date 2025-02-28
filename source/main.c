@@ -233,6 +233,18 @@ int main(int argc, char** argv) {
 
     log_message(LOG_DEBUG, "Starting main loop");
 
+    // Initialize status bar elements
+    SDL_Rect status_bar = {0, SCREEN_H - STATUS_BAR_HEIGHT, SCREEN_W, STATUS_BAR_HEIGHT};
+    SDL_Color status_color = COLOR_STATUS_TEXT;
+    SDL_Rect status_rect;
+    SDL_Texture* status_text = render_text(renderer,
+        "- MENU    + QUIT    X BROWSE/FAVES/HISTORY    Y TOGGLE FAVORITE",
+        small_font, status_color, &status_rect, 0);
+    if (status_text) {
+        status_rect.x = (SCREEN_W - status_rect.w) / 2;
+        status_rect.y = SCREEN_H - STATUS_BAR_HEIGHT + (STATUS_BAR_HEIGHT - status_rect.h) / 2;
+    }
+
     while (!exit_requested
         && appletMainLoop()
         ) {
@@ -871,20 +883,11 @@ int main(int argc, char** argv) {
             COLOR_STATUS_BAR.g,
             COLOR_STATUS_BAR.b,
             COLOR_STATUS_BAR.a);
-        SDL_Rect status_bar = {0, SCREEN_H - STATUS_BAR_HEIGHT, SCREEN_W, STATUS_BAR_HEIGHT};
         SDL_RenderFillRect(renderer, &status_bar);
 
         // Render status text
-        SDL_Color status_color = COLOR_STATUS_TEXT;
-        SDL_Rect status_rect;
-        SDL_Texture* status_text = render_text(renderer,
-            "- MENU    + QUIT    X BROWSE/FAVES/HISTORY    Y TOGGLE FAVORITE",
-            small_font, status_color, &status_rect, 0);
         if (status_text) {
-            status_rect.x = (SCREEN_W - status_rect.w) / 2;
-            status_rect.y = SCREEN_H - STATUS_BAR_HEIGHT + (STATUS_BAR_HEIGHT - status_rect.h) / 2;
             SDL_RenderCopy(renderer, status_text, NULL, &status_rect);
-            SDL_DestroyTexture(status_text);
         }
 
         SDL_RenderPresent(renderer);
@@ -910,6 +913,8 @@ cleanup:
         SDL_DestroyTexture(notification.texture);
     if (scraping_message)
         SDL_DestroyTexture(scraping_message);
+    if (status_text)
+        SDL_DestroyTexture(status_text);
 
     // Clean up menu textures
     for (int i = 0; i < MENU_OPTIONS; i++) {
