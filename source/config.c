@@ -157,31 +157,38 @@ void free_favorites(void) {
     }
 }
 
-void init_default_core_mappings(void) {
-    static const struct {
-        const char *key;
-        const char *value;
-    } default_cores[] = {
-        {"gb", "gambatte"},
-        {"gbc", "gambatte"},
-        {"gba", "mgba"},
-        {"md", "genesis_plus_gx"},
-        {"nes", "fceumm"},
-        {"n64", "mupen64plus_next"},
-        {"pce", "mednafen_pce"},
-        {"sfc", "snes9x"},
-        {"sms", "genesis_plus_gx"},
-        {"z64", "mupen64plus_next"}
-    };
-
-    for (size_t i = 0; i < sizeof(default_cores) / sizeof(default_cores[0]); i++) {
-        config_entry *entry = malloc(sizeof(config_entry));
-        strncpy(entry->key, default_cores[i].key, sizeof(entry->key)-1);
-        entry->key[sizeof(entry->key)-1] = '\0';
-        strncpy(entry->value, default_cores[i].value, sizeof(entry->value)-1);
-        entry->value[sizeof(entry->value)-1] = '\0';
-        HASH_ADD_STR(default_core_mappings, key, entry);
+// Helper function to add a mapping to the default cores hashmap
+static void add_default_core(const char *extension, const char *core) {
+    config_entry *entry = malloc(sizeof(config_entry));
+    if (!entry) {
+        log_message(LOG_ERROR, "Failed to allocate memory for core mapping");
+        return;
     }
+    
+    strncpy(entry->key, extension, sizeof(entry->key) - 1);
+    entry->key[sizeof(entry->key) - 1] = '\0';
+    
+    strncpy(entry->value, core, sizeof(entry->value) - 1);
+    entry->value[sizeof(entry->value) - 1] = '\0';
+    
+    HASH_ADD_STR(default_core_mappings, key, entry);
+}
+
+void init_default_core_mappings(void) {
+    // Initialize with NULL first to ensure clean state
+    default_core_mappings = NULL;
+    
+    // Add all the default mappings
+    add_default_core("gb", "gambatte");
+    add_default_core("gbc", "gambatte");
+    add_default_core("gba", "mgba");
+    add_default_core("md", "genesis_plus_gx");
+    add_default_core("nes", "fceumm");
+    add_default_core("n64", "mupen64plus_next");
+    add_default_core("pce", "mednafen_pce");
+    add_default_core("sfc", "snes9x");
+    add_default_core("sms", "genesis_plus_gx");
+    add_default_core("z64", "mupen64plus_next");
 }
 
 void free_default_core_mappings(void) {
