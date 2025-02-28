@@ -18,13 +18,18 @@
 #define JOY_B     1
 #define JOY_X     2
 #define JOY_Y     3
+
 typedef enum {
-    MODE_BROWSER,
-    MODE_FAVORITES,
-    MODE_MENU,
-    MODE_SCRAPING,
-    MODE_HISTORY
+    APP_MODE_BROWSER,
+    APP_MODE_MENU,
+    APP_MODE_SCRAPING,
+    APP_MODE_HISTORY
 } AppMode;
+
+typedef enum {
+    BROWSER_MODE_FILES,
+    BROWSER_MODE_FAVORITES
+} BrowserMode;
 
 // Menu options
 #define MENU_HELP 0
@@ -97,7 +102,8 @@ int main(int argc, char** argv) {
 
     int exit_requested = 0;
     int wait = 25;
-    AppMode current_mode = MODE_BROWSER;
+    AppMode current_app_mode = APP_MODE_BROWSER;
+    BrowserMode current_browser_mode = BROWSER_MODE_FILES;
     DirContent* favorites_content = NULL;
     DirContent* history_content = NULL;
     char saved_path[MAX_PATH_LEN];
@@ -245,7 +251,7 @@ int main(int argc, char** argv) {
                 }
 
                 if (event.jbutton.button == DPAD_UP || event.jbutton.button == DPAD_DOWN) {
-                    if (current_mode == MODE_FAVORITES && favorites_content) {
+                    if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES && favorites_content) {
                         // In favorites mode, skip group headers
                         int direction = (event.jbutton.button == DPAD_UP) ? -1 : 1;
                         selected_index = find_next_rom(favorites_content, selected_index, direction);
@@ -266,11 +272,17 @@ int main(int argc, char** argv) {
                         }
                     }
                     current_page = selected_index / ENTRIES_PER_PAGE;
-                    set_selection(current_mode == MODE_FAVORITES ? favorites_content : content,
-                                renderer, font, selected_index, current_page);
+                    DirContent* current_content = content;
+                    if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES) {
+                        current_content = favorites_content;
+                    } else if (current_app_mode == APP_MODE_HISTORY) {
+                        current_content = history_content;
+                    }
+                    set_selection(current_content, renderer, font, selected_index, current_page);
 
                     // Load box art for selected file when navigating
-                    if (current_mode == MODE_BROWSER &&
+                    if (current_app_mode == APP_MODE_BROWSER && 
+                        current_browser_mode == BROWSER_MODE_FILES &&
                         selected_index >= content->dir_count &&
                         selected_index < content->dir_count + content->file_count) {
                         int file_index = selected_index - content->dir_count;
@@ -281,86 +293,87 @@ int main(int argc, char** argv) {
                 }
 
                 if (event.jbutton.button == JOY_A) {
-                    switch (current_mode) {
-                        case MODE_BROWSER:
-                            log_message(LOG_DEBUG, "A button pressed in mode: BROWSER");
-                            if (selected_index < content->dir_count) {
-                                change_directory(content, selected_index, current_path);
-                                selected_index = 0;
-                                total_entries = content->dir_count + content->file_count;
-                                current_page = 0;
-                                total_pages = (total_entries + ENTRIES_PER_PAGE - 1) / ENTRIES_PER_PAGE;
-                                set_selection(content, renderer, font, selected_index, current_page);
-                            } else {
-                                int file_index = selected_index - content->dir_count;
-                                if (file_index >= 0 && file_index < content->file_count) {
-                                    char rom_path[MAX_PATH_LEN];
-                                    int written = snprintf(rom_path, sizeof(rom_path), "%s/%s", current_path + 5, content->files[file_index]);
-                                    if (written < 0 || (size_t)written >= sizeof(rom_path)) {
-                                        log_message(LOG_ERROR, "ROM path construction failed (truncation or error)");
-                                        continue;
-                                    }
-                                    if (launch_retroarch(rom_path)) {
-                                        exit_requested = 1;
-                                    } else {
-                                        if (notification.texture) {
-                                            SDL_DestroyTexture(notification.texture);
+                    switch (current_app_mode) {
+                        case APP_MODE_BROWSER:
+                            if (current_browser_mode == BROWSER_MODE_FILES) {
+                                log_message(LOG_DEBUG, "A button pressed in mode: BROWSER/FILES");
+                                if (selected_index < content->dir_count) {
+                                    change_directory(content, selected_index, current_path);
+                                    selected_index = 0;
+                                    total_entries = content->dir_count + content->file_count;
+                                    current_page = 0;
+                                    total_pages = (total_entries + ENTRIES_PER_PAGE - 1) / ENTRIES_PER_PAGE;
+                                    set_selection(content, renderer, font, selected_index, current_page);
+                                } else {
+                                    int file_index = selected_index - content->dir_count;
+                                    if (file_index >= 0 && file_index < content->file_count) {
+                                        char rom_path[MAX_PATH_LEN];
+                                        int written = snprintf(rom_path, sizeof(rom_path), "%s/%s", current_path + 5, content->files[file_index]);
+                                        if (written < 0 || (size_t)written >= sizeof(rom_path)) {
+                                            log_message(LOG_ERROR, "ROM path construction failed (truncation or error)");
+                                            continue;
                                         }
-                                        notification.texture = render_text(renderer, "Error launching emulator", font, COLOR_TEXT_ERROR, &notification.rect, 0);
-                                        notification.rect.x = (SCREEN_W - notification.rect.w) / 2;
-                                        notification.rect.y = SCREEN_H - notification.rect.h - 20;
-                                        notification.active = 1;
+                                        if (launch_retroarch(rom_path)) {
+                                            exit_requested = 1;
+                                        } else {
+                                            if (notification.texture) {
+                                                SDL_DestroyTexture(notification.texture);
+                                            }
+                                            notification.texture = render_text(renderer, "Error launching emulator", font, COLOR_TEXT_ERROR, &notification.rect, 0);
+                                            notification.rect.x = (SCREEN_W - notification.rect.w) / 2;
+                                            notification.rect.y = SCREEN_H - notification.rect.h - 20;
+                                            notification.active = 1;
+                                        }
                                     }
                                 }
-                            }
-                            break;
-                        case MODE_FAVORITES:
-                            log_message(LOG_DEBUG, "Favorites mode: selected_index=%d, file_count=%d",
-                                        selected_index, favorites_content ? favorites_content->file_count : -1);
-                            if (selected_index >= 0 && favorites_content && selected_index < favorites_content->file_count) {
-                                if (!is_group_header(favorites_content->files[selected_index])) {
-                                    log_message(LOG_DEBUG, "Selected favorite is not a group header");
-                                    FavoriteGroup* group = favorites_content->groups;
-                                    int count = 0;
-                                    while (group) {
-                                        count++; // Skip the group header
-                                        if (selected_index < count + group->entry_count) {
-                                            FavoriteEntry* entry = group->entries;
-                                            for (int i = 0; i < (group->entry_count - 1) - (selected_index - count); i++) {
-                                                entry = entry->next;
-                                            }
-                                            if (entry && entry->path) {
-                                                char launch_path[MAX_PATH_LEN];
-                                                if (strncmp(entry->path, "sdmc:", 5) != 0) {
-                                                    snprintf(launch_path, sizeof(launch_path), "sdmc:%s", entry->path);
-                                                } else {
-                                                    strncpy(launch_path, entry->path, sizeof(launch_path)-1);
-                                                    launch_path[sizeof(launch_path)-1] = '\0';
+                            } else if (current_browser_mode == BROWSER_MODE_FAVORITES) {
+                                log_message(LOG_DEBUG, "Favorites mode: selected_index=%d, file_count=%d",
+                                            selected_index, favorites_content ? favorites_content->file_count : -1);
+                                if (selected_index >= 0 && favorites_content && selected_index < favorites_content->file_count) {
+                                    if (!is_group_header(favorites_content->files[selected_index])) {
+                                        log_message(LOG_DEBUG, "Selected favorite is not a group header");
+                                        FavoriteGroup* group = favorites_content->groups;
+                                        int count = 0;
+                                        while (group) {
+                                            count++; // Skip the group header
+                                            if (selected_index < count + group->entry_count) {
+                                                FavoriteEntry* entry = group->entries;
+                                                for (int i = 0; i < (group->entry_count - 1) - (selected_index - count); i++) {
+                                                    entry = entry->next;
                                                 }
-                                                log_message(LOG_INFO, "Attempting to launch favorite: %s", launch_path);
-                                                if (launch_retroarch(launch_path)) {
-                                                    exit_requested = 1;
-                                                } else {
-                                                    if (notification.texture) {
-                                                        SDL_DestroyTexture(notification.texture);
+                                                if (entry && entry->path) {
+                                                    char launch_path[MAX_PATH_LEN];
+                                                    if (strncmp(entry->path, "sdmc:", 5) != 0) {
+                                                        snprintf(launch_path, sizeof(launch_path), "sdmc:%s", entry->path);
+                                                    } else {
+                                                        strncpy(launch_path, entry->path, sizeof(launch_path)-1);
+                                                        launch_path[sizeof(launch_path)-1] = '\0';
                                                     }
-                                                    notification.texture = render_text(renderer, "Error launching emulator", font, COLOR_TEXT_ERROR, &notification.rect, 0);
-                                                    notification.rect.x = (SCREEN_W - notification.rect.w) / 2;
-                                                    notification.rect.y = SCREEN_H - notification.rect.h - 20;
-                                                    notification.active = 1;
+                                                    log_message(LOG_INFO, "Attempting to launch favorite: %s", launch_path);
+                                                    if (launch_retroarch(launch_path)) {
+                                                        exit_requested = 1;
+                                                    } else {
+                                                        if (notification.texture) {
+                                                            SDL_DestroyTexture(notification.texture);
+                                                        }
+                                                        notification.texture = render_text(renderer, "Error launching emulator", font, COLOR_TEXT_ERROR, &notification.rect, 0);
+                                                        notification.rect.x = (SCREEN_W - notification.rect.w) / 2;
+                                                        notification.rect.y = SCREEN_H - notification.rect.h - 20;
+                                                        notification.active = 1;
+                                                    }
+                                                } else {
+                                                    log_message(LOG_ERROR, "Invalid favorite entry or path");
                                                 }
-                                            } else {
-                                                log_message(LOG_ERROR, "Invalid favorite entry or path");
+                                                break;
                                             }
-                                            break;
+                                            count += group->entry_count;
+                                            group = group->next;
                                         }
-                                        count += group->entry_count;
-                                        group = group->next;
                                     }
                                 }
                             }
                             break;
-                        case MODE_HISTORY:
+                        case APP_MODE_HISTORY:
                             if (selected_index >= 0 && history_content && selected_index < history_content->file_count) {
                                 const char* rom_path = history_content->files[selected_index];
                                 if (rom_path) {
@@ -405,7 +418,7 @@ int main(int argc, char** argv) {
                     }
 
                     // If we're in favorites mode, refresh the list
-                    if (current_mode == MODE_FAVORITES) {
+                    if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES) {
                         if (favorites_content) free_dir_content(favorites_content);
                         favorites_content = list_favorites();
                         selected_index = 0;
@@ -419,24 +432,36 @@ int main(int argc, char** argv) {
                 }
 
                 if (event.jbutton.button == JOY_Y) {
-                    switch (current_mode) {
-                        case MODE_BROWSER:
-                            strncpy(saved_path, current_path, MAX_PATH_LEN-1);
-                            saved_path[MAX_PATH_LEN-1] = '\0';
-                            favorites_content = list_favorites();
-                            if (favorites_content) {
-                                current_mode = MODE_FAVORITES;
-                                selected_index = find_next_rom(favorites_content, -1, 1);
-                                current_page = selected_index / ENTRIES_PER_PAGE;
-                                total_entries = favorites_content->file_count;
-                                total_pages = (total_entries + ENTRIES_PER_PAGE - 1) / ENTRIES_PER_PAGE;
-                                set_selection(favorites_content, renderer, font, selected_index, current_page);
+                    switch (current_app_mode) {
+                        case APP_MODE_BROWSER:
+                            if (current_browser_mode == BROWSER_MODE_FILES) {
+                                strncpy(saved_path, current_path, MAX_PATH_LEN-1);
+                                saved_path[MAX_PATH_LEN-1] = '\0';
+                                favorites_content = list_favorites();
+                                if (favorites_content) {
+                                    current_browser_mode = BROWSER_MODE_FAVORITES;
+                                    selected_index = find_next_rom(favorites_content, -1, 1);
+                                    current_page = selected_index / ENTRIES_PER_PAGE;
+                                    total_entries = favorites_content->file_count;
+                                    total_pages = (total_entries + ENTRIES_PER_PAGE - 1) / ENTRIES_PER_PAGE;
+                                    set_selection(favorites_content, renderer, font, selected_index, current_page);
+                                }
+                            } else {
+                                if (favorites_content) free_dir_content(favorites_content);
+                                favorites_content = NULL;
+                                current_browser_mode = BROWSER_MODE_FILES;
+                                strncpy(current_path, saved_path, MAX_PATH_LEN-1);
+                                current_path[MAX_PATH_LEN-1] = '\0';
+                                selected_index = 0;
+                                current_page = 0;
+                                set_selection(content, renderer, font, selected_index, current_page);
                             }
                             break;
-                        case MODE_HISTORY:
+                        case APP_MODE_HISTORY:
                             if (history_content) free_dir_content(history_content);
                             history_content = NULL;
-                            current_mode = MODE_BROWSER;
+                            current_app_mode = APP_MODE_BROWSER;
+                            current_browser_mode = BROWSER_MODE_FILES;
                             strncpy(current_path, saved_path, MAX_PATH_LEN-1);
                             current_path[MAX_PATH_LEN-1] = '\0';
                             selected_index = 0;
@@ -444,44 +469,51 @@ int main(int argc, char** argv) {
                             set_selection(content, renderer, font, selected_index, current_page);
                             break;
                         default:
-                            if (favorites_content) free_dir_content(favorites_content);
-                            favorites_content = NULL;
-                            current_mode = MODE_BROWSER;
-                            strncpy(current_path, saved_path, MAX_PATH_LEN-1);
-                            current_path[MAX_PATH_LEN-1] = '\0';
-                            selected_index = 0;
-                            current_page = 0;
-                            set_selection(content, renderer, font, selected_index, current_page);
                             break;
                     }
                 }
 
                 if (event.jbutton.button == JOY_B) {
-                    switch (current_mode) {
-                        case MODE_SCRAPING:
-                            current_mode = MODE_BROWSER;
+                    switch (current_app_mode) {
+                        case APP_MODE_SCRAPING:
+                            current_app_mode = APP_MODE_BROWSER;
+                            current_browser_mode = BROWSER_MODE_FILES;
                             if (scraping_message) {
                                 SDL_DestroyTexture(scraping_message);
                                 scraping_message = NULL;
                             }
                             break;
-                        case MODE_HISTORY:
+                        case APP_MODE_HISTORY:
                             if (history_content) free_dir_content(history_content);
                             history_content = NULL;
-                            current_mode = MODE_BROWSER;
+                            current_app_mode = APP_MODE_BROWSER;
+                            current_browser_mode = BROWSER_MODE_FILES;
                             strncpy(current_path, saved_path, MAX_PATH_LEN-1);
                             current_path[MAX_PATH_LEN-1] = '\0';
                             selected_index = 0;
                             current_page = 0;
                             set_selection(content, renderer, font, selected_index, current_page);
                             break;
+                        case APP_MODE_BROWSER:
+                            if (current_browser_mode == BROWSER_MODE_FAVORITES) {
+                                if (favorites_content) free_dir_content(favorites_content);
+                                favorites_content = NULL;
+                                current_browser_mode = BROWSER_MODE_FILES;
+                                strncpy(current_path, saved_path, MAX_PATH_LEN-1);
+                                current_path[MAX_PATH_LEN-1] = '\0';
+                                selected_index = 0;
+                                current_page = 0;
+                                set_selection(content, renderer, font, selected_index, current_page);
+                            } else {
+                                go_up_directory(content, current_path, rom_directory);
+                                selected_index = 0;
+                                total_entries = content->dir_count + content->file_count;
+                                current_page = 0;
+                                total_pages = (total_entries + ENTRIES_PER_PAGE - 1) / ENTRIES_PER_PAGE;
+                                set_selection(content, renderer, font, selected_index, current_page);
+                            }
+                            break;
                         default:
-                            go_up_directory(content, current_path, rom_directory);
-                            selected_index = 0;
-                            total_entries = content->dir_count + content->file_count;
-                            current_page = 0;
-                            total_pages = (total_entries + ENTRIES_PER_PAGE - 1) / ENTRIES_PER_PAGE;
-                            set_selection(content, renderer, font, selected_index, current_page);
                             break;
                     }
                 }
@@ -493,8 +525,13 @@ int main(int argc, char** argv) {
                         current_page = total_pages - 1;
                     }
                     selected_index = current_page * ENTRIES_PER_PAGE;
-                    set_selection(current_mode == MODE_FAVORITES ? favorites_content : content,
-                                renderer, font, selected_index, current_page);
+                    DirContent* current_content = content;
+                    if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES) {
+                        current_content = favorites_content;
+                    } else if (current_app_mode == APP_MODE_HISTORY) {
+                        current_content = history_content;
+                    }
+                    set_selection(current_content, renderer, font, selected_index, current_page);
                 }
 
                 if (event.jbutton.button == JOY_RIGHT_SHOULDER) {
@@ -504,13 +541,18 @@ int main(int argc, char** argv) {
                         current_page = 0;
                     }
                     selected_index = current_page * ENTRIES_PER_PAGE;
-                    set_selection(current_mode == MODE_FAVORITES ? favorites_content : content,
-                                renderer, font, selected_index, current_page);
+                    DirContent* current_content = content;
+                    if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES) {
+                        current_content = favorites_content;
+                    } else if (current_app_mode == APP_MODE_HISTORY) {
+                        current_content = history_content;
+                    }
+                    set_selection(current_content, renderer, font, selected_index, current_page);
                 }
 
                 if (event.jbutton.button == JOY_MINUS) {
-                    if (current_mode != MODE_MENU) {
-                        current_mode = MODE_MENU;
+                    if (current_app_mode != APP_MODE_MENU) {
+                        current_app_mode = APP_MODE_MENU;
                         menu_selection = 0;
 
                         // Create menu textures
@@ -524,7 +566,7 @@ int main(int argc, char** argv) {
                             menu_rects[i].y = SCREEN_H/3 + i * 60;
                         }
                     } else {
-                        current_mode = MODE_BROWSER;
+                        current_app_mode = APP_MODE_BROWSER;
                         // Cleanup menu textures
                         for (int i = 0; i < MENU_OPTIONS; i++) {
                             if (menu_textures[i]) {
@@ -535,7 +577,7 @@ int main(int argc, char** argv) {
                     }
                 }
 
-                if (current_mode == MODE_MENU) {
+                if (current_app_mode == APP_MODE_MENU) {
                     if (event.jbutton.button == DPAD_UP) {
                         if (menu_selection > 0) menu_selection--;
                         else menu_selection = MENU_OPTIONS - 1;
@@ -569,7 +611,7 @@ int main(int argc, char** argv) {
                                 saved_path[MAX_PATH_LEN-1] = '\0';
                                 history_content = list_history();
                                 if (history_content) {
-                                    current_mode = MODE_HISTORY;
+                                    current_app_mode = APP_MODE_HISTORY;
                                     selected_index = 0;
                                     current_page = 0;
                                     total_entries = history_content->file_count;
@@ -578,7 +620,7 @@ int main(int argc, char** argv) {
                                 }
                                 break;
                             case MENU_SCRAPER:
-                                current_mode = MODE_SCRAPING;
+                                current_app_mode = APP_MODE_SCRAPING;
                                 if (scraping_message) SDL_DestroyTexture(scraping_message);
                                 scraping_message = render_text(renderer, "Press B to stop", font, COLOR_TEXT, &scraping_rect, 0);
                                 scraping_rect.x = (SCREEN_W - scraping_rect.w) / 2;
@@ -609,9 +651,18 @@ int main(int argc, char** argv) {
                     else
                         selected_index = total_entries - 1;
                     current_page = selected_index / ENTRIES_PER_PAGE;
-                    set_selection(current_mode == MODE_FAVORITES ? favorites_content : content,
-                                  renderer, font, selected_index, current_page);
-                    if (current_mode == MODE_BROWSER &&
+                    
+                    DirContent* current_content = content;
+                    if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES) {
+                        current_content = favorites_content;
+                    } else if (current_app_mode == APP_MODE_HISTORY) {
+                        current_content = history_content;
+                    }
+                    
+                    set_selection(current_content, renderer, font, selected_index, current_page);
+                    
+                    if (current_app_mode == APP_MODE_BROWSER && 
+                        current_browser_mode == BROWSER_MODE_FILES &&
                         selected_index >= content->dir_count &&
                         selected_index < content->dir_count + content->file_count) {
                         int file_index = selected_index - content->dir_count;
@@ -635,9 +686,18 @@ int main(int argc, char** argv) {
                     else
                         selected_index = 0;
                     current_page = selected_index / ENTRIES_PER_PAGE;
-                    set_selection(current_mode == MODE_FAVORITES ? favorites_content : content,
-                                  renderer, font, selected_index, current_page);
-                    if (current_mode == MODE_BROWSER &&
+                    
+                    DirContent* current_content = content;
+                    if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES) {
+                        current_content = favorites_content;
+                    } else if (current_app_mode == APP_MODE_HISTORY) {
+                        current_content = history_content;
+                    }
+                    
+                    set_selection(current_content, renderer, font, selected_index, current_page);
+                    
+                    if (current_app_mode == APP_MODE_BROWSER && 
+                        current_browser_mode == BROWSER_MODE_FILES &&
                         selected_index >= content->dir_count &&
                         selected_index < content->dir_count + content->file_count) {
                         int file_index = selected_index - content->dir_count;
@@ -660,8 +720,15 @@ int main(int argc, char** argv) {
                     else
                         current_page = total_pages - 1;
                     selected_index = current_page * ENTRIES_PER_PAGE;
-                    set_selection(current_mode == MODE_FAVORITES ? favorites_content : content,
-                                  renderer, font, selected_index, current_page);
+                    
+                    DirContent* current_content = content;
+                    if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES) {
+                        current_content = favorites_content;
+                    } else if (current_app_mode == APP_MODE_HISTORY) {
+                        current_content = history_content;
+                    }
+                    
+                    set_selection(current_content, renderer, font, selected_index, current_page);
                     leftShoulderRepeatTime = now;
                 }
             } else {
@@ -677,8 +744,15 @@ int main(int argc, char** argv) {
                     else
                         current_page = 0;
                     selected_index = current_page * ENTRIES_PER_PAGE;
-                    set_selection(current_mode == MODE_FAVORITES ? favorites_content : content,
-                                  renderer, font, selected_index, current_page);
+                    
+                    DirContent* current_content = content;
+                    if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES) {
+                        current_content = favorites_content;
+                    } else if (current_app_mode == APP_MODE_HISTORY) {
+                        current_content = history_content;
+                    }
+                    
+                    set_selection(current_content, renderer, font, selected_index, current_page);
                     rightShoulderRepeatTime = now;
                 }
             } else {
@@ -702,9 +776,9 @@ int main(int argc, char** argv) {
         }
 
         // Render directory and file listings, menu, or scraping message
-        if (current_mode == MODE_SCRAPING && scraping_message) {
+        if (current_app_mode == APP_MODE_SCRAPING && scraping_message) {
             SDL_RenderCopy(renderer, scraping_message, NULL, &scraping_rect);
-        } else if (current_mode == MODE_MENU) {
+        } else if (current_app_mode == APP_MODE_MENU) {
             // Render menu options
             for (int i = 0; i < MENU_OPTIONS; i++) {
                 if (menu_textures[i]) {
@@ -713,9 +787,9 @@ int main(int argc, char** argv) {
             }
         } else {
             DirContent* current_content = content;
-            if (current_mode == MODE_FAVORITES) {
+            if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES) {
                 current_content = favorites_content;
-            } else if (current_mode == MODE_HISTORY) {
+            } else if (current_app_mode == APP_MODE_HISTORY) {
                 current_content = history_content;
             }
             if (current_content) {
@@ -733,11 +807,11 @@ int main(int argc, char** argv) {
         }
 
         // Render box art if available
-        if (current_mode != MODE_MENU && current_mode != MODE_SCRAPING) {
+        if (current_app_mode != APP_MODE_MENU && current_app_mode != APP_MODE_SCRAPING) {
             DirContent* current_content = content;
-            if (current_mode == MODE_FAVORITES) {
+            if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES) {
                 current_content = favorites_content;
-            } else if (current_mode == MODE_HISTORY) {
+            } else if (current_app_mode == APP_MODE_HISTORY) {
                 current_content = history_content;
             }
             
