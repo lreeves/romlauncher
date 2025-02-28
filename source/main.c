@@ -23,7 +23,6 @@ typedef enum {
     APP_MODE_BROWSER,
     APP_MODE_MENU,
     APP_MODE_SCRAPING,
-    APP_MODE_HISTORY
 } AppMode;
 
 typedef enum {
@@ -382,25 +381,6 @@ int main(int argc, char** argv) {
                         case APP_MODE_SCRAPING:
                             // Scraping mode is handled elsewhere
                             break;
-                        case APP_MODE_HISTORY:
-                            if (selected_index >= 0 && history_content && selected_index < history_content->file_count) {
-                                const char* rom_path = get_history_rom_path(selected_index);
-                                if (rom_path) {
-                                    log_message(LOG_INFO, "Attempting to launch from history: %s", rom_path);
-                                    if (launch_retroarch(rom_path)) {
-                                        exit_requested = 1;
-                                    } else {
-                                        if (notification.texture) {
-                                            SDL_DestroyTexture(notification.texture);
-                                        }
-                                        notification.texture = render_text(renderer, "Error launching emulator", font, COLOR_TEXT_ERROR, &notification.rect, 0);
-                                        notification.rect.x = (SCREEN_W - notification.rect.w) / 2;
-                                        notification.rect.y = SCREEN_H - notification.rect.h - 20;
-                                        notification.active = 1;
-                                    }
-                                }
-                            }
-                            break;
                         default:
                             // Do nothing for unhandled modes
                             break;
@@ -408,18 +388,20 @@ int main(int argc, char** argv) {
                 }
 
                 if (event.jbutton.button == JOY_X) {
-                    if (current_app_mode == APP_MODE_BROWSER || current_app_mode == APP_MODE_HISTORY) {
-                        // Cycle through browser modes: FILES -> FAVORITES -> HISTORY -> FILES
+                    // Cycle through browser modes: FILES -> FAVORITES -> HISTORY -> FILES
+                    if (current_app_mode == APP_MODE_BROWSER) {
                         strncpy(saved_path, current_path, MAX_PATH_LEN-1);
                         saved_path[MAX_PATH_LEN-1] = '\0';
                         
                         switch (current_browser_mode) {
                             case BROWSER_MODE_FILES:
+                                log_message(LOG_INFO, "Switching to favorites");
+                                current_browser_mode = BROWSER_MODE_FAVORITES;
+
                                 // Switch to favorites mode
                                 if (favorites_content) free_dir_content(favorites_content);
                                 favorites_content = list_favorites();
                                 if (favorites_content) {
-                                    current_browser_mode = BROWSER_MODE_FAVORITES;
                                     selected_index = find_next_rom(favorites_content, -1, 1);
                                     current_page = selected_index / ENTRIES_PER_PAGE;
                                     total_entries = favorites_content->file_count;
@@ -430,14 +412,15 @@ int main(int argc, char** argv) {
                                 
                             case BROWSER_MODE_FAVORITES:
                                 // Switch to history mode
+                                log_message(LOG_INFO, "Switching to history");
+                                current_browser_mode = BROWSER_MODE_HISTORY;
+
                                 if (favorites_content) free_dir_content(favorites_content);
                                 favorites_content = NULL;
                                 
                                 if (history_content) free_dir_content(history_content);
                                 history_content = list_history();
                                 if (history_content) {
-                                    current_browser_mode = BROWSER_MODE_HISTORY;
-                                    current_app_mode = APP_MODE_HISTORY;
                                     selected_index = 0;
                                     current_page = 0;
                                     total_entries = history_content->file_count;
@@ -447,12 +430,13 @@ int main(int argc, char** argv) {
                                 break;
                                 
                             case BROWSER_MODE_HISTORY:
+                                log_message(LOG_INFO, "Switching to files");
+                                current_browser_mode = BROWSER_MODE_FILES;
+
                                 // Switch back to files mode
                                 if (history_content) free_dir_content(history_content);
                                 history_content = NULL;
-                
-                                current_app_mode = APP_MODE_BROWSER;
-                                current_browser_mode = BROWSER_MODE_FILES;
+
                                 strncpy(current_path, saved_path, MAX_PATH_LEN-1);
                                 current_path[MAX_PATH_LEN-1] = '\0';
                                 selected_index = 0;
@@ -460,27 +444,8 @@ int main(int argc, char** argv) {
                                 set_selection(content, renderer, font, selected_index, current_page);
                                 break;
                         }
-                    } else {
-                        // In other modes, X toggles favorites
-                        toggle_current_favorite(content, selected_index, current_path);
-                        set_selection(content, renderer, font, selected_index, current_page);
-
-                        // Load box art for selected file
-                        if (selected_index >= content->dir_count &&
-                            selected_index < content->dir_count + content->file_count) {
-                            int file_index = selected_index - content->dir_count;
-                            const char* filename = content->files[file_index];
-                            log_message(LOG_DEBUG, "Selected file for box art check: %s", filename);
-                            load_box_art(content, renderer, current_path, filename);
-                        } else {
-                            log_message(LOG_DEBUG, "Directory selected, clearing box art");
-                            // Clear box art when directory is selected
-                            if (content->box_art_texture) {
-                                SDL_DestroyTexture(content->box_art_texture);
-                                content->box_art_texture = NULL;
-                            }
-                        }
                     }
+
                 }
 
                 if (event.jbutton.button == JOY_Y) {
@@ -522,17 +487,6 @@ int main(int argc, char** argv) {
                                 scraping_message = NULL;
                             }
                             break;
-                        case APP_MODE_HISTORY:
-                            if (history_content) free_dir_content(history_content);
-                            history_content = NULL;
-                            current_app_mode = APP_MODE_BROWSER;
-                            current_browser_mode = BROWSER_MODE_FILES;
-                            strncpy(current_path, saved_path, MAX_PATH_LEN-1);
-                            current_path[MAX_PATH_LEN-1] = '\0';
-                            selected_index = 0;
-                            current_page = 0;
-                            set_selection(content, renderer, font, selected_index, current_page);
-                            break;
                         case APP_MODE_BROWSER:
                             if (current_browser_mode == BROWSER_MODE_FAVORITES) {
                                 if (favorites_content) free_dir_content(favorites_content);
@@ -567,8 +521,6 @@ int main(int argc, char** argv) {
                     DirContent* current_content = content;
                     if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES) {
                         current_content = favorites_content;
-                    } else if (current_app_mode == APP_MODE_HISTORY) {
-                        current_content = history_content;
                     }
                     set_selection(current_content, renderer, font, selected_index, current_page);
                 }
@@ -583,8 +535,6 @@ int main(int argc, char** argv) {
                     DirContent* current_content = content;
                     if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES) {
                         current_content = favorites_content;
-                    } else if (current_app_mode == APP_MODE_HISTORY) {
-                        current_content = history_content;
                     }
                     set_selection(current_content, renderer, font, selected_index, current_page);
                 }
@@ -650,7 +600,6 @@ int main(int argc, char** argv) {
                                 saved_path[MAX_PATH_LEN-1] = '\0';
                                 history_content = list_history();
                                 if (history_content) {
-                                    current_app_mode = APP_MODE_HISTORY;
                                     selected_index = 0;
                                     current_page = 0;
                                     total_entries = history_content->file_count;
@@ -695,8 +644,6 @@ int main(int argc, char** argv) {
                     DirContent* current_content = content;
                     if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES) {
                         current_content = favorites_content;
-                    } else if (current_app_mode == APP_MODE_HISTORY) {
-                        current_content = history_content;
                     }
 
                     set_selection(current_content, renderer, font, selected_index, current_page);
@@ -730,8 +677,6 @@ int main(int argc, char** argv) {
                     DirContent* current_content = content;
                     if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES) {
                         current_content = favorites_content;
-                    } else if (current_app_mode == APP_MODE_HISTORY) {
-                        current_content = history_content;
                     }
 
                     set_selection(current_content, renderer, font, selected_index, current_page);
@@ -764,8 +709,6 @@ int main(int argc, char** argv) {
                     DirContent* current_content = content;
                     if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES) {
                         current_content = favorites_content;
-                    } else if (current_app_mode == APP_MODE_HISTORY) {
-                        current_content = history_content;
                     }
 
                     set_selection(current_content, renderer, font, selected_index, current_page);
@@ -788,8 +731,6 @@ int main(int argc, char** argv) {
                     DirContent* current_content = content;
                     if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES) {
                         current_content = favorites_content;
-                    } else if (current_app_mode == APP_MODE_HISTORY) {
-                        current_content = history_content;
                     }
 
                     set_selection(current_content, renderer, font, selected_index, current_page);
@@ -829,8 +770,6 @@ int main(int argc, char** argv) {
             DirContent* current_content = content;
             if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES) {
                 current_content = favorites_content;
-            } else if (current_app_mode == APP_MODE_HISTORY) {
-                current_content = history_content;
             }
             if (current_content) {
                 for (int i = 0; i < current_content->dir_count; i++) {
@@ -851,8 +790,6 @@ int main(int argc, char** argv) {
             DirContent* current_content = content;
             if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES) {
                 current_content = favorites_content;
-            } else if (current_app_mode == APP_MODE_HISTORY) {
-                current_content = history_content;
             }
 
             if (current_content && current_content->box_art_texture) {
@@ -878,7 +815,7 @@ int main(int argc, char** argv) {
         SDL_Color status_color = COLOR_STATUS_TEXT;
         SDL_Rect status_rect;
         SDL_Texture* status_text = render_text(renderer,
-            "- MENU    + QUIT    X CYCLE MODES    Y TOGGLE FAVORITE",
+            "- MENU    + QUIT    X BROWSE/FAVES/HISTORY    Y TOGGLE FAVORITE",
             small_font, status_color, &status_rect, 0);
         if (status_text) {
             status_rect.x = (SCREEN_W - status_rect.w) / 2;
