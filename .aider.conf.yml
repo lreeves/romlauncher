@@ -1,2 +1,0 @@
-test-cmd: ./build.sh
-auto-test: true
