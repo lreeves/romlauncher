@@ -13,6 +13,23 @@
 #include <SDL_ttf.h>
 #include <switch.h>
 
+// Function to update box art based on current selection
+void update_box_art_for_selection(DirContent* content, SDL_Renderer* renderer, 
+                                 const char* current_path, int selected_index) {
+    if (!content || selected_index < 0) return;
+    
+    // Only load box art for files (not directories)
+    if (selected_index >= content->dir_count && 
+        selected_index < content->dir_count + content->file_count) {
+        int file_index = selected_index - content->dir_count;
+        if (file_index >= 0 && file_index < content->file_count) {
+            const char* filename = content->files[file_index];
+            log_message(LOG_DEBUG, "Loading box art for: %s", filename);
+            load_box_art(content, renderer, current_path, filename);
+        }
+    }
+}
+
 // some switch buttons
 #define JOY_A     0
 #define JOY_B     1
@@ -292,13 +309,8 @@ int main(int argc, char** argv) {
 
                     // Load box art for selected file when navigating
                     if (current_app_mode == APP_MODE_BROWSER &&
-                        current_browser_mode == BROWSER_MODE_FILES &&
-                        selected_index >= content->dir_count &&
-                        selected_index < content->dir_count + content->file_count) {
-                        int file_index = selected_index - content->dir_count;
-                        const char* filename = content->files[file_index];
-                        log_message(LOG_DEBUG, "Selected file for box art check: %s", filename);
-                        load_box_art(content, renderer, current_path, filename);
+                        current_browser_mode == BROWSER_MODE_FILES) {
+                        update_box_art_for_selection(content, renderer, current_path, selected_index);
                     }
                 }
 
@@ -497,13 +509,7 @@ int main(int argc, char** argv) {
                         set_selection(content, renderer, font, selected_index, current_page);
                         
                         // Load box art for selected file
-                        if (selected_index >= content->dir_count &&
-                            selected_index < content->dir_count + content->file_count) {
-                            int file_index = selected_index - content->dir_count;
-                            const char* filename = content->files[file_index];
-                            log_message(LOG_DEBUG, "Selected file for box art check: %s", filename);
-                            load_box_art(content, renderer, current_path, filename);
-                        }
+                        update_box_art_for_selection(content, renderer, current_path, selected_index);
                     }
                 }
 
@@ -700,13 +706,9 @@ int main(int argc, char** argv) {
                     set_selection(current_content, renderer, font, selected_index, current_page);
 
                     if (current_app_mode == APP_MODE_BROWSER &&
-                        current_browser_mode == BROWSER_MODE_FILES &&
-                        selected_index >= content->dir_count &&
-                        selected_index < content->dir_count + content->file_count) {
-                        int file_index = selected_index - content->dir_count;
-                        const char* filename = content->files[file_index];
-                        log_message(LOG_DEBUG, "Auto repeat: DPAD_UP; new selection: %d, file: %s", selected_index, filename);
-                        load_box_art(content, renderer, current_path, filename);
+                        current_browser_mode == BROWSER_MODE_FILES) {
+                        update_box_art_for_selection(content, renderer, current_path, selected_index);
+                        log_message(LOG_DEBUG, "Auto repeat: DPAD_UP; new selection: %d", selected_index);
                     }
                     dpadUpRepeatTime = now;
                 }
@@ -737,13 +739,9 @@ int main(int argc, char** argv) {
                     set_selection(current_content, renderer, font, selected_index, current_page);
 
                     if (current_app_mode == APP_MODE_BROWSER &&
-                        current_browser_mode == BROWSER_MODE_FILES &&
-                        selected_index >= content->dir_count &&
-                        selected_index < content->dir_count + content->file_count) {
-                        int file_index = selected_index - content->dir_count;
-                        const char* filename = content->files[file_index];
-                        log_message(LOG_DEBUG, "Auto repeat: DPAD_DOWN; new selection: %d, file: %s", selected_index, filename);
-                        load_box_art(content, renderer, current_path, filename);
+                        current_browser_mode == BROWSER_MODE_FILES) {
+                        update_box_art_for_selection(content, renderer, current_path, selected_index);
+                        log_message(LOG_DEBUG, "Auto repeat: DPAD_DOWN; new selection: %d", selected_index);
                     }
                     dpadDownRepeatTime = now;
                 }
