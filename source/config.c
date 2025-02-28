@@ -9,6 +9,7 @@
 
 static config_entry *config = NULL;
 config_entry *default_core_mappings = NULL;
+config_entry *system_names_mappings = NULL;
 
 void config_put(const char *key, const char *value) {
     config_entry *entry;
@@ -197,4 +198,83 @@ void free_default_core_mappings(void) {
         HASH_DEL(default_core_mappings, current);
         free(current);
     }
+}
+
+// Helper function to add a mapping to the system names hashmap
+static void add_system_name(const char *short_name, const char *full_name) {
+    config_entry *entry = malloc(sizeof(config_entry));
+    if (!entry) {
+        log_message(LOG_ERROR, "Failed to allocate memory for system name mapping");
+        return;
+    }
+    
+    strncpy(entry->key, short_name, sizeof(entry->key) - 1);
+    entry->key[sizeof(entry->key) - 1] = '\0';
+    
+    strncpy(entry->value, full_name, sizeof(entry->value) - 1);
+    entry->value[sizeof(entry->value) - 1] = '\0';
+    
+    HASH_ADD_STR(system_names_mappings, key, entry);
+}
+
+void init_system_names_mappings(void) {
+    // Initialize with NULL first to ensure clean state
+    system_names_mappings = NULL;
+    
+    // Add all the system name mappings
+    add_system_name("nes", "Nintendo Entertainment System");
+    add_system_name("snes", "Super Nintendo Entertainment System");
+    add_system_name("sfc", "Super Famicom");
+    add_system_name("gb", "Game Boy");
+    add_system_name("gbc", "Game Boy Color");
+    add_system_name("gba", "Game Boy Advance");
+    add_system_name("n64", "Nintendo 64");
+    add_system_name("md", "Sega Mega Drive");
+    add_system_name("genesis", "Sega Genesis");
+    add_system_name("sms", "Sega Master System");
+    add_system_name("gg", "Game Gear");
+    add_system_name("32x", "Sega 32X");
+    add_system_name("psx", "PlayStation");
+    add_system_name("ps2", "PlayStation 2");
+    add_system_name("psp", "PlayStation Portable");
+    add_system_name("tg16", "TurboGrafx-16");
+    add_system_name("pce", "PC Engine");
+    add_system_name("ngp", "Neo Geo Pocket");
+    add_system_name("ngpc", "Neo Geo Pocket Color");
+    add_system_name("ws", "WonderSwan");
+    add_system_name("wsc", "WonderSwan Color");
+    add_system_name("arcade", "Arcade");
+    add_system_name("mame", "MAME");
+    add_system_name("fba", "Final Burn Alpha");
+    add_system_name("ngcd", "Neo Geo CD");
+    add_system_name("atari2600", "Atari 2600");
+    add_system_name("lynx", "Atari Lynx");
+    add_system_name("jaguar", "Atari Jaguar");
+    add_system_name("segacd", "Sega CD");
+    add_system_name("saturn", "Sega Saturn");
+    add_system_name("dreamcast", "Sega Dreamcast");
+    add_system_name("coleco", "ColecoVision");
+    add_system_name("intellivision", "Intellivision");
+    add_system_name("vectrex", "Vectrex");
+    add_system_name("pc", "DOS/PC");
+    add_system_name("amiga", "Commodore Amiga");
+    add_system_name("c64", "Commodore 64");
+    add_system_name("z64", "Nintendo 64 (z64)");
+}
+
+void free_system_names_mappings(void) {
+    config_entry *current, *tmp;
+    HASH_ITER(hh, system_names_mappings, current, tmp) {
+        HASH_DEL(system_names_mappings, current);
+        free(current);
+    }
+}
+
+// Get the full name of a system from its short name
+const char* get_system_full_name(const char *short_name) {
+    if (!short_name) return "Unknown System";
+    
+    config_entry *entry;
+    HASH_FIND_STR(system_names_mappings, short_name, entry);
+    return entry ? entry->value : short_name; // Return the short name if not found
 }

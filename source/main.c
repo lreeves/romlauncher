@@ -111,6 +111,7 @@ int main(int argc, char** argv) {
     load_favorites();
     load_history();
     init_default_core_mappings();
+    init_system_names_mappings();
     log_message(LOG_INFO, "Config, favorites, and history loaded");
 
 
@@ -960,11 +961,12 @@ cleanup:
     if (romfs_initialized)
         romfsExit();
 
-    // Free config, favorites, history, and core mappings hash tables
+    // Free config, favorites, history, and hash tables
     free_config();
     free_favorites();
     free_history();
     free_default_core_mappings();
+    free_system_names_mappings();
 
     log_message(LOG_INFO, "Finished cleanup - all done!");
     log_close();
