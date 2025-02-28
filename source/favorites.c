@@ -17,27 +17,59 @@ static int compare_entries(const void* a, const void* b) {
 }
 
 static char* extract_group_name(const char* full_path, const char* rom_path) {
-    // Skip the ROM path prefix
-    const char* relative_path = strstr(full_path, rom_path);
-    if (!relative_path) return strdup("");
+    log_message(LOG_DEBUG, "Extracting group from: %s (ROM path: %s)", full_path, rom_path);
     
-    relative_path += strlen(rom_path);
+    // Normalize paths for comparison (remove "sdmc:" prefix if present)
+    char norm_full_path[MAX_PATH_LEN];
+    char norm_rom_path[MAX_PATH_LEN];
+    
+    // Normalize full path
+    if (strncmp(full_path, "sdmc:", 5) == 0) {
+        strncpy(norm_full_path, full_path + 5, MAX_PATH_LEN - 1);
+    } else {
+        strncpy(norm_full_path, full_path, MAX_PATH_LEN - 1);
+    }
+    norm_full_path[MAX_PATH_LEN - 1] = '\0';
+    
+    // Normalize ROM path
+    if (strncmp(rom_path, "sdmc:", 5) == 0) {
+        strncpy(norm_rom_path, rom_path + 5, MAX_PATH_LEN - 1);
+    } else {
+        strncpy(norm_rom_path, rom_path, MAX_PATH_LEN - 1);
+    }
+    norm_rom_path[MAX_PATH_LEN - 1] = '\0';
+    
+    log_message(LOG_DEBUG, "Normalized paths: %s / %s", norm_full_path, norm_rom_path);
+    
+    // Find common ROM path prefix
+    const char* relative_path = strstr(norm_full_path, norm_rom_path);
+    if (!relative_path) {
+        log_message(LOG_WARNING, "ROM path not found in favorite path, using full path");
+        // Extract directory path without filename
+        char* last_slash = strrchr(norm_full_path, '/');
+        if (!last_slash) return strdup("Uncategorized");
+        
+        return strndup(norm_full_path, last_slash - norm_full_path);
+    }
+    
+    // Skip ROM path prefix
+    relative_path += strlen(norm_rom_path);
     if (*relative_path == '/') relative_path++;
     
-    // Find last slash
+    // If there's no remaining path, use "Root"
+    if (*relative_path == '\0') return strdup("Root");
+    
+    // Find last slash (this separates directory from filename)
     char* last_slash = strrchr(relative_path, '/');
-    if (!last_slash) return strdup("");
+    if (!last_slash) return strdup("Root");
     
     // Create group name from path without the filename
     char* group_name = strndup(relative_path, last_slash - relative_path);
-    if (!group_name) return strdup("");
+    if (!group_name) return strdup("Uncategorized");
     
-    // Remove leading slash if present
-    if (group_name[0] == '/') {
-        char* tmp = strdup(group_name + 1);
-        free(group_name);
-        return tmp ? tmp : strdup("");
-    }
+    // Log the resulting group name
+    log_message(LOG_DEBUG, "Extracted group name: %s", group_name);
+    
     return group_name;
 }
 
@@ -92,6 +124,8 @@ DirContent* list_favorites(void) {
     // Get ROM path from config
     const char* rom_path = config_get("rom_path");
     if (!rom_path) rom_path = "sdmc:/roms";
+    
+    log_message(LOG_INFO, "Listing favorites with ROM path: %s", rom_path);
     
     // First pass: group favorites by directory
     FavoriteGroup* groups = NULL;
