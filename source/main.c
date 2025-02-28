@@ -408,7 +408,7 @@ int main(int argc, char** argv) {
                 }
 
                 if (event.jbutton.button == JOY_X) {
-                    if (current_app_mode == APP_MODE_BROWSER) {
+                    if (current_app_mode == APP_MODE_BROWSER || current_app_mode == APP_MODE_HISTORY) {
                         // Cycle through browser modes: FILES -> FAVORITES -> HISTORY -> FILES
                         strncpy(saved_path, current_path, MAX_PATH_LEN-1);
                         saved_path[MAX_PATH_LEN-1] = '\0';
