@@ -2,6 +2,7 @@
 
 // Test function prototypes
 int run_path_utils_tests();
+int run_emulator_selection_tests();
 
 int main() {
     printf("Starting test suite...\n\n");
@@ -10,9 +11,7 @@ int main() {
     int result = 0;
     
     result += run_path_utils_tests();
-    
-    // Add more test modules here as they are created
-    // result += run_other_module_tests();
+    result += run_emulator_selection_tests();
     
     if (result == 0) {
         printf("All tests passed successfully!\n");

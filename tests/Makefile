@@ -2,11 +2,11 @@ CC = gcc
 CFLAGS = -Wall -Wextra -g
 
 # Source files
-TEST_SOURCES = test_runner.c test_path_utils.c mock_logging.c
+TEST_SOURCES = test_runner.c test_path_utils.c test_emulator_selection.c mock_logging.c
 TEST_OBJECTS = $(TEST_SOURCES:.c=.o)
 
 # Source files from main project needed for testing
-PROJECT_SOURCES = ../source/path_utils.c
+PROJECT_SOURCES = ../source/path_utils.c ../source/emulator_selection.c
 PROJECT_OBJECTS = $(PROJECT_SOURCES:.c=.o)
 
 # Include directories
