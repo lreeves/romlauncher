@@ -14,7 +14,7 @@ EmulatorConfig* derive_emulator_from_extension(const char *extension);
  */
 EmulatorConfig* derive_emulator_from_path(const char *path) {
     if (!path) return NULL;
-    
+
     // Extract the file extension from the path
     const char *extension = strrchr(path, '.');
     if (extension) {
