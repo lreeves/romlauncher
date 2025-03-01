@@ -8,5 +8,5 @@ romlauncher.elf
 romlauncher.nacp
 romlauncher.nro
 source/*.o
-test/*.o
+tests/*.o
 tests/test_runner
