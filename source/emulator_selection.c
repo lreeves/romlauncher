@@ -27,5 +27,20 @@ EmulatorConfig* derive_emulator_from_path(const char *path) {
 }
 
 EmulatorConfig* derive_emulator_from_extension(const char *extension) {
+    if (!extension) return NULL;
+    
+    // Check for Super Famicom ROMs
+    if (strcasecmp(extension, "sfc") == 0) {
+        EmulatorConfig *config = malloc(sizeof(EmulatorConfig));
+        if (!config) {
+            fprintf(stderr, "Failed to allocate memory for EmulatorConfig\n");
+            return NULL;
+        }
+        
+        config->emulator = EMULATOR_RETROARCH;
+        config->core_name = "snes9x";
+        return config;
+    }
+    
     return NULL;
 }
