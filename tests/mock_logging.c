@@ -3,7 +3,7 @@
 #include "../source/logging.h"
 
 // Mock implementation of log_message for tests
-void log_message(int level, const char* format, ...) {
+void log_message(int level __attribute__((unused)), const char* format, ...) {
     va_list args;
     va_start(args, format);
     
