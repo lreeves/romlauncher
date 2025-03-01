@@ -6,6 +6,16 @@
 #include "logging.h"
 #include "config.h"
 #include <SDL_image.h>
+#include <SDL_thread.h>
+#include <stdint.h>
+
+typedef struct {
+    char rom_path[MAX_PATH_LEN];
+    char rom_name[MAX_PATH_LEN];
+    int request_id;
+} BoxArtRequest;
+
+int current_boxart_request_id = 0;
 
 // Derive the short system name from the ROM path or extension
 static const char* derive_system_name(const char* rom_path, const char* ext) {
@@ -67,6 +77,63 @@ SDL_Texture* render_text(SDL_Renderer *renderer, const char* text,
 
     SDL_FreeSurface(surface);
     return texture;
+}
+
+static int boxart_loader_thread(void *data) {
+    BoxArtRequest *req = (BoxArtRequest *)data;
+    const char *ext = strrchr(req->rom_name, '.');
+    if (!ext) {
+        free(req);
+        return 0;
+    }
+    ext++; // Skip the dot
+    const char* system_name = derive_system_name(req->rom_path, ext);
+    
+    int basename_length = (int)(ext - req->rom_name - 1);
+    char rom_basename[MAX_PATH_LEN];
+    strncpy(rom_basename, req->rom_name, basename_length);
+    rom_basename[basename_length] = '\0';
+
+    char box_art_path[MAX_PATH_LEN];
+    int path_len = snprintf(box_art_path, sizeof(box_art_path),
+             "%s/media/%s/2dboxart/",
+             ROMLAUNCHER_DATA_DIRECTORY, system_name);
+    if (path_len <= 0 || (size_t)path_len >= sizeof(box_art_path)) {
+        free(req);
+        return 0;
+    }
+    strncat(box_art_path, rom_basename, sizeof(box_art_path) - path_len - 5);
+    strcat(box_art_path, ".png");
+
+    FILE* test = fopen(box_art_path, "r");
+    if (!test) {
+         free(req);
+         return 0;
+    }
+    fclose(test);
+
+    SDL_Surface* surface = IMG_Load(box_art_path);
+    if (!surface) {
+         free(req);
+         return 0;
+    }
+
+    if (req->request_id != current_boxart_request_id) {
+         SDL_FreeSurface(surface);
+         free(req);
+         return 0;
+    }
+
+    SDL_Event event;
+    SDL_zero(event);
+    event.type = SDL_USEREVENT;
+    event.user.code = 1;
+    event.user.data1 = surface;
+    event.user.data2 = (void *)(intptr_t)(req->request_id);
+    SDL_PushEvent(&event);
+
+    free(req);
+    return 0;
 }
 
 static int compare_strings(const void* a, const void* b) {
@@ -261,62 +328,18 @@ void load_box_art(DirContent* content, SDL_Renderer *renderer, const char* rom_p
     }
 
     if (!rom_name) return;
-    const char* ext = strrchr(rom_name, '.');
-    if (!ext) return;
-    ext++; // Skip the dot
+    // Cancel any previous box art loading request by incrementing the global request ID
+    current_boxart_request_id++;
+    BoxArtRequest* req = malloc(sizeof(BoxArtRequest));
+    if (!req) return;
+    strncpy(req->rom_path, rom_path, MAX_PATH_LEN - 1);
+    req->rom_path[MAX_PATH_LEN - 1] = '\0';
+    strncpy(req->rom_name, rom_name, MAX_PATH_LEN - 1);
+    req->rom_name[MAX_PATH_LEN - 1] = '\0';
+    req->request_id = current_boxart_request_id;
 
-    // Derive the system name
-    const char* system_name = derive_system_name(rom_path, ext);
-    log_message(LOG_DEBUG, "Derived system name: %s", system_name);
-
-    // Get the ROM name without extension for the PNG filename
-    char rom_basename[MAX_PATH_LEN];
-    strncpy(rom_basename, rom_name, (ext - rom_name - 1));
-    rom_basename[(ext - rom_name - 1)] = '\0';
-    log_message(LOG_DEBUG, "ROM basename: %s", rom_basename);
-
-    // Construct box art path
-    char box_art_path[MAX_PATH_LEN];
-    int path_len = snprintf(box_art_path, sizeof(box_art_path),
-             "%s/media/%s/2dboxart/",
-             ROMLAUNCHER_DATA_DIRECTORY, system_name);
-    if (path_len > 0 && (size_t)path_len < sizeof(box_art_path)) {
-        strncat(box_art_path, rom_basename, sizeof(box_art_path) - path_len - 5); // -5 for ".png\0"
-        strcat(box_art_path, ".png");
-    } else {
-        log_message(LOG_ERROR, "Box art path construction failed");
-        return;
-    }
-
-    log_message(LOG_DEBUG, "Checking for box art at: %s", box_art_path);
-
-    // Check if file exists first
-    FILE* test = fopen(box_art_path, "r");
-    if (!test) {
-        log_message(LOG_DEBUG, "Box art file does not exist");
-        return;
-    }
-    fclose(test);
-
-    // Try to load the image
-    SDL_Surface* surface = IMG_Load(box_art_path);
-    if (surface) {
-        content->box_art_texture = SDL_CreateTextureFromSurface(renderer, surface);
-
-        // Calculate display size (maintaining aspect ratio with max width)
-        float aspect = (float)surface->w / surface->h;
-        content->box_art_rect.w = BOXART_MAX_WIDTH;
-        content->box_art_rect.h = (int)(BOXART_MAX_WIDTH / aspect);
-
-        // Position on right side of screen
-        content->box_art_rect.x = 1280 - content->box_art_rect.w - 20; // 20px padding
-        content->box_art_rect.y = (720 - content->box_art_rect.h) / 2; // Centered vertically
-
-        SDL_FreeSurface(surface);
-        log_message(LOG_DEBUG, "Loaded box art: %s", box_art_path);
-    } else {
-        log_message(LOG_DEBUG, "No box art found at: %s", box_art_path);
-    }
+    // Spawn asynchronous thread to load box art
+    SDL_CreateThread(boxart_loader_thread, "BoxArtLoader", req);
 }
 
 void free_dir_content(DirContent* content) {
