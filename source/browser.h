@@ -11,6 +11,7 @@
 
 // External declarations
 extern char current_path[MAX_PATH_LEN];
+extern int current_boxart_request_id;
 extern int is_favorite(const char *path);
 extern void toggle_favorite(const char *path);
 

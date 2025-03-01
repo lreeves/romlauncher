@@ -638,6 +638,28 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
                     }
                 }
             }
+            else if (event.type == SDL_USEREVENT && event.user.code == 1) {
+                int loaded_request_id = (int)(intptr_t)event.user.data2;
+                if (loaded_request_id == current_boxart_request_id) {
+                    SDL_Surface *surface = event.user.data1;
+                    DirContent* current_content = get_current_content();
+                    if (current_content) {
+                        if (current_content->box_art_texture) {
+                            SDL_DestroyTexture(current_content->box_art_texture);
+                        }
+                        current_content->box_art_texture = SDL_CreateTextureFromSurface(renderer, surface);
+                        float aspect = (float)surface->w / surface->h;
+                        current_content->box_art_rect.w = BOXART_MAX_WIDTH;
+                        current_content->box_art_rect.h = (int)(BOXART_MAX_WIDTH / aspect);
+                        current_content->box_art_rect.x = 1280 - current_content->box_art_rect.w - 20;
+                        current_content->box_art_rect.y = (720 - current_content->box_art_rect.h) / 2;
+                    }
+                    SDL_FreeSurface(surface);
+                } else {
+                    SDL_Surface *surface = event.user.data1;
+                    SDL_FreeSurface(surface);
+                }
+            }
         }
 
         
