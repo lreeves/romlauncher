@@ -2,23 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "emulator_selection.h"
 
-/**
- * Enum representing the available emulators
- */
-typedef enum {
-    EMULATOR_RETROARCH,
-    EMULATOR_PPSSPP
-} Emulator;
-
-/**
- * Configuration structure for emulators
- * Contains the emulator type and core name (if applicable)
- */
-typedef struct {
-    Emulator emulator;
-    const char *core_name;  // Only used for RetroArch
-} EmulatorConfig;
 
 /**
  * Determines which emulator to use based on the file path
