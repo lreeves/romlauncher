@@ -51,6 +51,16 @@ void test_derive_emulator_from_path() {
     const EmulatorConfig* result1 = derive_emulator_from_path(input1);
     assert_emulator_config("Super Famicom ROM", EMULATOR_RETROARCH, "snes9x", result1);
     
+    // Test case 1.1: NES ROM
+    const char* input1_1 = "games/mario.nes";
+    const EmulatorConfig* result1_1 = derive_emulator_from_path(input1_1);
+    assert_emulator_config("NES ROM", EMULATOR_RETROARCH, "fceumm", result1_1);
+    
+    // Test case 1.2: Sega Genesis/Mega Drive ROM
+    const char* input1_2 = "games/sonic.md";
+    const EmulatorConfig* result1_2 = derive_emulator_from_path(input1_2);
+    assert_emulator_config("Genesis ROM", EMULATOR_RETROARCH, "genesis_plus_gx", result1_2);
+    
     // Test case 2: NULL input
     const EmulatorConfig* result2 = derive_emulator_from_path(NULL);
     assert_emulator_config("NULL input", EMULATOR_RETROARCH, NULL, result2);

@@ -10,6 +10,16 @@ static const EmulatorConfig RETROARCH_SNES9X = {
     .core_name = "snes9x"
 };
 
+static const EmulatorConfig RETROARCH_FCEUMM = {
+    .emulator = EMULATOR_RETROARCH,
+    .core_name = "fceumm"
+};
+
+static const EmulatorConfig RETROARCH_GENESIS = {
+    .emulator = EMULATOR_RETROARCH,
+    .core_name = "genesis_plus_gx"
+};
+
 // Forward declaration
 const EmulatorConfig* derive_emulator_from_extension(const char *extension);
 
@@ -42,6 +52,8 @@ const EmulatorConfig* derive_emulator_from_extension(const char *extension) {
     if (!extension) return NULL;
 
     if (strcasecmp(extension, "sfc") == 0) return &RETROARCH_SNES9X;
+    if (strcasecmp(extension, "nes") == 0) return &RETROARCH_FCEUMM;
+    if (strcasecmp(extension, "md") == 0) return &RETROARCH_GENESIS;
 
     return NULL;
 }
