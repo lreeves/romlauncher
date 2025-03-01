@@ -22,7 +22,9 @@ typedef enum {
     SYSTEM_GENESIS,
     SYSTEM_MASTERSYSTEM,
     SYSTEM_N64,
-    SYSTEM_UNKNOWN
+    SYSTEM_PSP,
+    SYSTEM_PSX,
+    SYSTEM_UNKNOWN,
 } SystemType;
 
 /**

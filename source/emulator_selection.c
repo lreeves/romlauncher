@@ -40,6 +40,11 @@ static const EmulatorConfig RETROARCH_MEDNAFEN_PCE = {
     .core_name = "mednafen_pce"
 };
 
+static const EmulatorConfig RETROARCH_PCSX_REARMED = {
+    .emulator = EMULATOR_RETROARCH,
+    .core_name = "pcsx_rearmed"
+};
+
 // Forward declarations
 SystemType derive_system_from_extension(const char *extension);
 const EmulatorConfig* derive_emulator_for_system(SystemType system);
@@ -94,6 +99,11 @@ SystemType derive_system_from_extension(const char *extension) {
  */
 const EmulatorConfig* derive_emulator_from_path(const char *path) {
     SystemType system = derive_system_from_path(path);
+    if(system == SYSTEM_UNKNOWN) {
+        if (strcasecmp(path, "playstation portable")) system = SYSTEM_PSP;
+        if (strcasecmp(path, "playstation")) system = SYSTEM_PSX;
+    }
+
     return derive_emulator_for_system(system);
 }
 
@@ -121,6 +131,8 @@ const EmulatorConfig* derive_emulator_for_system(SystemType system) {
             return &RETROARCH_MUPEN64_PLUS_NEXT;
         case SYSTEM_TG16:
             return &RETROARCH_MEDNAFEN_PCE;
+        case SYSTEM_PSX:
+            return &RETROARCH_PCSX_REARMED;
         default:
             return NULL;
     }
