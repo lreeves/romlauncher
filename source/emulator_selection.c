@@ -20,40 +20,72 @@ static const EmulatorConfig RETROARCH_GENESIS = {
     .core_name = "genesis_plus_gx"
 };
 
-// Forward declaration
-const EmulatorConfig* derive_emulator_from_extension(const char *extension);
+// Forward declarations
+SystemType derive_system_from_extension(const char *extension);
+const EmulatorConfig* derive_emulator_for_system(SystemType system);
 
 /**
- * Determines which emulator to use based on the file path
+ * Determines the system type based on the file path
  *
  * @param path The path to the ROM file
- * @return Pointer to a static EmulatorConfig structure (do not free)
+ * @return The identified system type
  */
-const EmulatorConfig* derive_emulator_from_path(const char *path) {
-    if (!path) return NULL;
+SystemType derive_system_from_path(const char *path) {
+    if (!path) return SYSTEM_UNKNOWN;
 
     // Extract the file extension from the path
     const char *extension = strrchr(path, '.');
     if (extension) {
         extension++; // Skip the dot
-        return derive_emulator_from_extension(extension);
+        return derive_system_from_extension(extension);
     }
 
-    return NULL;
+    return SYSTEM_UNKNOWN;
 }
 
 /**
- * Determines which emulator to use based on the file extension
+ * Determines the system type based on the file extension
  *
  * @param extension The file extension (without the dot)
+ * @return The identified system type
+ */
+SystemType derive_system_from_extension(const char *extension) {
+    if (!extension) return SYSTEM_UNKNOWN;
+
+    if (strcasecmp(extension, "nes") == 0) return SYSTEM_NES;
+    if (strcasecmp(extension, "sfc") == 0) return SYSTEM_SNES;
+    if (strcasecmp(extension, "md") == 0) return SYSTEM_GENESIS;
+
+    return SYSTEM_UNKNOWN;
+}
+
+/**
+ * Determines which emulator to use based on the file path. This should be
+ * the only entrypoint into this logic.
+ *
+ * @param path The path to the ROM file
  * @return Pointer to a static EmulatorConfig structure (do not free)
  */
-const EmulatorConfig* derive_emulator_from_extension(const char *extension) {
-    if (!extension) return NULL;
+const EmulatorConfig* derive_emulator_from_path(const char *path) {
+    SystemType system = derive_system_from_path(path);
+    return derive_emulator_for_system(system);
+}
 
-    if (strcasecmp(extension, "sfc") == 0) return &RETROARCH_SNES9X;
-    if (strcasecmp(extension, "nes") == 0) return &RETROARCH_FCEUMM;
-    if (strcasecmp(extension, "md") == 0) return &RETROARCH_GENESIS;
-
-    return NULL;
+/**
+ * Determines which emulator to use based on the system type
+ *
+ * @param system The system type
+ * @return Pointer to a static EmulatorConfig structure (do not free)
+ */
+const EmulatorConfig* derive_emulator_for_system(SystemType system) {
+    switch (system) {
+        case SYSTEM_NES:
+            return &RETROARCH_FCEUMM;
+        case SYSTEM_SNES:
+            return &RETROARCH_SNES9X;
+        case SYSTEM_GENESIS:
+            return &RETROARCH_GENESIS;
+        default:
+            return NULL;
+    }
 }

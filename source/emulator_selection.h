@@ -31,6 +31,14 @@ typedef struct {
 } EmulatorConfig;
 
 /**
+ * Determines the system type based on the file path
+ *
+ * @param path The path to the ROM file
+ * @return The identified system type
+ */
+SystemType derive_system_from_path(const char *path);
+
+/**
  * Determines which emulator to use based on the file path
  *
  * @param path The path to the ROM file
