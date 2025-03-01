@@ -75,6 +75,11 @@ void test_derive_emulator_from_path() {
     const char* input4 = "games/document.txt";
     const EmulatorConfig* result4 = derive_emulator_from_path(input4);
     assert_emulator_config("Unsupported extension", EMULATOR_RETROARCH, NULL, result4);
+    
+    // Test case 5: PlayStation path with CHD file
+    const char* input5 = "/roms/playstation/test.chd";
+    const EmulatorConfig* result5 = derive_emulator_from_path(input5);
+    assert_emulator_config("PlayStation path", EMULATOR_RETROARCH, "pcsx_rearmed", result5);
 }
 
 // Helper function to check system type results
