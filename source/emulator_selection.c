@@ -98,6 +98,8 @@ SystemType derive_system_from_extension(const char *extension) {
  * @return Pointer to a static EmulatorConfig structure (do not free)
  */
 const EmulatorConfig* derive_emulator_from_path(const char *path) {
+    if(!path) return NULL;
+
     SystemType system = derive_system_from_path(path);
     if(system == SYSTEM_UNKNOWN) {
         if (strcasecmp(path, "playstation portable")) system = SYSTEM_PSP;
