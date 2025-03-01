@@ -102,8 +102,10 @@ const EmulatorConfig* derive_emulator_from_path(const char *path) {
 
     SystemType system = derive_system_from_path(path);
     if(system == SYSTEM_UNKNOWN) {
-        if (strcasecmp(path, "playstation portable")) system = SYSTEM_PSP;
-        if (strcasecmp(path, "playstation")) system = SYSTEM_PSX;
+        // Check if path contains "playstation portable" or "playstation"
+        // strcasecmp returns 0 when strings are equal, so we need to check for that
+        if (strstr(path, "playstation portable") != NULL) system = SYSTEM_PSP;
+        else if (strstr(path, "playstation") != NULL) system = SYSTEM_PSX;
     }
 
     return derive_emulator_for_system(system);
