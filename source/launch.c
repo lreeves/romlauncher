@@ -6,6 +6,7 @@
 #include "config.h"
 #include "launch.h"
 #include "history.h"
+#include "emulator_selection.h"
 
 #ifndef ROMLAUNCHER_BUILD_LINUX
 #include <switch.h>
@@ -25,23 +26,15 @@ int launch_retroarch(const char* rom_path) {
     add_history_entry(rom_path, time(NULL));
     save_history();
 
-    // Get file extension and look up core
-    const char* ext = get_file_extension(rom_path);
-    log_message(LOG_INFO, "ROM extension: %s", ext);
-
-    config_entry *core_entry;
-    HASH_FIND_STR(default_core_mappings, ext, core_entry);
-
-    if (!core_entry) {
-        log_message(LOG_ERROR, "No core mapping found for extension: %s", ext);
+    const EmulatorConfig* ec = derive_emulator_from_path(rom_path);
+    if(ec == NULL) {
+        log_message(LOG_ERROR, "Could not derive emulator for path: %s", rom_path);
         return 0;
     }
 
-    log_message(LOG_INFO, "Found core mapping: %s -> %s", ext, core_entry->value);
-
-    // Construct core path
+    // Construct RetroArch core path
     char core_path[MAX_PATH_LEN];
-    int written = snprintf(core_path, sizeof(core_path), "sdmc:/retroarch/cores/%s_libretro_libnx.nro", core_entry->value);
+    int written = snprintf(core_path, sizeof(core_path), "sdmc:/retroarch/cores/%s_libretro_libnx.nro", ec->core_name);
     if (written < 0 || (size_t)written >= sizeof(core_path)) {
         log_message(LOG_ERROR, "Core path construction failed (truncation or error)");
         return 0;
