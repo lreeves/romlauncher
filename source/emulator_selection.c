@@ -13,9 +13,15 @@ EmulatorConfig* derive_emulator_from_extension(const char *extension);
  * @return A newly allocated EmulatorConfig structure (must be freed by caller)
  */
 EmulatorConfig* derive_emulator_from_path(const char *path) {
-    // For now, just return NULL as requested
-    EmulatorConfig* from_extension = derive_emulator_from_extension(extension);
-    if(from_extension) return from_extension;
+    if (!path) return NULL;
+    
+    // Extract the file extension from the path
+    const char *extension = strrchr(path, '.');
+    if (extension) {
+        extension++; // Skip the dot
+        EmulatorConfig* from_extension = derive_emulator_from_extension(extension);
+        if (from_extension) return from_extension;
+    }
 
     return NULL;
 }
