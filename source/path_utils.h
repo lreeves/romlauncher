@@ -8,7 +8,7 @@
  * @param path The absolute path to convert
  * @return A newly allocated string with the relative path, or NULL on error
  */
-char* absolute_rom_path_to_relative(char* path);
+char* absolute_rom_path_to_relative(const char* path);
 
 /**
  * Converts a relative ROM path to an absolute path by adding ROM_DIRECTORY prefix.

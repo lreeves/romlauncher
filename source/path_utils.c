@@ -8,7 +8,7 @@
  * Converts an absolute ROM path to a relative path by removing ROM_DIRECTORY prefix.
  * Caller is responsible for freeing the returned string.
  */
-char* absolute_rom_path_to_relative(char* path) {
+char* absolute_rom_path_to_relative(const char* path) {
     if (!path) return NULL;
 
     // Check if path starts with ROM_DIRECTORY
