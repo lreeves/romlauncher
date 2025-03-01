@@ -22,8 +22,8 @@ typedef struct {
  * Determines which emulator to use based on the file path
  *
  * @param path The path to the ROM file
- * @return A newly allocated EmulatorConfig structure (must be freed by caller)
+ * @return Pointer to a static EmulatorConfig structure (do not free)
  */
-EmulatorConfig* derive_emulator_from_path(const char *path);
+const EmulatorConfig* derive_emulator_from_path(const char *path);
 
 #endif /* EMULATOR_SELECTION_H */
