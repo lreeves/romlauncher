@@ -1,15 +1,10 @@
 #ifndef PATH_UTILS_H
 #define PATH_UTILS_H
 
-// ROM directory constant
-#ifndef ROM_DIRECTORY
-#define ROM_DIRECTORY "sdmc:/roms/"
-#endif
-
 /**
  * Converts an absolute ROM path to a relative path by removing ROM_DIRECTORY prefix.
  * Caller is responsible for freeing the returned string.
- * 
+ *
  * @param path The absolute path to convert
  * @return A newly allocated string with the relative path, or NULL on error
  */
@@ -18,7 +13,7 @@ char* absolute_rom_path_to_relative(char* path);
 /**
  * Converts a relative ROM path to an absolute path by adding ROM_DIRECTORY prefix.
  * Caller is responsible for freeing the returned string.
- * 
+ *
  * @param path The relative path to convert
  * @return A newly allocated string with the absolute path, or NULL on error
  */
