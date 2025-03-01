@@ -10,6 +10,18 @@ typedef enum {
 } Emulator;
 
 /**
+ * Enum representing the supported system types
+ */
+typedef enum {
+    SYSTEM_NES,
+    SYSTEM_SNES,
+    SYSTEM_TG16,
+    SYSTEM_GENESIS,
+    SYSTEM_MASTERSYSTEM,
+    SYSTEM_UNKNOWN
+} SystemType;
+
+/**
  * Configuration structure for emulators
  * Contains the emulator type and core name (if applicable)
  */
