@@ -296,8 +296,16 @@ DirContent* list_favorites(void) {
     }
     
     content->file_count = idx;
-    content->groups = groups; // Store for later cleanup
-    
+    // Rebuild the groups linked list in sorted order using the sorted group_array
+    if (group_idx > 0) {
+        for (int i = 0; i < group_idx - 1; i++) {
+            group_array[i]->next = group_array[i+1];
+        }
+        group_array[group_idx - 1]->next = NULL;
+        content->groups = group_array[0];
+    } else {
+        content->groups = NULL;
+    }
     free(group_array);
     return content;
 }

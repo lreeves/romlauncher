@@ -323,7 +323,7 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
                                             count++; // Skip the group header
                                             if (selected_index < count + group->entry_count) {
                                                 FavoriteEntry* entry = group->entries;
-                                                for (int i = 0; i < (group->entry_count - 1) - (selected_index - count); i++) {
+                                                for (int i = 0; i < (selected_index - count); i++) {
                                                     entry = entry->next;
                                                 }
                                                 if (entry && entry->path) {
