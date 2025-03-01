@@ -20,7 +20,7 @@ typedef struct {
 
 /**
  * Determines which emulator to use based on the file path
- * 
+ *
  * @param path The path to the ROM file
  * @return A newly allocated EmulatorConfig structure (must be freed by caller)
  */
