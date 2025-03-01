@@ -88,6 +88,12 @@ int test_derive_emulator_from_path() {
         failures += assert_emulator_config("PlayStation path", EMULATOR_RETROARCH, "pcsx_rearmed", result5);
     }
 
+    // Test case 6: PlayStation uppercase path with CHD file
+    const char* input6 = "/roms/PlayStation/test.chd";
+    const EmulatorConfig* result6 = derive_emulator_from_path(input6);
+    if (result6 != NULL) {
+        failures += assert_emulator_config("PlayStation cased-path", EMULATOR_RETROARCH, "pcsx_rearmed", result6);
+    }
     return failures;
 }
 
