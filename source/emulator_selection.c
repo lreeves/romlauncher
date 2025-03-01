@@ -15,9 +15,29 @@ static const EmulatorConfig RETROARCH_FCEUMM = {
     .core_name = "fceumm"
 };
 
-static const EmulatorConfig RETROARCH_GENESIS = {
+static const EmulatorConfig RETROARCH_GENESIS_PLUS_GX = {
     .emulator = EMULATOR_RETROARCH,
     .core_name = "genesis_plus_gx"
+};
+
+static const EmulatorConfig RETROARCH_GAMBATTE = {
+    .emulator = EMULATOR_RETROARCH,
+    .core_name = "gambatte"
+};
+
+static const EmulatorConfig RETROARCH_MGBA = {
+    .emulator = EMULATOR_RETROARCH,
+    .core_name = "mgba"
+};
+
+static const EmulatorConfig RETROARCH_MUPEN64_PLUS_NEXT = {
+    .emulator = EMULATOR_RETROARCH,
+    .core_name = "mupen64plus_next"
+};
+
+static const EmulatorConfig RETROARCH_MEDNAFEN_PCE = {
+    .emulator = EMULATOR_RETROARCH,
+    .core_name = "mednafen_pce"
 };
 
 // Forward declarations
@@ -55,6 +75,12 @@ SystemType derive_system_from_extension(const char *extension) {
     if (strcasecmp(extension, "nes") == 0) return SYSTEM_NES;
     if (strcasecmp(extension, "sfc") == 0) return SYSTEM_SNES;
     if (strcasecmp(extension, "md") == 0) return SYSTEM_GENESIS;
+    if (strcasecmp(extension, "gba") == 0) return SYSTEM_GBA;
+    if (strcasecmp(extension, "gbc") == 0) return SYSTEM_GBC;
+    if (strcasecmp(extension, "gb") == 0) return SYSTEM_GB;
+    if (strcasecmp(extension, "n64") == 0) return SYSTEM_N64;
+    if (strcasecmp(extension, "z64") == 0) return SYSTEM_N64;
+    if (strcasecmp(extension, "pce") == 0) return SYSTEM_TG16;
 
     return SYSTEM_UNKNOWN;
 }
@@ -79,12 +105,22 @@ const EmulatorConfig* derive_emulator_from_path(const char *path) {
  */
 const EmulatorConfig* derive_emulator_for_system(SystemType system) {
     switch (system) {
+        case SYSTEM_GB:
+            return &RETROARCH_GAMBATTE;
+        case SYSTEM_GBC:
+            return &RETROARCH_GAMBATTE;
+        case SYSTEM_GBA:
+            return &RETROARCH_MGBA;
         case SYSTEM_NES:
             return &RETROARCH_FCEUMM;
         case SYSTEM_SNES:
             return &RETROARCH_SNES9X;
         case SYSTEM_GENESIS:
-            return &RETROARCH_GENESIS;
+            return &RETROARCH_GENESIS_PLUS_GX;
+        case SYSTEM_N64:
+            return &RETROARCH_MUPEN64_PLUS_NEXT;
+        case SYSTEM_TG16:
+            return &RETROARCH_MEDNAFEN_PCE;
         default:
             return NULL;
     }

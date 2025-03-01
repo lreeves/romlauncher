@@ -79,15 +79,11 @@ void test_derive_emulator_from_path() {
 
 // Helper function to check system type results
 void assert_system_type(const char* test_name, SystemType expected, SystemType actual) {
-    const char* system_names[] = {
-        "NES", "SNES", "TG16", "GENESIS", "MASTERSYSTEM", "UNKNOWN"
-    };
-    
     if (expected == actual) {
-        printf("✓ %s: System=%s\n", test_name, system_names[actual]);
+        printf("✓ %s: System type matches (enum value: %d)\n", test_name, actual);
     } else {
-        printf("✗ %s: Expected System=%s but got System=%s\n", 
-               test_name, system_names[expected], system_names[actual]);
+        printf("✗ %s: Expected System type %d but got %d\n", 
+               test_name, expected, actual);
     }
 }
 

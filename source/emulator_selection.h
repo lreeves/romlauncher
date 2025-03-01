@@ -13,11 +13,15 @@ typedef enum {
  * Enum representing the supported system types
  */
 typedef enum {
+    SYSTEM_GB,
+    SYSTEM_GBA,
+    SYSTEM_GBC,
     SYSTEM_NES,
     SYSTEM_SNES,
     SYSTEM_TG16,
     SYSTEM_GENESIS,
     SYSTEM_MASTERSYSTEM,
+    SYSTEM_N64,
     SYSTEM_UNKNOWN
 } SystemType;
 
