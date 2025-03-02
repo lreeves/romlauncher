@@ -2,6 +2,8 @@
 
 A lightweight and user-friendly frontend for RetroArch and PPSSPP designed for handheld gaming devices.
 
+![Screenshot of romlauncher](https://github.com/lreeves/romlauncher/blob/main/screenshot.png?raw=true)
+
 ## Features
 
 - Clean, intuitive interface for browsing your ROM collection
