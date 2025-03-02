@@ -18,16 +18,17 @@
 #define SCREEN_H 720
 #define STATUS_BAR_HEIGHT 30
 
+// Any path constants should not have a trailing slash
 
 #ifdef ROMLAUNCHER_BUILD_LINUX
-    #define ROMLAUNCHER_DATA_DIRECTORY "/home/luke/.config/Ryujinx/sdcard/romlauncher/"
-    #define ROM_DIRECTORY "/home/luke/.config/Ryujinx/sdcard/roms/"
+    #define ROMLAUNCHER_DATA_DIRECTORY "/home/luke/.config/Ryujinx/sdcard/romlauncher"
+    #define ROM_DIRECTORY "/home/luke/.config/Ryujinx/sdcard/roms"
 #else
-    #define ROMLAUNCHER_DATA_DIRECTORY "sdmc:/romlauncher/"
-    #define ROM_DIRECTORY "sdmc:/roms/"
+    #define ROMLAUNCHER_DATA_DIRECTORY "sdmc:/romlauncher"
+    #define ROM_DIRECTORY "sdmc:/roms"
 #endif
 
-#define ROMLAUNCHER_MEDIA_DIRECTORY ROMLAUNCHER_DATA_DIRECTORY "media/"
+#define ROMLAUNCHER_MEDIA_DIRECTORY ROMLAUNCHER_DATA_DIRECTORY "/media"
 
 typedef struct {
     char key[256];           // key string

@@ -195,11 +195,11 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
 
 #ifdef ROMLAUNCHER_BUILD_LINUX
     // load fonts from romfs
-    font = TTF_OpenFont(ROMLAUNCHER_DATA_DIRECTORY "data/Raleway-Regular.ttf", 32);
-    TTF_Font* small_font = TTF_OpenFont(ROMLAUNCHER_DATA_DIRECTORY "data/Raleway-Regular.ttf", 16);
+    font = TTF_OpenFont(ROMLAUNCHER_DATA_DIRECTORY "/data/Raleway-Regular.ttf", 32);
+    TTF_Font* small_font = TTF_OpenFont(ROMLAUNCHER_DATA_DIRECTORY "/data/Raleway-Regular.ttf", 16);
 #else
-    font = TTF_OpenFont("data/Raleway-Regular.ttf", 32);
-    TTF_Font* small_font = TTF_OpenFont("data/Raleway-Regular.ttf", 16);
+    font = TTF_OpenFont("/data/Raleway-Regular.ttf", 32);
+    TTF_Font* small_font = TTF_OpenFont("/data/Raleway-Regular.ttf", 16);
 #endif
 
     if((!font) || (!small_font)) {
