@@ -58,8 +58,6 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
     load_favorites();
     dump_favorites(); // Log favorites for debugging
     load_history();
-    init_default_core_mappings();
-    init_system_names_mappings();
     log_message(LOG_INFO, "Config, favorites, and history loaded");
 
 
@@ -159,24 +157,24 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
     // Initialize joystick with better cross-platform support
     SDL_JoystickEventState(SDL_ENABLE);
     joystick = NULL;
-    
+
     // Count available joysticks
     int num_joysticks = SDL_NumJoysticks();
     log_message(LOG_INFO, "Found %d joystick(s)", num_joysticks);
-    
+
     // Try to open the first available joystick
     for (int i = 0; i < num_joysticks; i++) {
         log_message(LOG_INFO, "Joystick %d: %s", i, SDL_JoystickNameForIndex(i));
         joystick = SDL_JoystickOpen(i);
         if (joystick) {
-            log_message(LOG_INFO, "Using joystick: %s with %d buttons, %d axes", 
+            log_message(LOG_INFO, "Using joystick: %s with %d buttons, %d axes",
                 SDL_JoystickName(joystick),
                 SDL_JoystickNumButtons(joystick),
                 SDL_JoystickNumAxes(joystick));
             break;
         }
     }
-    
+
     if (!joystick) {
         log_message(LOG_ERROR, "Failed to open any joystick: %s", SDL_GetError());
         // Continue anyway, as this isn't fatal
@@ -534,7 +532,7 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
 
                         // Create menu textures
                         update_menu_selection(0);
-                        
+
                         // Position menu items
                         for (int i = 0; i < MENU_OPTIONS; i++) {
                             menu_rects[i].x = (SCREEN_W - menu_rects[i].w) / 2;
@@ -601,12 +599,12 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
             // Handle hat events (D-pad on many controllers)
             if (event.type == SDL_JOYHATMOTION) {
                 log_message(LOG_DEBUG, "Hat motion: %d", event.jhat.value);
-                
+
                 if (notification.active) {
                     notification.active = 0;
                     continue;
                 }
-                
+
                 if (event.jhat.value & SDL_HAT_UP) {
                     handle_navigation_input(-1);
                 }
@@ -619,18 +617,18 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
                 // Only process significant movements (avoid drift)
                 if (abs(event.jaxis.value) > 16000) {
                     log_message(LOG_DEBUG, "Axis %d motion: %d", event.jaxis.axis, event.jaxis.value);
-                    
+
                     if (notification.active) {
                         notification.active = 0;
                         continue;
                     }
-                    
+
                     // Vertical axis (typically 1 or 3 for left/right stick)
                     if (event.jaxis.axis == 1 || event.jaxis.axis == 3) {
                         if (event.jaxis.value < -16000) {
                             // Up direction
                             handle_navigation_input(-1);
-                        } 
+                        }
                         else if (event.jaxis.value > 16000) {
                             // Down direction
                             handle_navigation_input(1);
@@ -662,19 +660,19 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
             }
         }
 
-        
+
         // Process button repeats
         {
             Uint32 now = SDL_GetTicks();
-            
+
             // Up button repeat
-            handle_button_repeat(DPAD_UP, &dpadUpHeld, &dpadUpInitialDelay, &dpadUpRepeatTime, now, 
+            handle_button_repeat(DPAD_UP, &dpadUpHeld, &dpadUpInitialDelay, &dpadUpRepeatTime, now,
                                  handle_up_navigation);
-            
+
             // Down button repeat
             handle_button_repeat(DPAD_DOWN, &dpadDownHeld, &dpadDownInitialDelay, &dpadDownRepeatTime, now,
                                  handle_down_navigation);
-            
+
             // Left shoulder button repeat
             if (SDL_JoystickGetButton(joystick, JOY_LEFT_SHOULDER)) {
                 if (!leftShoulderHeld) {
@@ -687,7 +685,7 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
             } else {
                 leftShoulderHeld = 0;
             }
-            
+
             // Right shoulder button repeat
             if (SDL_JoystickGetButton(joystick, JOY_RIGHT_SHOULDER)) {
                 if (!rightShoulderHeld) {
@@ -827,8 +825,6 @@ cleanup:
     free_config();
     free_favorites();
     free_history();
-    free_default_core_mappings();
-    free_system_names_mappings();
 
     log_message(LOG_INFO, "Finished cleanup - all done!");
     log_close();
