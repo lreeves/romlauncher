@@ -44,7 +44,7 @@ typedef struct {
 } DirContent;
 
 // Function to load box art for a ROM
-void load_box_art(DirContent* content, SDL_Renderer *renderer, const char* rom_path, const char* rom_name);
+void load_box_art(DirContent* content, const char* rom_path, const char* rom_name);
 
 // Function declarations
 SDL_Texture* render_text(SDL_Renderer *renderer, const char* text,

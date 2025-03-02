@@ -58,12 +58,12 @@ SDL_Texture* render_text(SDL_Renderer *renderer, const char* text,
     } else {
         surface = TTF_RenderText_Blended(font, text, color);
     }
-    
+
     if (!surface) {
         log_message(LOG_ERROR, "TTF_RenderText_Blended failed: %s", TTF_GetError());
         exit(1);
     }
-    
+
     texture = SDL_CreateTextureFromSurface(renderer, surface);
 
     if(!texture) {
@@ -88,7 +88,7 @@ static int boxart_loader_thread(void *data) {
     }
     ext++; // Skip the dot
     const char* system_name = derive_system_name(req->rom_path, ext);
-    
+
     int basename_length = (int)(ext - req->rom_name - 1);
     char rom_basename[MAX_PATH_LEN];
     strncpy(rom_basename, req->rom_name, basename_length);
@@ -320,7 +320,7 @@ void change_directory(DirContent* content, int selected_index, char* current_pat
     }
 }
 
-void load_box_art(DirContent* content, SDL_Renderer *renderer, const char* rom_path, const char* rom_name) {
+void load_box_art(DirContent* content, const char* rom_path, const char* rom_name) {
     // Free any existing box art texture first to prevent memory leaks
     if (content->box_art_texture) {
         SDL_DestroyTexture(content->box_art_texture);
@@ -395,7 +395,7 @@ void set_selection(DirContent* content, SDL_Renderer *renderer, TTF_Font *font,
 
     int start_index = current_page * ENTRIES_PER_PAGE;
     int end_index = start_index + ENTRIES_PER_PAGE;
-    
+
     // Special handling for history view
     if (content->is_history_view) {
         log_message(LOG_DEBUG, "Setting selection for history view with %d entries", content->file_count);
@@ -407,20 +407,20 @@ void set_selection(DirContent* content, SDL_Renderer *renderer, TTF_Font *font,
                 }
                 continue;
             }
-            
+
             if (content->file_textures[i]) {
                 SDL_DestroyTexture(content->file_textures[i]);
             }
-            
+
             content->file_textures[i] = render_text(renderer, content->files[i], font,
-                i == selected_index ? COLOR_TEXT_HIGHLIGHT : COLOR_TEXT, 
+                i == selected_index ? COLOR_TEXT_HIGHLIGHT : COLOR_TEXT,
                 &content->file_rects[i], 0, current_path);
-            
+
             log_message(LOG_DEBUG, "Rendered history entry %d: %s", i, content->files[i]);
         }
         return;
     }
-    
+
     for (int i = 0; i < content->dir_count; i++) {
         if (i < start_index || i >= end_index) {
             if (content->dir_textures[i]) {
@@ -464,7 +464,7 @@ void set_selection(DirContent* content, SDL_Renderer *renderer, TTF_Font *font,
         int entry_index = content->dir_count + i;
 
         // Special handling for the "no favorites" or "no history" message
-        if ((content->is_favorites_view || content->is_history_view) && content->file_count == 1 && i == 0 && 
+        if ((content->is_favorites_view || content->is_history_view) && content->file_count == 1 && i == 0 &&
             (strstr(content->files[i], "No history yet") || strstr(content->files[i], "Use the X button"))) {
             // Render the text first to get its dimensions
             SDL_Texture* texture = render_text(renderer, log_buf, font, COLOR_TEXT, &content->file_rects[i], content->is_favorites_view, current_path);
@@ -472,7 +472,7 @@ void set_selection(DirContent* content, SDL_Renderer *renderer, TTF_Font *font,
             content->file_rects[i].x = (1280 - content->file_rects[i].w) / 2;  // Assuming 1280x720 screen
             content->file_rects[i].y = (720 - content->file_rects[i].h - STATUS_BAR_HEIGHT) / 2;  // Account for status bar
             content->file_textures[i] = texture;
-            log_message(LOG_DEBUG, "Centered special message: %s at (%d, %d)", 
+            log_message(LOG_DEBUG, "Centered special message: %s at (%d, %d)",
                        content->files[i], content->file_rects[i].x, content->file_rects[i].y);
         } else {
             content->file_textures[i] = render_text(renderer, log_buf, font,
@@ -481,6 +481,6 @@ void set_selection(DirContent* content, SDL_Renderer *renderer, TTF_Font *font,
     }
     if (selected_index >= content->dir_count && selected_index < content->dir_count + content->file_count) {
         int file_index = selected_index - content->dir_count;
-        load_box_art(content, renderer, current_path, content->files[file_index]);
+        load_box_art(content, current_path, content->files[file_index]);
     }
 }

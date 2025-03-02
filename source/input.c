@@ -39,14 +39,14 @@ void handle_up_navigation(const char* current_path) {
         selected_index--;
     else
         selected_index = total_entries - 1;
-    
+
     current_page = selected_index / ENTRIES_PER_PAGE;
     DirContent* current_content = get_current_content();
     set_selection(current_content, renderer, font, selected_index, current_page, current_path);
-    
-    if (current_app_mode == APP_MODE_BROWSER && 
+
+    if (current_app_mode == APP_MODE_BROWSER &&
         current_browser_mode == BROWSER_MODE_FILES) {
-        update_box_art_for_selection(content, renderer, current_path, selected_index);
+        update_box_art_for_selection(content, current_path, selected_index);
         log_message(LOG_DEBUG, "Auto repeat: DPAD_UP; new selection: %d", selected_index);
     }
 }
@@ -57,14 +57,14 @@ void handle_down_navigation(const char* current_path) {
         selected_index++;
     else
         selected_index = 0;
-    
+
     current_page = selected_index / ENTRIES_PER_PAGE;
     DirContent* current_content = get_current_content();
     set_selection(current_content, renderer, font, selected_index, current_page, current_path);
-    
-    if (current_app_mode == APP_MODE_BROWSER && 
+
+    if (current_app_mode == APP_MODE_BROWSER &&
         current_browser_mode == BROWSER_MODE_FILES) {
-        update_box_art_for_selection(content, renderer, current_path, selected_index);
+        update_box_art_for_selection(content, current_path, selected_index);
         log_message(LOG_DEBUG, "Auto repeat: DPAD_DOWN; new selection: %d", selected_index);
     }
 }
@@ -90,15 +90,15 @@ void handle_navigation_input(int direction, const char* current_path) {
             }
         }
     }
-    
+
     current_page = selected_index / ENTRIES_PER_PAGE;
     DirContent* current_content = get_current_content();
     set_selection(current_content, renderer, font, selected_index, current_page, current_path);
-    
+
     // Load box art for selected file when navigating
     if (current_app_mode == APP_MODE_BROWSER &&
         current_browser_mode == BROWSER_MODE_FILES) {
-        update_box_art_for_selection(content, renderer, current_path, selected_index);
+        update_box_art_for_selection(content, current_path, selected_index);
     }
 }
 
@@ -115,7 +115,7 @@ void handle_page_navigation(int direction, const char* current_path) {
         else
             current_page = 0;
     }
-    
+
     selected_index = current_page * ENTRIES_PER_PAGE;
     DirContent* current_content = get_current_content();
     set_selection(current_content, renderer, font, selected_index, current_page, current_path);
@@ -124,7 +124,7 @@ void handle_page_navigation(int direction, const char* current_path) {
 // Helper function to update menu selection
 void update_menu_selection(int new_selection, const char* current_path) {
     menu_selection = new_selection;
-    
+
     // Update menu textures
     for (int i = 0; i < MENU_OPTIONS; i++) {
         if (menu_textures[i]) SDL_DestroyTexture(menu_textures[i]);
@@ -134,7 +134,7 @@ void update_menu_selection(int new_selection, const char* current_path) {
 }
 
 // Helper function to handle button repeat for navigation
-void handle_button_repeat(int button, int *held_state, int *initial_delay_state, 
+void handle_button_repeat(int button, int *held_state, int *initial_delay_state,
                          Uint32 *repeat_time, Uint32 now, void (*action_fn)(const char*), const char* action_param) {
     if (SDL_JoystickGetButton(joystick, button)) {
         if (!(*held_state)) {
@@ -145,7 +145,7 @@ void handle_button_repeat(int button, int *held_state, int *initial_delay_state,
         } else {
             // Handle repeat with initial delay
             Uint32 delay = (*initial_delay_state) ? INITIAL_DELAY_MS : REPEAT_DELAY_MS;
-            
+
             if (now - (*repeat_time) >= delay) {
                 action_fn(action_param);
                 *initial_delay_state = 0;  // Switch to repeat phase
@@ -158,8 +158,7 @@ void handle_button_repeat(int button, int *held_state, int *initial_delay_state,
 }
 
 // Function to update box art based on current selection
-void update_box_art_for_selection(DirContent* content, SDL_Renderer* renderer,
-                                 const char* current_path, int selected_index) {
+void update_box_art_for_selection(DirContent* content, const char* current_path, int selected_index) {
     if (!content || selected_index < 0) return;
 
     // Only load box art for files (not directories)
@@ -169,7 +168,7 @@ void update_box_art_for_selection(DirContent* content, SDL_Renderer* renderer,
         if (file_index >= 0 && file_index < content->file_count) {
             const char* filename = content->files[file_index];
             log_message(LOG_DEBUG, "Loading box art for: %s", filename);
-            load_box_art(content, renderer, current_path, filename);
+            load_box_art(content, current_path, filename);
         }
     }
 }

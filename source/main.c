@@ -470,7 +470,7 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
                         set_selection(content, renderer, font, selected_index, current_page, current_path);
 
                         // Load box art for selected file
-                        update_box_art_for_selection(content, renderer, current_path, selected_index);
+                        update_box_art_for_selection(content, current_path, selected_index);
                     }
                 }
 
