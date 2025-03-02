@@ -33,6 +33,12 @@ Obviously you'll need RetroArch installed on your modded Switch.  You'll also
 want to use the stable version of RetroArch (tested with 1.20.0) and not the
 nightlies which have a crash bug occuring when using RetroAchivements.
 
+## Log files
+
+When things break the log files created are essential in helping troubleshoot
+why - they're located in the /romlauncher/ folder on your SD card and only the
+5 most recent are kept around.
+
 ## Contributing
 
 The build.sh script is barebones but will create a working .nro file in a
