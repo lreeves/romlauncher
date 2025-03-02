@@ -4,8 +4,10 @@ on:
   push:
     branches:
       - main
-      - github-action-for-nro
   pull_request:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -30,3 +32,41 @@ jobs:
         with:
           name: romlauncher.nro
           path: romlauncher.nro
+
+  release:
+    needs: build  # Wait for the build to complete before releasing
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download built artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: romlauncher.nro
+
+      - name: Checkout repository # Just to get the hash
+        uses: actions/checkout@v3
+
+      - name: Extract tag based on commit SHA
+        id: vars
+        run: echo "TAG_NAME=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      - name: Create a GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          release_name: "Release ${{ env.TAG_NAME }}"
+          draft: false
+          prerelease: false
+
+      - name: Upload Artifact to Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: romlauncher.nro
+          asset_name: romlauncher.nro
+          asset_content_type: application/octet-stream
