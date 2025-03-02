@@ -43,13 +43,13 @@ typedef enum {
 } BrowserMode;
 
 // Function declarations
-void handle_up_navigation(void);
-void handle_down_navigation(void);
-void handle_page_navigation(int direction);
-void handle_navigation_input(int direction);
-void update_menu_selection(int new_selection);
+void handle_up_navigation(const char* current_path);
+void handle_down_navigation(const char* current_path);
+void handle_page_navigation(int direction, const char* current_path);
+void handle_navigation_input(int direction, const char* current_path);
+void update_menu_selection(int new_selection, const char* current_path);
 void handle_button_repeat(int button, int *held_state, int *initial_delay_state, 
-                         Uint32 *repeat_time, Uint32 now, void (*action)(void));
+                         Uint32 *repeat_time, Uint32 now, void (*action_fn)(const char*), const char* action_param);
 DirContent* get_current_content(void);
 void update_box_art_for_selection(DirContent* content, SDL_Renderer* renderer,
                                  const char* current_path, int selected_index);

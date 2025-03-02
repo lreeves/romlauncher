@@ -17,8 +17,8 @@
 #include <switch.h>
 #endif
 
-// Define current_path as a global variable so it can be accessed from other files
-char current_path[MAX_PATH_LEN];
+// Local path variable
+static char current_path[MAX_PATH_LEN];
 
 typedef struct {
     char message[256];
@@ -225,7 +225,7 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
         current_browser_mode = BROWSER_MODE_FILES;
         content->is_history_view = 0;
         log_message(LOG_DEBUG, "Calling set_selection");
-        set_selection(content, renderer, font, selected_index, current_page);
+        set_selection(content, renderer, font, selected_index, current_page, current_path);
         if (current_browser_mode != BROWSER_MODE_FILES) {
             current_browser_mode = BROWSER_MODE_FILES;
             log_message(LOG_DEBUG, "Reset browser mode to FILES");
@@ -240,7 +240,7 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
     SDL_Rect status_rect;
     SDL_Texture* status_text = render_text(renderer,
         "- MENU    + QUIT    X BROWSE/FAVES/HISTORY    Y TOGGLE FAVORITE",
-        small_font, status_color, &status_rect, 0);
+        small_font, status_color, &status_rect, 0, current_path);
     if (status_text) {
         status_rect.x = (SCREEN_W - status_rect.w) / 2;
         status_rect.y = SCREEN_H - STATUS_BAR_HEIGHT + (STATUS_BAR_HEIGHT - status_rect.h) / 2;
@@ -265,7 +265,7 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
 
                 if (event.jbutton.button == DPAD_UP || event.jbutton.button == DPAD_DOWN) {
                     int direction = (event.jbutton.button == DPAD_UP) ? -1 : 1;
-                    handle_navigation_input(direction);
+                    handle_navigation_input(direction, current_path);
                 }
 
                 if (event.jbutton.button == JOY_A) {
@@ -279,7 +279,7 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
                                     total_entries = content->dir_count + content->file_count;
                                     current_page = 0;
                                     total_pages = (total_entries + ENTRIES_PER_PAGE - 1) / ENTRIES_PER_PAGE;
-                                    set_selection(content, renderer, font, selected_index, current_page);
+                                    set_selection(content, renderer, font, selected_index, current_page, current_path);
                                 } else {
                                     int file_index = selected_index - content->dir_count;
                                     if (file_index >= 0 && file_index < content->file_count) {
@@ -302,7 +302,7 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
                                             if (notification.texture) {
                                                 SDL_DestroyTexture(notification.texture);
                                             }
-                                            notification.texture = render_text(renderer, "Error launching emulator", font, COLOR_TEXT_ERROR, &notification.rect, 0);
+                                            notification.texture = render_text(renderer, "Error launching emulator", font, COLOR_TEXT_ERROR, &notification.rect, 0, current_path);
                                             notification.rect.x = (SCREEN_W - notification.rect.w) / 2;
                                             notification.rect.y = SCREEN_H - notification.rect.h - 20;
                                             notification.active = 1;
@@ -339,7 +339,7 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
                                                         if (notification.texture) {
                                                             SDL_DestroyTexture(notification.texture);
                                                         }
-                                                        notification.texture = render_text(renderer, "Error launching emulator", font, COLOR_TEXT_ERROR, &notification.rect, 0);
+                                                        notification.texture = render_text(renderer, "Error launching emulator", font, COLOR_TEXT_ERROR, &notification.rect, 0, current_path);
                                                         notification.rect.x = (SCREEN_W - notification.rect.w) / 2;
                                                         notification.rect.y = SCREEN_H - notification.rect.h - 20;
                                                         notification.active = 1;
@@ -367,7 +367,7 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
                                             if (notification.texture) {
                                                 SDL_DestroyTexture(notification.texture);
                                             }
-                                            notification.texture = render_text(renderer, "Error launching emulator", font, COLOR_TEXT_ERROR, &notification.rect, 0);
+                                            notification.texture = render_text(renderer, "Error launching emulator", font, COLOR_TEXT_ERROR, &notification.rect, 0, current_path);
                                             notification.rect.x = (SCREEN_W - notification.rect.w) / 2;
                                             notification.rect.y = SCREEN_H - notification.rect.h - 20;
                                             notification.active = 1;
@@ -409,7 +409,7 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
                                     current_page = selected_index / ENTRIES_PER_PAGE;
                                     total_entries = favorites_content->file_count;
                                     total_pages = (total_entries + ENTRIES_PER_PAGE - 1) / ENTRIES_PER_PAGE;
-                                    set_selection(favorites_content, renderer, font, selected_index, current_page);
+                                    set_selection(favorites_content, renderer, font, selected_index, current_page, current_path);
                                 }
                                 break;
 
@@ -428,7 +428,7 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
                                     current_page = 0;
                                     total_entries = history_content->file_count;
                                     total_pages = (total_entries + ENTRIES_PER_PAGE - 1) / ENTRIES_PER_PAGE;
-                                    set_selection(history_content, renderer, font, selected_index, current_page);
+                                    set_selection(history_content, renderer, font, selected_index, current_page, current_path);
                                 }
                                 break;
 
@@ -444,7 +444,7 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
                                 current_path[MAX_PATH_LEN-1] = '\0';
                                 selected_index = 0;
                                 current_page = 0;
-                                set_selection(content, renderer, font, selected_index, current_page);
+                                set_selection(content, renderer, font, selected_index, current_page, current_path);
                                 break;
                         }
                     }
@@ -464,10 +464,10 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
                         if (favorites_content) {
                             total_entries = favorites_content->file_count;
                             total_pages = (total_entries + ENTRIES_PER_PAGE - 1) / ENTRIES_PER_PAGE;
-                            set_selection(favorites_content, renderer, font, selected_index, current_page);
+                            set_selection(favorites_content, renderer, font, selected_index, current_page, current_path);
                         }
                     } else {
-                        set_selection(content, renderer, font, selected_index, current_page);
+                        set_selection(content, renderer, font, selected_index, current_page, current_path);
 
                         // Load box art for selected file
                         update_box_art_for_selection(content, renderer, current_path, selected_index);
@@ -493,7 +493,7 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
                                 current_path[MAX_PATH_LEN-1] = '\0';
                                 selected_index = 0;
                                 current_page = 0;
-                                set_selection(content, renderer, font, selected_index, current_page);
+                                set_selection(content, renderer, font, selected_index, current_page, current_path);
                             } else if (current_browser_mode == BROWSER_MODE_HISTORY) {
                                 if (history_content) free_dir_content(history_content);
                                 history_content = NULL;
@@ -502,14 +502,14 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
                                 current_path[MAX_PATH_LEN-1] = '\0';
                                 selected_index = 0;
                                 current_page = 0;
-                                set_selection(content, renderer, font, selected_index, current_page);
+                                set_selection(content, renderer, font, selected_index, current_page, current_path);
                             } else {
                                 go_up_directory(content, current_path, ROM_DIRECTORY);
                                 selected_index = 0;
                                 total_entries = content->dir_count + content->file_count;
                                 current_page = 0;
                                 total_pages = (total_entries + ENTRIES_PER_PAGE - 1) / ENTRIES_PER_PAGE;
-                                set_selection(content, renderer, font, selected_index, current_page);
+                                set_selection(content, renderer, font, selected_index, current_page, current_path);
                             }
                             break;
                         default:
@@ -518,11 +518,11 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
                 }
 
                 if (event.jbutton.button == JOY_LEFT_SHOULDER) {
-                    handle_page_navigation(-1);
+                    handle_page_navigation(-1, current_path);
                 }
 
                 if (event.jbutton.button == JOY_RIGHT_SHOULDER) {
-                    handle_page_navigation(1);
+                    handle_page_navigation(1, current_path);
                 }
 
                 if (event.jbutton.button == JOY_MINUS) {
@@ -531,7 +531,7 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
                         menu_selection = 0;
 
                         // Create menu textures
-                        update_menu_selection(0);
+                        update_menu_selection(0, current_path);
 
                         // Position menu items
                         for (int i = 0; i < MENU_OPTIONS; i++) {
@@ -553,11 +553,11 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
                 if (current_app_mode == APP_MODE_MENU) {
                     if (event.jbutton.button == DPAD_UP) {
                         int new_selection = (menu_selection > 0) ? menu_selection - 1 : MENU_OPTIONS - 1;
-                        update_menu_selection(new_selection);
+                        update_menu_selection(new_selection, current_path);
                     }
                     else if (event.jbutton.button == DPAD_DOWN) {
                         int new_selection = (menu_selection < MENU_OPTIONS - 1) ? menu_selection + 1 : 0;
-                        update_menu_selection(new_selection);
+                        update_menu_selection(new_selection, current_path);
                     }
                     else if (event.jbutton.button == JOY_A) {
                         switch (menu_selection) {
@@ -575,13 +575,13 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
                                     total_entries = history_content->file_count;
                                     total_pages = (total_entries + ENTRIES_PER_PAGE - 1) / ENTRIES_PER_PAGE;
                                     log_message(LOG_INFO, "Switching to history mode with %d entries", total_entries);
-                                    set_selection(history_content, renderer, font, selected_index, current_page);
+                                    set_selection(history_content, renderer, font, selected_index, current_page, current_path);
                                 }
                                 break;
                             case MENU_SCRAPER:
                                 current_app_mode = APP_MODE_SCRAPING;
                                 if (scraping_message) SDL_DestroyTexture(scraping_message);
-                                scraping_message = render_text(renderer, "Press B to stop", font, COLOR_TEXT, &scraping_rect, 0);
+                                scraping_message = render_text(renderer, "Press B to stop", font, COLOR_TEXT, &scraping_rect, 0, current_path);
                                 scraping_rect.x = (SCREEN_W - scraping_rect.w) / 2;
                                 scraping_rect.y = (SCREEN_H - scraping_rect.h) / 2;
                                 break;
@@ -606,10 +606,10 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
                 }
 
                 if (event.jhat.value & SDL_HAT_UP) {
-                    handle_navigation_input(-1);
+                    handle_navigation_input(-1, current_path);
                 }
                 else if (event.jhat.value & SDL_HAT_DOWN) {
-                    handle_navigation_input(1);
+                    handle_navigation_input(1, current_path);
                 }
             }
             // Handle axis events (analog sticks and sometimes D-pad)
@@ -627,11 +627,11 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
                     if (event.jaxis.axis == 1 || event.jaxis.axis == 3) {
                         if (event.jaxis.value < -16000) {
                             // Up direction
-                            handle_navigation_input(-1);
+                            handle_navigation_input(-1, current_path);
                         }
                         else if (event.jaxis.value > 16000) {
                             // Down direction
-                            handle_navigation_input(1);
+                            handle_navigation_input(1, current_path);
                         }
                     }
                 }
@@ -667,11 +667,11 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
 
             // Up button repeat
             handle_button_repeat(DPAD_UP, &dpadUpHeld, &dpadUpInitialDelay, &dpadUpRepeatTime, now,
-                                 handle_up_navigation);
+                                 handle_up_navigation, current_path);
 
             // Down button repeat
             handle_button_repeat(DPAD_DOWN, &dpadDownHeld, &dpadDownInitialDelay, &dpadDownRepeatTime, now,
-                                 handle_down_navigation);
+                                 handle_down_navigation, current_path);
 
             // Left shoulder button repeat
             if (SDL_JoystickGetButton(joystick, JOY_LEFT_SHOULDER)) {
@@ -679,7 +679,7 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
                     leftShoulderHeld = 1;
                     leftShoulderRepeatTime = now;
                 } else if (now - leftShoulderRepeatTime >= 50) {
-                    handle_page_navigation(-1);
+                    handle_page_navigation(-1, current_path);
                     leftShoulderRepeatTime = now;
                 }
             } else {
@@ -692,7 +692,7 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
                     rightShoulderHeld = 1;
                     rightShoulderRepeatTime = now;
                 } else if (now - rightShoulderRepeatTime >= 50) {
-                    handle_page_navigation(1);
+                    handle_page_navigation(1, current_path);
                     rightShoulderRepeatTime = now;
                 }
             } else {

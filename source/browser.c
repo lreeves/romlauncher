@@ -38,7 +38,7 @@ static const char* derive_system_name(const char* rom_path, const char* ext) {
 }
 
 SDL_Texture* render_text(SDL_Renderer *renderer, const char* text,
-                              TTF_Font *font, const SDL_Color color, SDL_Rect *rect, int is_favorites_view) {
+                              TTF_Font *font, const SDL_Color color, SDL_Rect *rect, int is_favorites_view, const char* current_path) {
     SDL_Surface *surface;
     SDL_Texture *texture;
 
@@ -388,7 +388,7 @@ void free_dir_content(DirContent* content) {
 
 
 void set_selection(DirContent* content, SDL_Renderer *renderer, TTF_Font *font,
-                  int selected_index, int current_page) {
+                  int selected_index, int current_page, const char* current_path) {
     if (!content) return;
 
     char log_buf[MAX_PATH_LEN];
@@ -414,7 +414,7 @@ void set_selection(DirContent* content, SDL_Renderer *renderer, TTF_Font *font,
             
             content->file_textures[i] = render_text(renderer, content->files[i], font,
                 i == selected_index ? COLOR_TEXT_HIGHLIGHT : COLOR_TEXT, 
-                &content->file_rects[i], 0);
+                &content->file_rects[i], 0, current_path);
             
             log_message(LOG_DEBUG, "Rendered history entry %d: %s", i, content->files[i]);
         }
@@ -435,7 +435,7 @@ void set_selection(DirContent* content, SDL_Renderer *renderer, TTF_Font *font,
             SDL_DestroyTexture(content->dir_textures[i]);
         }
         content->dir_textures[i] = render_text(renderer, log_buf, font,
-            i == selected_index ? COLOR_TEXT_HIGHLIGHT : COLOR_TEXT, &content->dir_rects[i], content->is_favorites_view);
+            i == selected_index ? COLOR_TEXT_HIGHLIGHT : COLOR_TEXT, &content->dir_rects[i], content->is_favorites_view, current_path);
     }
 
     for (int i = 0; i < content->file_count; i++) {
@@ -467,7 +467,7 @@ void set_selection(DirContent* content, SDL_Renderer *renderer, TTF_Font *font,
         if ((content->is_favorites_view || content->is_history_view) && content->file_count == 1 && i == 0 && 
             (strstr(content->files[i], "No history yet") || strstr(content->files[i], "Use the X button"))) {
             // Render the text first to get its dimensions
-            SDL_Texture* texture = render_text(renderer, log_buf, font, COLOR_TEXT, &content->file_rects[i], content->is_favorites_view);
+            SDL_Texture* texture = render_text(renderer, log_buf, font, COLOR_TEXT, &content->file_rects[i], content->is_favorites_view, current_path);
             // Center the text on screen
             content->file_rects[i].x = (1280 - content->file_rects[i].w) / 2;  // Assuming 1280x720 screen
             content->file_rects[i].y = (720 - content->file_rects[i].h - STATUS_BAR_HEIGHT) / 2;  // Account for status bar
@@ -476,7 +476,7 @@ void set_selection(DirContent* content, SDL_Renderer *renderer, TTF_Font *font,
                        content->files[i], content->file_rects[i].x, content->file_rects[i].y);
         } else {
             content->file_textures[i] = render_text(renderer, log_buf, font,
-                entry_index == selected_index ? COLOR_TEXT_HIGHLIGHT : COLOR_TEXT, &content->file_rects[i], content->is_favorites_view);
+                entry_index == selected_index ? COLOR_TEXT_HIGHLIGHT : COLOR_TEXT, &content->file_rects[i], content->is_favorites_view, current_path);
         }
     }
     if (selected_index >= content->dir_count && selected_index < content->dir_count + content->file_count) {

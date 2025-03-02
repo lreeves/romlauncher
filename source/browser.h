@@ -10,7 +10,6 @@
 #define BOXART_MAX_WIDTH 350
 
 // External declarations
-extern char current_path[MAX_PATH_LEN];
 extern int current_boxart_request_id;
 extern int is_favorite(const char *path);
 extern void toggle_favorite(const char *path);
@@ -49,12 +48,12 @@ void load_box_art(DirContent* content, SDL_Renderer *renderer, const char* rom_p
 
 // Function declarations
 SDL_Texture* render_text(SDL_Renderer *renderer, const char* text,
-                        TTF_Font *font, const SDL_Color color, SDL_Rect *rect, int is_favorites_view);
+                        TTF_Font *font, const SDL_Color color, SDL_Rect *rect, int is_favorites_view, const char* current_path);
 DirContent* list_files(const char* path);
 void go_up_directory(DirContent* content, char* current_path, const char* rom_directory);
 void change_directory(DirContent* content, int selected_index, char* current_path);
 void set_selection(DirContent* content, SDL_Renderer *renderer, TTF_Font *font,
-                  int selected_index, int current_page);
+                  int selected_index, int current_page, const char* current_path);
 void free_dir_content(DirContent* content);
 
 #endif // BROWSER_H

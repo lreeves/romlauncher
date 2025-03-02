@@ -34,7 +34,7 @@ DirContent* get_current_content(void) {
 }
 
 // Helper function for up navigation
-void handle_up_navigation(void) {
+void handle_up_navigation(const char* current_path) {
     if (selected_index > 0)
         selected_index--;
     else
@@ -42,7 +42,7 @@ void handle_up_navigation(void) {
     
     current_page = selected_index / ENTRIES_PER_PAGE;
     DirContent* current_content = get_current_content();
-    set_selection(current_content, renderer, font, selected_index, current_page);
+    set_selection(current_content, renderer, font, selected_index, current_page, current_path);
     
     if (current_app_mode == APP_MODE_BROWSER && 
         current_browser_mode == BROWSER_MODE_FILES) {
@@ -52,7 +52,7 @@ void handle_up_navigation(void) {
 }
 
 // Helper function for down navigation
-void handle_down_navigation(void) {
+void handle_down_navigation(const char* current_path) {
     if (selected_index < total_entries - 1)
         selected_index++;
     else
@@ -60,7 +60,7 @@ void handle_down_navigation(void) {
     
     current_page = selected_index / ENTRIES_PER_PAGE;
     DirContent* current_content = get_current_content();
-    set_selection(current_content, renderer, font, selected_index, current_page);
+    set_selection(current_content, renderer, font, selected_index, current_page, current_path);
     
     if (current_app_mode == APP_MODE_BROWSER && 
         current_browser_mode == BROWSER_MODE_FILES) {
@@ -70,7 +70,7 @@ void handle_down_navigation(void) {
 }
 
 // Helper function to handle navigation input
-void handle_navigation_input(int direction) {
+void handle_navigation_input(int direction, const char* current_path) {
     if (current_app_mode == APP_MODE_BROWSER && current_browser_mode == BROWSER_MODE_FAVORITES && favorites_content) {
         // In favorites mode, skip group headers
         selected_index = find_next_rom(favorites_content, selected_index, direction);
@@ -93,7 +93,7 @@ void handle_navigation_input(int direction) {
     
     current_page = selected_index / ENTRIES_PER_PAGE;
     DirContent* current_content = get_current_content();
-    set_selection(current_content, renderer, font, selected_index, current_page);
+    set_selection(current_content, renderer, font, selected_index, current_page, current_path);
     
     // Load box art for selected file when navigating
     if (current_app_mode == APP_MODE_BROWSER &&
@@ -103,7 +103,7 @@ void handle_navigation_input(int direction) {
 }
 
 // Helper function to handle page navigation (for shoulder buttons)
-void handle_page_navigation(int direction) {
+void handle_page_navigation(int direction, const char* current_path) {
     if (direction < 0) {
         if (current_page > 0)
             current_page--;
@@ -118,24 +118,24 @@ void handle_page_navigation(int direction) {
     
     selected_index = current_page * ENTRIES_PER_PAGE;
     DirContent* current_content = get_current_content();
-    set_selection(current_content, renderer, font, selected_index, current_page);
+    set_selection(current_content, renderer, font, selected_index, current_page, current_path);
 }
 
 // Helper function to update menu selection
-void update_menu_selection(int new_selection) {
+void update_menu_selection(int new_selection, const char* current_path) {
     menu_selection = new_selection;
     
     // Update menu textures
     for (int i = 0; i < MENU_OPTIONS; i++) {
         if (menu_textures[i]) SDL_DestroyTexture(menu_textures[i]);
         SDL_Color color = (i == menu_selection) ? COLOR_TEXT_SELECTED : COLOR_TEXT;
-        menu_textures[i] = render_text(renderer, menu_options[i], font, color, &menu_rects[i], 0);
+        menu_textures[i] = render_text(renderer, menu_options[i], font, color, &menu_rects[i], 0, current_path);
     }
 }
 
 // Helper function to handle button repeat for navigation
 void handle_button_repeat(int button, int *held_state, int *initial_delay_state, 
-                         Uint32 *repeat_time, Uint32 now, void (*action)(void)) {
+                         Uint32 *repeat_time, Uint32 now, void (*action_fn)(const char*), const char* action_param) {
     if (SDL_JoystickGetButton(joystick, button)) {
         if (!(*held_state)) {
             *held_state = 1;
@@ -147,7 +147,7 @@ void handle_button_repeat(int button, int *held_state, int *initial_delay_state,
             Uint32 delay = (*initial_delay_state) ? INITIAL_DELAY_MS : REPEAT_DELAY_MS;
             
             if (now - (*repeat_time) >= delay) {
-                action();
+                action_fn(action_param);
                 *initial_delay_state = 0;  // Switch to repeat phase
                 *repeat_time = now;
             }
