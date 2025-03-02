@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -g
+CFLAGS = -Wall -Wextra -g -DROMLAUNCHER_BUILD_LINUX
 
 # Source files
 TEST_SOURCES = test_runner.c test_path_utils.c test_emulator_selection.c mock_logging.c
