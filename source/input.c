@@ -158,17 +158,17 @@ void handle_button_repeat(int button, int *held_state, int *initial_delay_state,
 }
 
 // Function to update box art based on current selection
-void update_box_art_for_selection(DirContent* content, const char* current_path, int selected_index) {
-    if (!content || selected_index < 0) return;
+void update_box_art_for_selection(DirContent* dir_content, const char* current_path, int index) {
+    if (!dir_content || index < 0) return;
 
     // Only load box art for files (not directories)
-    if (selected_index >= content->dir_count &&
-        selected_index < content->dir_count + content->file_count) {
-        int file_index = selected_index - content->dir_count;
-        if (file_index >= 0 && file_index < content->file_count) {
-            const char* filename = content->files[file_index];
+    if (index >= dir_content->dir_count &&
+        index < dir_content->dir_count + dir_content->file_count) {
+        int file_index = index - dir_content->dir_count;
+        if (file_index >= 0 && file_index < dir_content->file_count) {
+            const char* filename = dir_content->files[file_index];
             log_message(LOG_DEBUG, "Loading box art for: %s", filename);
-            load_box_art(content, current_path, filename);
+            load_box_art(dir_content, current_path, filename);
         }
     }
 }
