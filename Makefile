@@ -2,7 +2,7 @@
 
 # Compiler and flags
 CC = gcc
-CFLAGS = -Wall -Wextra -O0 -g -DROMLAUNCHER_BUILD_LINUX -I/usr/include/SDL2
+CFLAGS = -Wall -Wextra -Wshadow -Wformat=2 -Wunused -O0 -g -DROMLAUNCHER_BUILD_LINUX -I/usr/include/SDL2
 LDFLAGS = -lSDL2 -lSDL2_ttf -lSDL2_image
 
 # Source and object files
