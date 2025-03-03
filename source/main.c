@@ -56,7 +56,6 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
     // Load config, favorites, and history
     load_config();
     load_favorites();
-    dump_favorites(); // Log favorites for debugging
     load_history();
     log_message(LOG_INFO, "Config, favorites, and history loaded");
 

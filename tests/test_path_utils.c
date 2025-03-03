@@ -75,14 +75,14 @@ int test_relative_to_absolute() {
 
     // Test case 1: Normal relative path
     char* input1 = "nes/game.nes";
-    char* expected1 = ROM_DIRECTORY "nes/game.nes";
+    char* expected1 = ROM_DIRECTORY "/nes/game.nes";
     char* result1 = relative_rom_path_to_absolute(input1);
     failures += assert_str_equals("Normal relative path", expected1, result1);
     free(result1);
 
     // Test case 2: Already absolute path
-    char* input2 = ROM_DIRECTORY "nes/game.nes";
-    char* expected2 = ROM_DIRECTORY "nes/game.nes";
+    char* input2 = ROM_DIRECTORY "/nes/game.nes";
+    char* expected2 = ROM_DIRECTORY "/nes/game.nes";
     char* result2 = relative_rom_path_to_absolute(input2);
     failures += assert_str_equals("Already absolute path", expected2, result2);
     free(result2);
