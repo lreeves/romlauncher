@@ -3,7 +3,8 @@ name: Docker build
 on:
   push:
     branches:
-      - main
+      - '**'
+  pull_request:
 
 permissions:
   contents: write
@@ -35,6 +36,7 @@ jobs:
   release:
     needs: build  # Wait for the build to complete before releasing
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'  # Only run on main branch
 
     steps:
       - name: Checkout repository # Just to get the hash
