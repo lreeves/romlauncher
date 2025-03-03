@@ -4,6 +4,12 @@
 #include "browser.h"
 
 // Function declarations
+void load_favorites(void);
+void save_favorites(void);
+int is_favorite(const char *path);
+void toggle_favorite(const char *path);
+void free_favorites(void);
+
 int is_group_header(const char* text);
 int find_next_rom(DirContent* content, int current_index, int direction);
 DirContent* list_favorites(void);

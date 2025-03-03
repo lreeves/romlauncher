@@ -1,9 +1,127 @@
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <errno.h>
 #include "browser.h"
 #include "config.h"
 #include "logging.h"
 #include "path_utils.h"
+#include "uthash.h"
+
+void load_favorites(void) {
+    char favorites_path[256];
+    snprintf(favorites_path, sizeof(favorites_path), "%s/favorites.txt", ROMLAUNCHER_DATA_DIRECTORY);
+
+    log_message(LOG_INFO, "Trying to load favorites from: %s", favorites_path);
+
+    // Check if file exists first
+    struct stat file_stat;
+    if (stat(favorites_path, &file_stat) != 0) {
+        log_message(LOG_INFO, "No favorites file found (stat check failed)");
+    } else {
+        log_message(LOG_INFO, "Favorites file exists, size: %ld bytes", (long)file_stat.st_size);
+    }
+
+    FILE *fp = fopen(favorites_path, "r");
+    if (!fp) {
+        log_message(LOG_INFO, "No favorites file found (fopen failed: %s)", strerror(errno));
+        return;
+    }
+
+    char line[768];
+    while (fgets(line, sizeof(line), fp)) {
+        // Remove newline
+        line[strcspn(line, "\n")] = 0;
+        if (strlen(line) > 0) {
+            // Convert relative path to absolute path
+            char* absolute_path = relative_rom_path_to_absolute(line);
+            if (!absolute_path) {
+                log_message(LOG_ERROR, "Failed to convert favorite path to absolute: %s", line);
+                continue;
+            }
+
+            config_entry *entry = malloc(sizeof(config_entry));
+            if (!entry) {
+                free(absolute_path);
+                log_message(LOG_ERROR, "Failed to allocate memory for favorite entry");
+                continue;
+            }
+
+            strncpy(entry->key, absolute_path, sizeof(entry->key)-1);
+            entry->key[sizeof(entry->key)-1] = '\0';
+            entry->value[0] = '1';
+            entry->value[1] = '\0';
+            HASH_ADD_STR(favorites, key, entry);
+            log_message(LOG_DEBUG, "Loaded favorite: %s (absolute: %s)", line, absolute_path);
+
+            free(absolute_path);
+        }
+    }
+    fclose(fp);
+}
+
+void save_favorites(void) {
+    char favorites_path[256];
+    snprintf(favorites_path, sizeof(favorites_path), "%s/favorites.txt", ROMLAUNCHER_DATA_DIRECTORY);
+
+    log_message(LOG_INFO, "Saving favorites to: %s", favorites_path);
+
+    FILE *fp = fopen(favorites_path, "w");
+    if (!fp) {
+        log_message(LOG_ERROR, "Could not open favorites file for writing: %s", strerror(errno));
+        return;
+    }
+
+    config_entry *entry, *tmp;
+    HASH_ITER(hh, favorites, entry, tmp) {
+        char* relative_path = absolute_rom_path_to_relative(entry->key);
+        if (relative_path) {
+            fprintf(fp, "%s\n", relative_path);
+            free(relative_path);
+        } else {
+            // Fallback to original path if conversion fails
+            fprintf(fp, "%s\n", entry->key);
+            log_message(LOG_ERROR, "Failed to convert favorite path to relative: %s", entry->key);
+        }
+    }
+    fclose(fp);
+}
+
+int is_favorite(const char *path) {
+    config_entry *entry;
+    HASH_FIND_STR(favorites, path, entry);
+    return entry != NULL;
+}
+
+void toggle_favorite(const char *path) {
+    config_entry *entry;
+    HASH_FIND_STR(favorites, path, entry);
+
+    if (entry) {
+        HASH_DEL(favorites, entry);
+        free(entry);
+        log_message(LOG_INFO, "Removed favorite: %s", path);
+    } else {
+        entry = malloc(sizeof(config_entry));
+        strncpy(entry->key, path, sizeof(entry->key)-1);
+        entry->key[sizeof(entry->key)-1] = '\0';
+        entry->value[0] = '1';
+        entry->value[1] = '\0';
+        HASH_ADD_STR(favorites, key, entry);
+        log_message(LOG_INFO, "Added favorite: %s", path);
+    }
+    save_favorites();
+}
+
+void free_favorites(void) {
+    config_entry *current, *tmp;
+    HASH_ITER(hh, favorites, current, tmp) {
+        HASH_DEL(favorites, current);
+        free(current);
+    }
+}
 
 static int compare_strings(const void* a, const void* b) {
     const char* str_a = (*(FavoriteGroup**)a)->group_name;
