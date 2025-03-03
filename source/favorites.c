@@ -1,9 +1,123 @@
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <errno.h>
 #include "browser.h"
 #include "config.h"
 #include "logging.h"
 #include "path_utils.h"
+#include "uthash.h"
+
+#define FAVORITES_FILE ROMLAUNCHER_DATA_DIRECTORY "/favorites.txt"
+
+void load_favorites(void) {
+    log_message(LOG_INFO, "Trying to load favorites from: %s", FAVORITES_FILE);
+
+    // Check if file exists first
+    struct stat file_stat;
+    if (stat(FAVORITES_FILE, &file_stat) != 0) {
+        log_message(LOG_INFO, "No favorites file found (stat check failed)");
+    } else {
+        log_message(LOG_INFO, "Favorites file exists, size: %ld bytes", (long)file_stat.st_size);
+    }
+
+    FILE *fp = fopen(FAVORITES_FILE, "r");
+    if (!fp) {
+        log_message(LOG_INFO, "No favorites file found (fopen failed: %s)", strerror(errno));
+        return;
+    }
+
+    char line[768];
+    while (fgets(line, sizeof(line), fp)) {
+        // Remove newline
+        line[strcspn(line, "\n")] = 0;
+        if (strlen(line) > 0) {
+            // Convert relative path to absolute path
+            char* absolute_path = relative_rom_path_to_absolute(line);
+            if (!absolute_path) {
+                log_message(LOG_ERROR, "Failed to convert favorite path to absolute: %s", line);
+                continue;
+            }
+
+            config_entry *entry = malloc(sizeof(config_entry));
+            if (!entry) {
+                free(absolute_path);
+                log_message(LOG_ERROR, "Failed to allocate memory for favorite entry");
+                continue;
+            }
+
+            strncpy(entry->key, absolute_path, sizeof(entry->key)-1);
+            entry->key[sizeof(entry->key)-1] = '\0';
+            entry->value[0] = '1';
+            entry->value[1] = '\0';
+            HASH_ADD_STR(favorites, key, entry);
+            log_message(LOG_DEBUG, "Loaded favorite: %s", absolute_path);
+
+            free(absolute_path);
+        }
+    }
+    fclose(fp);
+}
+
+void save_favorites(void) {
+    log_message(LOG_INFO, "Saving favorites to: %s", FAVORITES_FILE);
+
+    FILE *fp = fopen(FAVORITES_FILE, "w");
+    if (!fp) {
+        log_message(LOG_ERROR, "Could not open favorites file for writing: %s", strerror(errno));
+        return;
+    }
+
+    config_entry *entry, *tmp;
+    HASH_ITER(hh, favorites, entry, tmp) {
+        char* relative_path = absolute_rom_path_to_relative(entry->key);
+        if (relative_path) {
+            fprintf(fp, "%s\n", relative_path);
+            free(relative_path);
+        } else {
+            // Fallback to original path if conversion fails
+            fprintf(fp, "%s\n", entry->key);
+            log_message(LOG_ERROR, "Failed to convert favorite path to relative: %s", entry->key);
+        }
+    }
+    fclose(fp);
+}
+
+int is_favorite(const char *path) {
+    config_entry *entry;
+    HASH_FIND_STR(favorites, path, entry);
+    return entry != NULL;
+}
+
+void toggle_favorite(const char *path) {
+    config_entry *entry;
+    HASH_FIND_STR(favorites, path, entry);
+
+    if (entry) {
+        HASH_DEL(favorites, entry);
+        free(entry);
+        log_message(LOG_INFO, "Removed favorite: %s", path);
+    } else {
+        entry = malloc(sizeof(config_entry));
+        strncpy(entry->key, path, sizeof(entry->key)-1);
+        entry->key[sizeof(entry->key)-1] = '\0';
+        entry->value[0] = '1';
+        entry->value[1] = '\0';
+        HASH_ADD_STR(favorites, key, entry);
+        log_message(LOG_INFO, "Added favorite: %s", path);
+    }
+    save_favorites();
+}
+
+void free_favorites(void) {
+    config_entry *current, *tmp;
+    HASH_ITER(hh, favorites, current, tmp) {
+        HASH_DEL(favorites, current);
+        free(current);
+    }
+}
 
 static int compare_strings(const void* a, const void* b) {
     const char* str_a = (*(FavoriteGroup**)a)->group_name;
@@ -85,12 +199,6 @@ DirContent* list_favorites(void) {
     memset(content, 0, sizeof(DirContent));
     content->is_favorites_view = 1;
 
-    // Get ROM path from config
-    const char* rom_path = config_get("rom_path");
-    if (!rom_path) rom_path = "sdmc:/roms";
-
-    log_message(LOG_INFO, "Listing favorites with ROM path: %s", rom_path);
-
     // Count favorites to ensure we have some
     int favorite_count = 0;
     config_entry *current, *tmp;
@@ -105,7 +213,7 @@ DirContent* list_favorites(void) {
     // Process favorites
     HASH_ITER(hh, favorites, current, tmp) {
         log_message(LOG_DEBUG, "Processing favorite: %s", current->key);
-        char* group_name = extract_group_name(current->key, rom_path);
+        char* group_name = extract_group_name(current->key, ROM_DIRECTORY);
         char* display_name = get_display_name(current->key);
 
         if (!group_name || !display_name) {
@@ -265,20 +373,6 @@ DirContent* list_favorites(void) {
     }
     free(group_array);
     return content;
-}
-
-void dump_favorites(void) {
-    log_message(LOG_INFO, "===== DUMPING FAVORITES =====");
-    int count = 0;
-    config_entry *current, *tmp;
-
-    HASH_ITER(hh, favorites, current, tmp) {
-        count++;
-        log_message(LOG_INFO, "Favorite %d: %s", count, current->key);
-    }
-
-    log_message(LOG_INFO, "Total favorites: %d", count);
-    log_message(LOG_INFO, "===== END FAVORITES DUMP =====");
 }
 
 void toggle_current_favorite(DirContent* content, int selected_index, const char* current_path) {

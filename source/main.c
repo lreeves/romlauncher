@@ -56,7 +56,6 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
     // Load config, favorites, and history
     load_config();
     load_favorites();
-    dump_favorites(); // Log favorites for debugging
     load_history();
     log_message(LOG_INFO, "Config, favorites, and history loaded");
 
@@ -325,15 +324,8 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
                                                     entry = entry->next;
                                                 }
                                                 if (entry && entry->path) {
-                                                    char launch_path[MAX_PATH_LEN];
-                                                    if (strncmp(entry->path, "sdmc:", 5) != 0) {
-                                                        snprintf(launch_path, sizeof(launch_path), "sdmc:%s", entry->path);
-                                                    } else {
-                                                        strncpy(launch_path, entry->path, sizeof(launch_path)-1);
-                                                        launch_path[sizeof(launch_path)-1] = '\0';
-                                                    }
-                                                    log_message(LOG_INFO, "Attempting to launch favorite: %s", launch_path);
-                                                    if (launch_retroarch(launch_path)) {
+                                                    log_message(LOG_INFO, "Attempting to launch favorite: %s", entry->path);
+                                                    if (launch_retroarch(entry->path)) {
                                                         exit_requested = 1;
                                                     } else {
                                                         if (notification.texture) {
