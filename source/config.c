@@ -90,7 +90,7 @@ config_entry *favorites = NULL;
 
 void load_favorites(void) {
     char favorites_path[256];
-    snprintf(favorites_path, sizeof(favorites_path), "%sfavorites.txt", ROMLAUNCHER_DATA_DIRECTORY);
+    snprintf(favorites_path, sizeof(favorites_path), "%s/favorites.txt", ROMLAUNCHER_DATA_DIRECTORY);
 
     log_message(LOG_INFO, "Trying to load favorites from: %s", favorites_path);
 

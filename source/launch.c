@@ -34,7 +34,7 @@ int launch_retroarch(const char* rom_path) {
 
     // Construct RetroArch core path
     char core_path[MAX_PATH_LEN];
-    int written = snprintf(core_path, sizeof(core_path), "sdmc:/retroarch/cores/%s_libretro_libnx.nro", ec->core_name);
+    int written = snprintf(core_path, sizeof(core_path), RETROARCH_DIRECTORY "/cores/%s_libretro_libnx.nro", ec->core_name);
     if (written < 0 || (size_t)written >= sizeof(core_path)) {
         log_message(LOG_ERROR, "Core path construction failed (truncation or error)");
         return 0;

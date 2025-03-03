@@ -24,9 +24,11 @@
 #ifdef ROMLAUNCHER_BUILD_LINUX
     #define ROMLAUNCHER_DATA_DIRECTORY "/home/luke/.config/Ryujinx/sdcard/romlauncher"
     #define ROM_DIRECTORY "/home/luke/.config/Ryujinx/sdcard/roms"
+    #define RETROARCH_DIRECTORY "/home/luke/.config/Ryujinx/sdcard/retroarch"
 #else
     #define ROMLAUNCHER_DATA_DIRECTORY "sdmc:/romlauncher"
     #define ROM_DIRECTORY "sdmc:/roms"
+    #define RETROARCH_DIRECTORY "sdmc:/retroarch"
 #endif
 
 #define ROMLAUNCHER_MEDIA_DIRECTORY ROMLAUNCHER_DATA_DIRECTORY "/media"

@@ -36,7 +36,7 @@ int appletMainLoop() {
 
 int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) {
     char log_filename[256];
-    snprintf(log_filename, sizeof(log_filename), "%sromlauncher-%ld.log", ROMLAUNCHER_DATA_DIRECTORY, (long)time(NULL));
+    snprintf(log_filename, sizeof(log_filename), "%s/romlauncher-%ld.log", ROMLAUNCHER_DATA_DIRECTORY, (long)time(NULL));
     log_init(log_filename);
 
     log_message(LOG_INFO, "Starting romlauncher");
