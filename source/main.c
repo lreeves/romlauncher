@@ -36,7 +36,7 @@ int appletMainLoop() {
 
 int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) {
     char log_filename[256];
-    snprintf(log_filename, sizeof(log_filename), "%sromlauncher-%ld.log", ROMLAUNCHER_DATA_DIRECTORY, (long)time(NULL));
+    snprintf(log_filename, sizeof(log_filename), "%s/romlauncher-%ld.log", ROMLAUNCHER_DATA_DIRECTORY, (long)time(NULL));
     log_init(log_filename);
 
     log_message(LOG_INFO, "Starting romlauncher");
@@ -675,30 +675,33 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
             handle_button_repeat(DPAD_DOWN, &dpadDownHeld, &dpadDownInitialDelay, &dpadDownRepeatTime, now,
                                  handle_down_navigation, current_path);
 
-            // Left shoulder button repeat
-            if (SDL_JoystickGetButton(joystick, JOY_LEFT_SHOULDER)) {
-                if (!leftShoulderHeld) {
-                    leftShoulderHeld = 1;
-                    leftShoulderRepeatTime = now;
-                } else if (now - leftShoulderRepeatTime >= 50) {
-                    handle_page_navigation(-1, current_path);
-                    leftShoulderRepeatTime = now;
+            // Only process joystick input if joystick is valid
+            if (joystick) {
+                // Left shoulder button repeat
+                if (SDL_JoystickGetButton(joystick, JOY_LEFT_SHOULDER)) {
+                    if (!leftShoulderHeld) {
+                        leftShoulderHeld = 1;
+                        leftShoulderRepeatTime = now;
+                    } else if (now - leftShoulderRepeatTime >= 50) {
+                        handle_page_navigation(-1, current_path);
+                        leftShoulderRepeatTime = now;
+                    }
+                } else {
+                    leftShoulderHeld = 0;
                 }
-            } else {
-                leftShoulderHeld = 0;
-            }
 
-            // Right shoulder button repeat
-            if (SDL_JoystickGetButton(joystick, JOY_RIGHT_SHOULDER)) {
-                if (!rightShoulderHeld) {
-                    rightShoulderHeld = 1;
-                    rightShoulderRepeatTime = now;
-                } else if (now - rightShoulderRepeatTime >= 50) {
-                    handle_page_navigation(1, current_path);
-                    rightShoulderRepeatTime = now;
+                // Right shoulder button repeat
+                if (SDL_JoystickGetButton(joystick, JOY_RIGHT_SHOULDER)) {
+                    if (!rightShoulderHeld) {
+                        rightShoulderHeld = 1;
+                        rightShoulderRepeatTime = now;
+                    } else if (now - rightShoulderRepeatTime >= 50) {
+                        handle_page_navigation(1, current_path);
+                        rightShoulderRepeatTime = now;
+                    }
+                } else {
+                    rightShoulderHeld = 0;
                 }
-            } else {
-                rightShoulderHeld = 0;
             }
         }
 
@@ -773,54 +776,108 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
         SDL_Delay(wait);
     }
 
-    // Free favorites and history content if they exist
+    // Flush any remaining events before cleanup
+    SDL_Event flush_event;
+    while (SDL_PollEvent(&flush_event)) {}
+
+    // Free all content structures
+    if (content) {
+        free_dir_content(content);
+        content = NULL;
+    }
+
+    // Add extra logging for debugging
+    log_message(LOG_INFO, "About to free favorites_content: %p", (void*)favorites_content);
     if (favorites_content) {
         free_dir_content(favorites_content);
+        favorites_content = NULL;
     }
+    log_message(LOG_INFO, "Favorites content freed successfully");
 
+    log_message(LOG_INFO, "About to free history_content: %p", (void*)history_content);
     if (history_content) {
         free_dir_content(history_content);
+        history_content = NULL;
     }
+    log_message(LOG_INFO, "History content freed successfully");
 
 cleanup:
+    log_message(LOG_INFO, "Starting cleanup sequence");
+
     // Clean up all textures
-    if (notification.texture)
+    if (notification.texture) {
         SDL_DestroyTexture(notification.texture);
-    if (scraping_message)
+        notification.texture = NULL;
+    }
+
+    if (scraping_message) {
         SDL_DestroyTexture(scraping_message);
-    if (status_text)
+        scraping_message = NULL;
+    }
+
+    if (status_text) {
         SDL_DestroyTexture(status_text);
+        status_text = NULL;
+    }
 
     // Clean up menu textures
     for (int i = 0; i < MENU_OPTIONS; i++) {
-        if (menu_textures[i])
+        if (menu_textures[i]) {
             SDL_DestroyTexture(menu_textures[i]);
+            menu_textures[i] = NULL;
+        }
     }
 
     // Close joystick if it was opened
-    if (joystick)
+    if (joystick) {
         SDL_JoystickClose(joystick);
+        joystick = NULL;
+    }
 
     // Clean up SDL systems in reverse order of initialization
-    if (renderer)
+    if (renderer) {
+        log_message(LOG_DEBUG, "Destroying renderer");
         SDL_DestroyRenderer(renderer);
-    if (window)
+        renderer = NULL;
+    }
+
+    if (window) {
+        log_message(LOG_DEBUG, "Destroying window");
         SDL_DestroyWindow(window);
-    if (font)
+        window = NULL;
+    }
+
+    if (font) {
         TTF_CloseFont(font);
-    if (small_font)
+        font = NULL;
+    }
+
+    if (small_font) {
         TTF_CloseFont(small_font);
+        small_font = NULL;
+    }
 
     // Quit SDL subsystems in reverse order
-    if (ttf_initialized)
+    if (ttf_initialized) {
+        log_message(LOG_DEBUG, "Quitting TTF");
         TTF_Quit();
-    if (img_initialized)
+    }
+
+    if (img_initialized) {
+        log_message(LOG_DEBUG, "Quitting IMG");
         IMG_Quit();
-    if (sdl_initialized)
+    }
+
+    if (sdl_initialized) {
+        log_message(LOG_DEBUG, "Quitting SDL");
         SDL_Quit();
+    }
+
 #ifndef ROMLAUNCHER_BUILD_LINUX
-    if (romfs_initialized)
+    if (romfs_initialized) {
+        log_message(LOG_DEBUG, "Exiting romfs");
         romfsExit();
+    }
 #endif
 
     // Free config, favorites, history, and hash tables

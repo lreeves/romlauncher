@@ -33,7 +33,7 @@ static int compare_history_entries(const void *a, const void *b) {
 }
 
 void load_history(void) {
-    FILE *fp = fopen(ROMLAUNCHER_DATA_DIRECTORY "history.txt", "r");
+    FILE *fp = fopen(ROMLAUNCHER_DATA_DIRECTORY "/history.txt", "r");
     if (!fp) {
         log_message(LOG_INFO, "No history file found");
         return;
@@ -59,12 +59,12 @@ void load_history(void) {
         if (separator) {
             *separator = '\0';
             timestamp = (time_t)atoll(line);
-            
+
             // Get the relative path from the file
             char rel_path[MAX_PATH_LEN];
             strncpy(rel_path, separator + 1, MAX_PATH_LEN - 1);
             rel_path[MAX_PATH_LEN - 1] = '\0';
-            
+
             // Convert relative path to absolute path
             char* absolute_path = relative_rom_path_to_absolute(rel_path);
             if (absolute_path) {
@@ -79,16 +79,16 @@ void load_history(void) {
 
     fclose(fp);
     log_message(LOG_INFO, "Loaded %d history entries", history_count);
-    
+
     // Sort history entries after loading
     sort_history();
-    
+
     // Debug dump of history entries
     dump_history_entries();
 }
 
 void save_history(void) {
-    FILE *fp = fopen(ROMLAUNCHER_DATA_DIRECTORY "history.txt", "w");
+    FILE *fp = fopen(ROMLAUNCHER_DATA_DIRECTORY "/history.txt", "w");
     if (!fp) {
         log_message(LOG_ERROR, "Could not open history file for writing");
         return;
@@ -102,7 +102,7 @@ void save_history(void) {
     for (int i = 0; i < history_count && count < MAX_HISTORY_ENTRIES; i++) {
         const char* path = sorted_history[i]->path;
         char* relative_path = absolute_rom_path_to_relative((char*)path);
-        
+
         if (relative_path) {
             fprintf(fp, "%lld|%s\n", (long long)sorted_history[i]->timestamp, relative_path);
             free(relative_path);
@@ -169,7 +169,7 @@ void sort_history(void) {
 
     // Sort array by timestamp
     qsort(sorted_history, history_count, sizeof(history_entry*), compare_history_entries);
-    
+
     log_message(LOG_DEBUG, "Sorted %d history entries", history_count);
 }
 
@@ -196,7 +196,7 @@ DirContent* list_history(void) {
         free_dir_content(content);
         return NULL;
     }
-    
+
     content->dir_count = 0;
 
     // If no history entries, show a message
@@ -216,18 +216,18 @@ DirContent* list_history(void) {
         // Get the filename from the path
         const char* path = sorted_history[i]->path;
         const char* filename = strrchr(path, '/');
-        
+
         if (filename) {
             filename++; // Skip the slash
-            
+
             // Format the display name with timestamp
             char display_name[MAX_PATH_LEN];
             time_t timestamp = sorted_history[i]->timestamp;
             struct tm* timeinfo = localtime(&timestamp);
-                
+
             char time_str[32];
             strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M", timeinfo);
-                
+
             // Get the file extension
             const char* ext = strrchr(filename, '.');
             if (ext) {
@@ -237,7 +237,7 @@ DirContent* list_history(void) {
                 if (name_len >= MAX_PATH_LEN) name_len = MAX_PATH_LEN - 1;
                 strncpy(base_name, filename, name_len);
                 base_name[name_len] = '\0';
-                    
+
                 // Make sure we don't overflow the buffer
                 int time_len = strlen(time_str);
                 int base_len = strlen(base_name);
@@ -254,7 +254,7 @@ DirContent* list_history(void) {
                         goto skip_name;
                     }
                 }
-                
+
                 // Use a temporary buffer to ensure we don't overflow
                 char temp_buffer[MAX_PATH_LEN];
                 snprintf(temp_buffer, sizeof(temp_buffer), "[%s] ", time_str);
@@ -273,7 +273,7 @@ DirContent* list_history(void) {
                     if (trunc_len > 0) {
                         strncpy(truncated_name, filename, trunc_len);
                         truncated_name[trunc_len] = '\0';
-                        
+
                         // Use a temporary buffer to ensure we don't overflow
                         char temp_buffer[MAX_PATH_LEN];
                         snprintf(temp_buffer, sizeof(temp_buffer), "[%s] ", time_str);
@@ -293,11 +293,11 @@ DirContent* list_history(void) {
                     display_name[sizeof(display_name) - 1] = '\0';
                 }
             }
-                
+
             skip_name:
-            
+
             content->files[count] = strdup(display_name);
-            
+
             // Initialize rect position for rendering
             if (content->files[count]) {
                 content->file_rects[count].x = 50;
@@ -338,19 +338,19 @@ const char* get_history_rom_path(int display_index) {
         log_message(LOG_ERROR, "Invalid history index: %d (max: %d)", display_index, history_count-1);
         return NULL;
     }
-    
+
     // Fix path format if needed (remove extra slash)
     char* path = sorted_history[display_index]->path;
     if (strncmp(path, "sdmc://", 7) == 0) {
         // Remove the extra slash
         static char fixed_path[MAX_PATH_LEN];
         snprintf(fixed_path, sizeof(fixed_path), "sdmc:/%s", path + 7);
-        log_message(LOG_INFO, "Fixed history ROM path for index %d: %s -> %s", 
+        log_message(LOG_INFO, "Fixed history ROM path for index %d: %s -> %s",
                     display_index, path, fixed_path);
         return fixed_path;
     }
-    
-    log_message(LOG_INFO, "Getting history ROM path for index %d: %s", 
+
+    log_message(LOG_INFO, "Getting history ROM path for index %d: %s",
                 display_index, path);
     return path;
 }
@@ -359,15 +359,15 @@ const char* get_history_rom_path(int display_index) {
 void dump_history_entries(void) {
     log_message(LOG_INFO, "=== DUMPING HISTORY ENTRIES ===");
     log_message(LOG_INFO, "Total history entries: %d", history_count);
-    
+
     if (!sorted_history) {
         log_message(LOG_INFO, "No sorted history array");
         return;
     }
-    
+
     for (int i = 0; i < history_count; i++) {
         if (sorted_history[i]) {
-            log_message(LOG_INFO, "Entry %d: %s (timestamp: %lld)", 
+            log_message(LOG_INFO, "Entry %d: %s (timestamp: %lld)",
                         i, sorted_history[i]->path, (long long)sorted_history[i]->timestamp);
         } else {
             log_message(LOG_INFO, "Entry %d: NULL", i);

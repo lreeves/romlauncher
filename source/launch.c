@@ -34,7 +34,7 @@ int launch_retroarch(const char* rom_path) {
 
     // Construct RetroArch core path
     char core_path[MAX_PATH_LEN];
-    int written = snprintf(core_path, sizeof(core_path), "sdmc:/retroarch/cores/%s_libretro_libnx.nro", ec->core_name);
+    int written = snprintf(core_path, sizeof(core_path), RETROARCH_DIRECTORY "/cores/%s_libretro_libnx.nro", ec->core_name);
     if (written < 0 || (size_t)written >= sizeof(core_path)) {
         log_message(LOG_ERROR, "Core path construction failed (truncation or error)");
         return 0;
@@ -48,12 +48,9 @@ int launch_retroarch(const char* rom_path) {
     }
     fclose(core_file);
 
-    // Skip the "sdmc:" prefix if present for the arguments
-    const char* rom_arg = strncmp(rom_path, "sdmc:", 5) == 0 ? rom_path + 5 : rom_path;
-
     // Construct the arguments string
     char full_arguments[MAX_PATH_LEN];
-    written = snprintf(full_arguments, sizeof(full_arguments), "%s \"%s\"", core_path, rom_arg);
+    written = snprintf(full_arguments, sizeof(full_arguments), "%s \"%s\"", core_path, rom_path);
     if (written < 0 || (size_t)written >= sizeof(full_arguments)) {
         log_message(LOG_ERROR, "Arguments string construction failed (truncation or error)");
         return 0;
