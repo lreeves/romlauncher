@@ -39,6 +39,17 @@ When things break the log files created are essential in helping troubleshoot
 why - they're located in the /romlauncher/ folder on your SD card and only the
 5 most recent are kept around.
 
+## Crash dumps
+
+It can be a bit tricky to get stack traces out of the Atmosphere crash dumps.
+Generally when I have to do that I enter the podman container used to build the
+project like this:
+
+And then use the addr2line utility with the program offsets from the crash log
+(found in `/atmosphere/crash_reports/*.log`):
+
+`/opt/devkitpro/devkitA64/bin/aarch64-none-elf-addr2line -e romlauncher.elf -f -p -C -a 0x11f34`
+
 ## Contributing
 
 The build.sh script is barebones but will create a working .nro file in a
