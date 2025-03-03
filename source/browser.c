@@ -354,15 +354,35 @@ void free_dir_content(DirContent* content) {
 
     if (content->box_art_texture) {
         SDL_DestroyTexture(content->box_art_texture);
+        content->box_art_texture = NULL;
     }
 
-    for (int i = 0; i < content->dir_count; i++) {
-        free(content->dirs[i]);
-        if (content->dir_textures[i]) SDL_DestroyTexture(content->dir_textures[i]);
+    // Free directory entries
+    if (content->dirs) {
+        for (int i = 0; i < content->dir_count; i++) {
+            if (content->dirs[i]) {
+                free(content->dirs[i]);
+                content->dirs[i] = NULL;
+            }
+            if (content->dir_textures && content->dir_textures[i]) {
+                SDL_DestroyTexture(content->dir_textures[i]);
+                content->dir_textures[i] = NULL;
+            }
+        }
     }
-    for (int i = 0; i < content->file_count; i++) {
-        free(content->files[i]);
-        if (content->file_textures[i]) SDL_DestroyTexture(content->file_textures[i]);
+
+    // Free file entries
+    if (content->files) {
+        for (int i = 0; i < content->file_count; i++) {
+            if (content->files[i]) {
+                free(content->files[i]);
+                content->files[i] = NULL;
+            }
+            if (content->file_textures && content->file_textures[i]) {
+                SDL_DestroyTexture(content->file_textures[i]);
+                content->file_textures[i] = NULL;
+            }
+        }
     }
 
     // Free favorite groups structure if this was a favorites view
@@ -372,24 +392,27 @@ void free_dir_content(DirContent* content) {
             FavoriteEntry* entry = group->entries;
             while (entry) {
                 FavoriteEntry* next_entry = entry->next;
-                free(entry->path);
-                free(entry->display_name);
+                if (entry->path) free(entry->path);
+                if (entry->display_name) free(entry->display_name);
                 free(entry);
                 entry = next_entry;
             }
             FavoriteGroup* next_group = group->next;
-            free(group->group_name);
+            if (group->group_name) free(group->group_name);
             free(group);
             group = next_group;
         }
+        content->groups = NULL;
     }
 
-    free(content->dirs);
-    free(content->files);
-    free(content->dir_textures);
-    free(content->file_textures);
-    free(content->dir_rects);
-    free(content->file_rects);
+    // Free arrays
+    if (content->dirs) free(content->dirs);
+    if (content->files) free(content->files);
+    if (content->dir_textures) free(content->dir_textures);
+    if (content->file_textures) free(content->file_textures);
+    if (content->dir_rects) free(content->dir_rects);
+    if (content->file_rects) free(content->file_rects);
+    
     free(content);
 }
 

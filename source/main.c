@@ -675,30 +675,33 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
             handle_button_repeat(DPAD_DOWN, &dpadDownHeld, &dpadDownInitialDelay, &dpadDownRepeatTime, now,
                                  handle_down_navigation, current_path);
 
-            // Left shoulder button repeat
-            if (SDL_JoystickGetButton(joystick, JOY_LEFT_SHOULDER)) {
-                if (!leftShoulderHeld) {
-                    leftShoulderHeld = 1;
-                    leftShoulderRepeatTime = now;
-                } else if (now - leftShoulderRepeatTime >= 50) {
-                    handle_page_navigation(-1, current_path);
-                    leftShoulderRepeatTime = now;
+            // Only process joystick input if joystick is valid
+            if (joystick) {
+                // Left shoulder button repeat
+                if (SDL_JoystickGetButton(joystick, JOY_LEFT_SHOULDER)) {
+                    if (!leftShoulderHeld) {
+                        leftShoulderHeld = 1;
+                        leftShoulderRepeatTime = now;
+                    } else if (now - leftShoulderRepeatTime >= 50) {
+                        handle_page_navigation(-1, current_path);
+                        leftShoulderRepeatTime = now;
+                    }
+                } else {
+                    leftShoulderHeld = 0;
                 }
-            } else {
-                leftShoulderHeld = 0;
-            }
 
-            // Right shoulder button repeat
-            if (SDL_JoystickGetButton(joystick, JOY_RIGHT_SHOULDER)) {
-                if (!rightShoulderHeld) {
-                    rightShoulderHeld = 1;
-                    rightShoulderRepeatTime = now;
-                } else if (now - rightShoulderRepeatTime >= 50) {
-                    handle_page_navigation(1, current_path);
-                    rightShoulderRepeatTime = now;
+                // Right shoulder button repeat
+                if (SDL_JoystickGetButton(joystick, JOY_RIGHT_SHOULDER)) {
+                    if (!rightShoulderHeld) {
+                        rightShoulderHeld = 1;
+                        rightShoulderRepeatTime = now;
+                    } else if (now - rightShoulderRepeatTime >= 50) {
+                        handle_page_navigation(1, current_path);
+                        rightShoulderRepeatTime = now;
+                    }
+                } else {
+                    rightShoulderHeld = 0;
                 }
-            } else {
-                rightShoulderHeld = 0;
             }
         }
 
@@ -783,15 +786,20 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
         content = NULL;
     }
 
+    // Add extra logging for debugging
+    log_message(LOG_INFO, "About to free favorites_content: %p", (void*)favorites_content);
     if (favorites_content) {
         free_dir_content(favorites_content);
         favorites_content = NULL;
     }
+    log_message(LOG_INFO, "Favorites content freed successfully");
 
+    log_message(LOG_INFO, "About to free history_content: %p", (void*)history_content);
     if (history_content) {
         free_dir_content(history_content);
         history_content = NULL;
     }
+    log_message(LOG_INFO, "History content freed successfully");
 
 cleanup:
     log_message(LOG_INFO, "Starting cleanup sequence");
@@ -801,12 +809,12 @@ cleanup:
         SDL_DestroyTexture(notification.texture);
         notification.texture = NULL;
     }
-    
+
     if (scraping_message) {
         SDL_DestroyTexture(scraping_message);
         scraping_message = NULL;
     }
-    
+
     if (status_text) {
         SDL_DestroyTexture(status_text);
         status_text = NULL;
@@ -832,18 +840,18 @@ cleanup:
         SDL_DestroyRenderer(renderer);
         renderer = NULL;
     }
-    
+
     if (window) {
         log_message(LOG_DEBUG, "Destroying window");
         SDL_DestroyWindow(window);
         window = NULL;
     }
-    
+
     if (font) {
         TTF_CloseFont(font);
         font = NULL;
     }
-    
+
     if (small_font) {
         TTF_CloseFont(small_font);
         small_font = NULL;
@@ -854,17 +862,17 @@ cleanup:
         log_message(LOG_DEBUG, "Quitting TTF");
         TTF_Quit();
     }
-    
+
     if (img_initialized) {
         log_message(LOG_DEBUG, "Quitting IMG");
         IMG_Quit();
     }
-    
+
     if (sdl_initialized) {
         log_message(LOG_DEBUG, "Quitting SDL");
         SDL_Quit();
     }
-    
+
 #ifndef ROMLAUNCHER_BUILD_LINUX
     if (romfs_initialized) {
         log_message(LOG_DEBUG, "Exiting romfs");
