@@ -18,6 +18,8 @@ typedef struct {
 int current_boxart_request_id = 0;
 
 // Derive the short system name from the ROM path or extension
+// Used primarily for artwork
+#if LOAD_ARTWORK
 static const char* derive_system_name(const char* rom_path, const char* ext) {
     // First check file extension
     if (strcasecmp(ext, "nes") == 0) return "nes";
@@ -36,6 +38,7 @@ static const char* derive_system_name(const char* rom_path, const char* ext) {
     // Return the extension as fallback
     return ext;
 }
+#endif
 
 SDL_Texture* render_text(SDL_Renderer *renderer, const char* text,
                               TTF_Font *font, const SDL_Color color, SDL_Rect *rect, int is_favorites_view, const char* current_path) {
@@ -79,6 +82,7 @@ SDL_Texture* render_text(SDL_Renderer *renderer, const char* text,
     return texture;
 }
 
+#if LOAD_ARTWORK
 static int boxart_loader_thread(void *data) {
     BoxArtRequest *req = (BoxArtRequest *)data;
     const char *ext = strrchr(req->rom_name, '.');
@@ -135,6 +139,7 @@ static int boxart_loader_thread(void *data) {
     free(req);
     return 0;
 }
+#endif
 
 static int compare_strings(const void* a, const void* b) {
     return strcmp(*(const char**)a, *(const char**)b);
@@ -338,8 +343,10 @@ void load_box_art(DirContent* content, const char* rom_path, const char* rom_nam
     req->rom_name[MAX_PATH_LEN - 1] = '\0';
     req->request_id = current_boxart_request_id;
 
+#if LOAD_ARTWORK
     // Spawn asynchronous thread to load box art
     SDL_CreateThread(boxart_loader_thread, "BoxArtLoader", req);
+#endif
 }
 
 void free_dir_content(DirContent* content) {

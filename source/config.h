@@ -17,6 +17,7 @@
 #define SCREEN_W 1280
 #define SCREEN_H 720
 #define STATUS_BAR_HEIGHT 30
+#define LOAD_ARTWORK 0
 
 // Any path constants should not have a trailing slash
 

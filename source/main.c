@@ -636,6 +636,7 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
                     }
                 }
             }
+#if LOAD_ARTWORK
             else if (event.type == SDL_USEREVENT && event.user.code == 1) {
                 int loaded_request_id = (int)(intptr_t)event.user.data2;
                 if (loaded_request_id == current_boxart_request_id) {
@@ -658,6 +659,7 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
                     SDL_FreeSurface(surface);
                 }
             }
+#endif
         }
 
 
