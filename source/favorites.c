@@ -85,12 +85,6 @@ DirContent* list_favorites(void) {
     memset(content, 0, sizeof(DirContent));
     content->is_favorites_view = 1;
 
-    // Get ROM path from config
-    const char* rom_path = config_get("rom_path");
-    if (!rom_path) rom_path = "sdmc:/roms";
-
-    log_message(LOG_INFO, "Listing favorites with ROM path: %s", rom_path);
-
     // Count favorites to ensure we have some
     int favorite_count = 0;
     config_entry *current, *tmp;
@@ -105,7 +99,7 @@ DirContent* list_favorites(void) {
     // Process favorites
     HASH_ITER(hh, favorites, current, tmp) {
         log_message(LOG_DEBUG, "Processing favorite: %s", current->key);
-        char* group_name = extract_group_name(current->key, rom_path);
+        char* group_name = extract_group_name(current->key, ROM_DIRECTORY);
         char* display_name = get_display_name(current->key);
 
         if (!group_name || !display_name) {
