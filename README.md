@@ -45,6 +45,8 @@ It can be a bit tricky to get stack traces out of the Atmosphere crash dumps.
 Generally when I have to do that I enter the podman container used to build the
 project like this:
 
+`podman run --rm -it -v $(pwd):/usr/src/project:Z my-switch-builder /bin/bash`
+
 And then use the addr2line utility with the program offsets from the crash log
 (found in `/atmosphere/crash_reports/*.log`):
 
