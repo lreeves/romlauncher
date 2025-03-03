@@ -24,6 +24,8 @@ typedef enum {
     SYSTEM_N64,
     SYSTEM_PSP,
     SYSTEM_PSX,
+    SYSTEM_SATURN,
+    SYSTEM_DREAMCAST,
     SYSTEM_UNKNOWN,
 } SystemType;
 

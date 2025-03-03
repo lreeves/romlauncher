@@ -46,6 +46,16 @@ static const EmulatorConfig RETROARCH_PCSX_REARMED = {
     .core_name = "pcsx_rearmed"
 };
 
+static const EmulatorConfig RETROARCH_YABAUSE = {
+    .emulator = EMULATOR_RETROARCH,
+    .core_name = "yabause"
+};
+
+static const EmulatorConfig RETROARCH_FLYCAST = {
+    .emulator = EMULATOR_RETROARCH,
+    .core_name = "flycast"
+};
+
 // Forward declarations
 SystemType derive_system_from_extension(const char *extension);
 const EmulatorConfig* derive_emulator_for_system(SystemType system);
@@ -107,6 +117,8 @@ const EmulatorConfig* derive_emulator_from_path(const char *path) {
         // using case-insensitive string search
         if (strcasestr(path, "playstation portable") != NULL) system = SYSTEM_PSP;
         else if (strcasestr(path, "playstation") != NULL) system = SYSTEM_PSX;
+        else if (strcasestr(path, "dreamcast") != NULL) system = SYSTEM_DREAMCAST;
+        else if (strcasestr(path, "saturn") != NULL) system = SYSTEM_SATURN;
     }
 
     return derive_emulator_for_system(system);
@@ -138,6 +150,10 @@ const EmulatorConfig* derive_emulator_for_system(SystemType system) {
             return &RETROARCH_MEDNAFEN_PCE;
         case SYSTEM_PSX:
             return &RETROARCH_PCSX_REARMED;
+        case SYSTEM_SATURN:
+            return &RETROARCH_YABAUSE;
+        case SYSTEM_DREAMCAST:
+            return &RETROARCH_FLYCAST;
         default:
             return NULL;
     }
