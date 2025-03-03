@@ -1,7 +1,7 @@
 # ROM Launcher
 
 A lightweight and user-friendly frontend for RetroArch and PPSSPP designed for
-handheld gaming devices.
+the Nintendo Switch (using the libnx homebrew libraries).
 
 ![Screenshot of romlauncher](https://github.com/lreeves/romlauncher/blob/main/screenshot.png?raw=true)
 
