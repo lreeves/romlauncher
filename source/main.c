@@ -768,6 +768,9 @@ int main(int argc __attribute__((unused)), char** argv __attribute__((unused))) 
         SDL_Delay(wait);
     }
 
+    log_message(LOG_INFO, "Main loop terminated. Exit requested: %d", exit_requested); // Add this
+    log_message(LOG_INFO, "Proceeding to post-loop cleanup."); // And this
+
     // Flush any remaining events before cleanup
     SDL_Event flush_event;
     while (SDL_PollEvent(&flush_event)) {}
